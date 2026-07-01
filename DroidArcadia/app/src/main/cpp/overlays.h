@@ -390,17 +390,18 @@ EXPORT const STRPTR overlays[OVERLAYS][33] = {
 { // 26. Jungler
         "Fire",                 "-----",
 "-----","-----","-----","-----","-----","-----",
-"Close","-----","-----","-----","-----","-----",
-"Close","Fire", "-----","-----","-----","-----",
-"Open", "Fire", "-----","-----","-----","-----",
-"Open", "Fire", "-----","-----","-----","-----",
-"A (F2): cycle through \"games\" (1..9)\n" \
+"Close","-----","-----","Pause","-----","Unpau",
+"Close","Fire", "-----","Pause","-----","Unpau",
+"Open", "Fire", "-----","Pause","-----","Unpau",
+"Open", "Fire", "-----","Pause","-----","Unpau",
+"A (F2): cycle through \"games\" (1..9). Game 9 is demo mode.\n" \
 "B (F3): cycle through \"options\" (1..8)\n" \
 "START (F1): start game\n" \
 "Open = Open gates\n" \
 "Close = Close gates\n" \
 "Paddle directions: turn snake\n" \
-"Paddle directions + Fire: shoot"
+"Paddle directions + Fire: shoot\n" \
+"Unpau = Unpause"
 },
 { // 27. Monaco Grand Prix
         "-----",                "-----",
@@ -907,7 +908,7 @@ EXPORT const STRPTR overlays[OVERLAYS][33] = {
 "Left", "-----","Right","Left", "-----","Right",
 "-----","Down", "-----","-----","Down", "-----",
 "-----","-----","-----","-----","-----","-----",
-"Wait at the title screen.\n" \
+"Wait for at least 24 seconds at the title screen.\n" \
 "UC (F2): reset\n" \
 "START (F1): start\n" \
 "Up/Down/Left/Right: turn\n" \
@@ -946,12 +947,13 @@ EXPORT const STRPTR overlays[OVERLAYS][33] = {
 "-----","-----","Gas",  "-----","-----","-----",
 "-----","-----","-----","-----","-----","-----",
 "-----","-----","-----","-----","-----","-----",
-"-----","-----","Easy", "Hard", "-----","-----",
+"-----","-----","-----","Easy", "Hard", "-----",
 "Easy/Hard = Easy/Hard difficulty\n" \
 "Start = Start engines\n" \
 "Gas = give Gas\n" \
 "Paddle directions: fly plane\n\n" \
-"Pilot an aeroplane through a complete sequence of take-off, flight and landing, on the basis of instrument readings and instructions from the ground. The instruments are an artificial horizon (in the centre of the screen), an altimeter (upper right) and an airspeed indicator (upper left). Furthermore, an indication of your progress during take-off, along the flight path and when landing is given in the lower half of the screen. To the left and right of this, arrows indicate any required course changes (or 'OK') and instructions to increase or decrease altitude. These instructions must be followed up immediately."
+"Pilot an aeroplane through a complete sequence of take-off, flight and landing, on the basis of instrument readings and instructions from the ground. The instruments are an artificial horizon (in the centre of the screen), an altimeter (upper right) and an airspeed indicator (upper left). Furthermore, an indication of your progress during take-off, along the flight path and when landing is given in the lower half of the screen. To the left and right of this, arrows indicate any required course changes (or 'OK') and instructions to increase or decrease altitude. These instructions must be followed up immediately.\n" \
+"Takeoff speed is 50 knots; cruising speed is at least 45, but no more than 90. The maximum permitted altitude is FL95 (flight level 95 = 9,500 feet). Any change in altitude affects speed."
 },
 { // 71. 10-5-Catapult
         "Fire",                 "Fire",
@@ -1917,12 +1919,15 @@ EXPORT const STRPTR overlays[OVERLAYS][33] = {
 "-----","-----","-----","-----","-----","-----",
 "Pause","-----","Unpau","-----","-----","-----",
 "Pause","-----","Unpau","-----","-----","-----",
-"Pause","-----","Unpau","-----","-----","-----",
+"Pause","Start","Unpau","-----","-----","-----",
 "Pause","Level","Unpau","-----","-----","-----",
-"A/B/START (F1): start game from level 1\n" \
-"Level = change Level\n" \
-"Unpau = Unpause\n" \
-"Paddle up/down/left/right: move"
+"START (F1): start game from level 1\n" \
+"A (F2) = start demon\n" \
+"B (F3) = start game in practice mode\n" \
+"Level = change to next level\n" \
+"Start = start game from chosen level\n" \
+"Paddle up/down/left/right: move\n" \
+"Unpau = Unpause"
 },
 { // 143. Jump Bug B
         "-----",                "Fire",
@@ -3234,15 +3239,21 @@ Colours, Horizontal Scroll, Music, Show Text, 8 Sprites, Target 1 and 2 */
 "Paddle directions: move"
 },
 { // 234. Munch & Crunch
-        "-----",                "-----",
+        "Top"  ,                "Top"  ,
 "-----","-----","-----","-----","-----","-----",
-"-----","-----","-----","-----","-----","-----",
-"-----","-----","-----","-----","-----","-----",
+"Top"  ,"-----","Top"  ,"Top"  ,"-----","Top"  ,
+"Botom","Botom","Botom","Botom","Botom","Botom",
 "-----","-----","-----","-----","-----","-----",
 "-----","-----","-----","-----","-----","-----",
 "SELECT (F2): choose game variant (1..8)\n" \
 "START (F1): start game\n" \
-"Paddle directions: move"
+"For Crunch's player:\n" \
+"Paddle directions: move Crunch\n" \
+"In games 2 & 6, for Munch's player:\n" \
+"Paddle directions: move Munch\n" \
+"In games 4 & 8, for Munch's player:\n" \
+"Paddle directions (while Top held): move top muncher (\"Munch's Mate\")\n" \
+"Paddle directions (while Botom held): move bottom muncher (\"Munch\")"
 },
 { // 235. EPROM Programmer aka Table 48 (Elektor)
         "Start",                "-----",
@@ -3785,5 +3796,24 @@ Colours, Horizontal Scroll, Music, Show Text, 8 Sprites, Target 1 and 2 */
 "-----","-----","-----","-----","-----","-----",
 "Paddle left/right: move left/right\n" \
 "Swing: swing bat"
+},
+{ // 279. Kotonoha Tower
+        "Ao/Ki",                "-----"  ,
+"-----","-----","-----","-----","-----","-----",
+"Ak/Ju","-----","Fr/Ju","-----","-----","-----",
+"Ak/Ju","Ao/Ki","Fr/Ju","-----","-----","-----",
+"Ak/Ju","Ao/Ki","Fr/Ju","-----","-----","-----",
+"Ak/Ju","Ao/Ki","Fr/Ju","-----","-----","-----",
+"On title screen:\n" \
+"Choose mode Ak(ane)/Ao(i)/Fr(ee).\n" \
+"In free mode:\n" \
+"Choose level with paddle left/right.\n" \
+"Then START (F1) to confirm level.\n" \
+"Then choose character Ak(ane)/Ao(i).\n" \
+"During game:\n" \
+"Paddle left/right: move left/right\n" \
+"Ki = Kick\n" \
+"Ju = Jump\n" \
+"START (F1): pause/unpause"
 },
 };

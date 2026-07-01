@@ -1,8 +1,8 @@
 // INCLUDES---------------------------------------------------------------
 
 #define MAJORVERSION   0x04
-#define MINORVERSION   0x50
-#define INTEGERVERSION "4.50" // for RetroAchievements
+#define MINORVERSION   0x60
+#define INTEGERVERSION "4.60" // for RetroAchievements
 
 #include <jni.h>
 
@@ -142,6 +142,7 @@ typedef unsigned char  ASCREEN;
 #define FROGGER2POS           452
 #define FROGGER3POS           453
 #define HOMERUNPOS            456
+#define KOTONOHAPOS           458
 // Interton
 #define SUPERINVPOS           131
 #define INTERTONSTUBPOS       132
@@ -150,6 +151,7 @@ typedef unsigned char  ASCREEN;
 #define MONSTERMANPOS         135
 #define COMECOMEPOS           136
 #define COMEFRUTASPOS1        137
+#define CRAZYCRABPOS          138
 #define COMEFRUTASPOS2        139
 #define KABOOM1POS            141
 #define KABOOM2POS            142
@@ -172,7 +174,7 @@ typedef unsigned char  ASCREEN;
 #define CARRACESPOS           162
 #define HEADONPOS             163
 #define HIPPODROMEPOS         164
-#define HUNTINGPOS            165
+#define I_HUNTINGPOS          165
 #define HYPERSPACEPOS         166
 #define INVADERAPOS           167
 #define INVADERBPOS           168
@@ -184,6 +186,7 @@ typedef unsigned char  ASCREEN;
 #define MUSICALGAMESPOS       174
 #define PADDLEGAMESPOS        175
 #define PINBALLBPOS           177
+#define SHOOTGALPOS           179
 #define SOCCERBPOS            181
 #define SOLITAIREPOS          182
 #define SPACEWARPOS           183
@@ -191,18 +194,21 @@ typedef unsigned char  ASCREEN;
 #define MEMORY1POS            185
 #define WINTERSPORTSPOS       186
 #define LEAPFROGPOS           188
+#define MUNCHANDCRUNCH1POS    191
 #define SUPERKNOCKOUTPOS      193
 #define AIRSEAATTACKPOS       194
 #define COMEFRUTASPOS3        201
 #define I_TETRISPOS1          206
 #define I_TETRISPOS2          207
 #define I_TETRISPOS3          208
+#define MUNCHANDCRUNCH2POS    224
 // Elektor
 #define MAZESPOS              236
 #define CIRCLEDRIVEPOS1       237
 #define COSMICADVENTUREPOS1   249
 #define COSMICADVENTUREPOS2   253
 #define ROCKETSHOOTINGPOS     263
+#define AMAZONEPOS            267
 #define SPACESHOOTOUTPOS      268
 #define UFOSHOOTINGPOS        286
 #define E_PINBALLPOS          290
@@ -218,6 +224,7 @@ typedef unsigned char  ASCREEN;
 #define QUEENPOS              354
 #define SPACEBATTLEPOS        355
 #define E_MATH1POS            356
+#define E_HUNTINGPOS          377
 #define PENALTYPOS            391
 #define MOONLANDING1POS       392
 #define MOONLANDING2POS       393
@@ -233,10 +240,12 @@ typedef unsigned char  ASCREEN;
 #define CHICKEN1POS           424
 #define CHICKEN2POS           425
 #define CHICKEN3POS           438
+#define AGGRESSORPOS1         450
+#define AGGRESSORPOS2         451
 // all
-#define KNOWNGAMES           (456 + 1)
+#define KNOWNGAMES           (460 + 1)
 
-#define OVERLAYS             (278 + 1)
+#define OVERLAYS             (279 + 1)
 #define     ARCADIA_OVERLAY     0
 #define     ELEKTOR_OVERLAY     1
 #define    INTERTON_OVERLAY    15
@@ -278,8 +287,8 @@ typedef unsigned char  ASCREEN;
 #define A_P1LEFTKEYS     6400 // $1900
 #define A_P1MIDDLEKEYS   6401 // $1901
 #define A_P1RIGHTKEYS    6402 // $1902
-/* #define A_P1PALLADIUM 6403 // $1903
-#define A_P2LEFTKEYS     6404 // $1904
+#define A_P1PALLADIUM    6403 // $1903
+/* #define A_P2LEFTKEYS  6404 // $1904
 #define A_P2MIDDLEKEYS   6405 // $1905
 #define A_P2RIGHTKEYS    6406 // $1906
 #define A_P2PALLADIUM    6407 // $1907 */
@@ -416,6 +425,23 @@ typedef unsigned char  ASCREEN;
 #define FIELD                   0x40 // for Malzak
 #define SPECIALREAD             (RANDOM | READONCE | NOREAD)
 
+#define GUESTKEY_0   0
+#define GUESTKEY_1   1
+#define GUESTKEY_2   2
+#define GUESTKEY_3   3
+#define GUESTKEY_4   4
+#define GUESTKEY_5   5
+#define GUESTKEY_6   6
+#define GUESTKEY_7   7
+#define GUESTKEY_8   8
+#define GUESTKEY_9   9
+#define GUESTKEY_CL 10
+#define GUESTKEY_EN 11
+#define GUESTKEY_X1 12
+#define GUESTKEY_X2 13
+#define GUESTKEY_X3 14
+#define GUESTKEY_X4 15
+
 #define ARCADIA                 0
 #define INTERTON                1
 #define ELEKTOR                 2
@@ -514,7 +540,7 @@ typedef unsigned char  ASCREEN;
 // #define DUMP_OKENH   DUMP_OK
 #define DUMP_SUSPECT    2
 #define DUMP_BAD        3
-// #define DUMP_BADOBS  DUMP_BAD
+#define DUMP_BADOBS     DUMP_BAD
 
 // computer languages
 // #define CL_MISC   0 // miscellaneous
@@ -698,15 +724,187 @@ typedef unsigned char  ASCREEN;
 #define PORTC          256
 #define PORTD          257
 
-//  0..50: Arcadia
-// 51..56: Coin-ops
+//  0..51: Arcadia
+// 52..57: Coin-ops
 #define HS_ASTROWARS_POS    51
 #define HS_GALAXIA_POS      52
 #define HS_LASERBATTLE_POS  53
 #define HS_LAZARIAN_POS     54
 #define HS_MALZAK1_POS      55
 #define HS_MALZAK2_POS      56
-#define HISCORES            57 // ie. [0..56]
+#define HISCORES            58 // ie. [0..57]
+
+// ARCADIA games
+#define GL_3DATTACK  0
+#define GL_3DSOCCER  1
+#define GL_HOMERUN   2
+#define GL_ALIENINV  3
+#define GL_ASTROINV  4
+#define GL_AUTORACE  5
+#define GL_BASEBALL  6
+#define GL_BASKETBA  7
+#define GL_BATTLE    8
+#define GL_BLACKJAC  9
+#define GL_BOWLING  10
+#define GL_BOXING   11
+#define GL_BRAINQUI 12
+#define GL_BREAKAWA 13
+#define GL_CAPTURE  14
+#define GL_CATTRAX  15
+#define GL_CIRCUS   16
+#define GL_COMBAT   17
+#define GL_CRAZYCLI 18
+#define GL_CRAZYGOB 19
+#define GL_VIDLEX   20
+#define GL_DORAEMON 21
+#define GL_DRSLUMP  22
+#define GL_ESCAPE   23
+#define GL_GRIDIRON 24
+#define GL_FROGGER  25
+#define GL_FUNKYFIS 26
+#define GL_GOLF     27
+#define GL_GUNDAM   28
+#define GL_HOBO     29
+#define GL_HORSERAC 30
+#define GL_JOURNEY  31
+#define GL_JUMPBUG  32
+#define GL_JUNGLER  33
+#define GL_KOTONOHA 34
+#define GL_MACROSS  35
+#define GL_MISSILEW 36
+#define GL_MONACO   37
+#define GL_NIBBLEME 38
+#define GL_OCEANBAT 39
+#define GL_PARASHOO 40
+#define GL_PLEIADES 41
+#define GL_R2DTANK  42
+#define GL_REDCLASH 43
+#define GL_ROBOTKIL 44
+#define GL_ROUTE16  45
+#define GL_2DSOCCER 46
+#define GL_SATTACK  47
+#define GL_SBUSTER  48
+#define GL_SMISSION 49
+#define GL_SRAIDERS 50
+#define GL_SSQUADRO 51
+#define GL_SVULTURE 52
+#define GL_SPIDERS  53
+#define GL_STARCHES 54
+#define GL_SUPERBUG 55
+#define GL_TANKSALO 56
+#define GL_TENNIS   57
+#define GL_THEEND   58
+#define GL_TURTLES  59
+#define ARCADIAGLYPHS   60
+// INTERTON games
+#define GL_I_37BYTE 60
+#define GL_I_AIRSEA 61
+#define GL_I_BOWLIN 62
+#define GL_I_BOXING 63
+#define GL_I_CANABA 64
+#define GL_I_CAPTUR 65
+#define GL_I_CASINO 66
+#define GL_I_CIRCUS 67
+#define GL_I_COCKPI 68
+#define GL_I_COMBAT 69
+#define GL_I_COMECO 70
+#define GL_I_COMEFR 71
+#define GL_I_COWBOY 72
+#define GL_I_CRAZYC 73
+#define GL_I_FLAPPY 74
+#define GL_I_GOLF   75
+#define GL_I_GRANDP 76
+#define GL_I_HANGMA 77
+#define GL_I_HEADON 78
+#define GL_I_HORSER 79
+#define GL_I_HUNTIN 80
+#define GL_I_HYPERS 81
+#define GL_I_INVADE 82
+#define GL_I_KABOOM 83
+#define GL_I_LABYRI 84
+#define GL_I_LASERA 85
+#define GL_I_LEAPFR 86
+#define GL_I_MONMAN 87
+#define GL_I_MONMUN 88
+#define GL_I_MUNCHA 89
+#define GL_I_MUSICA 90
+#define GL_I_PINBAL 91
+#define GL_I_SHOOTO 92
+#define GL_I_SOCCER 93
+#define GL_I_SPACEW 94
+#define GL_I_SPACEZ 95
+#define GL_I_SUPERI 96
+#define GL_I_SUPERS 97
+#define GL_I_TREASU 98
+#define GL_I_WINTER 99
+#define INTERTONGLYPHS  40
+// ELEKTOR games
+#define GL_E_AGGRES 100
+#define GL_E_AMAZON 101
+#define GL_E_ANIMAT 102
+#define GL_E_ASTERO 103
+#define GL_E_ATTACK 104
+#define GL_E_BASKET 105
+#define GL_E_BURSTI 106
+#define GL_E_CARDTR 107
+#define GL_E_CARGOS 108
+#define GL_E_CARRAC 109
+#define GL_E_CATAPU 110
+#define GL_E_CHICKE 111
+#define GL_E_CHRIST 112
+#define GL_E_CIRCLE 113
+#define GL_E_COSMIC 114
+#define GL_E_DESTRO 115
+#define GL_E_ENTERP 116
+#define GL_E_ENTER2 117
+#define GL_E_ENTER3 118
+#define GL_E_EXPLOD 119
+#define GL_E_FLYING 120
+#define GL_E_HAMISH 121
+#define GL_E_HELICO 122
+#define GL_E_HORSER 123
+#define GL_E_HUNTIN 124
+#define GL_E_INVADE 125
+#define GL_E_JACKPO 126
+#define GL_E_LABYRI 127
+#define GL_E_LAUNCH 128
+#define GL_E_MAZES  129
+#define GL_E_MEMORY 130
+#define GL_E_MOLEBA 131
+#define GL_E_MOONLA 132
+#define GL_E_MULTIP 133
+#define GL_E_NEWTON 134
+#define GL_E_NIM    135
+#define GL_E_OFFSHO 136
+#define GL_E_OMEGAL 137
+#define GL_E_PAINTI 138
+#define GL_E_PENALT 139
+#define GL_E_PIANO  140
+#define GL_E_PILOT  141
+#define GL_E_PINBAL 142
+#define GL_E_PVIART 143
+#define GL_E_QUEEN  144
+#define GL_E_RASTER 145
+#define GL_E_ROCKET 146
+#define GL_E_SEAWAR 147
+#define GL_E_SNAKES 148
+#define GL_E_SNAP   149
+#define GL_E_SPACEB 150
+#define GL_E_SPACES 151
+#define GL_E_STEAME 152
+#define GL_E_SUBMAR 153
+#define GL_E_SURVIV 154
+#define GL_E_TINYTI 155
+#define GL_E_UFOSHO 156
+#define ELEKTORGLYPHS   57
+#define GAMEGLYPHS      (ARCADIAGLYPHS + INTERTONGLYPHS + ELEKTORGLYPHS)
+#define GLYPH_ARCADIA   (GAMEGLYPHS + 0)
+#define GLYPH_INTERTON  (GAMEGLYPHS + 1)
+#define GLYPH_ELEKTOR   (GAMEGLYPHS + 2)
+#define GLYPH_ASTROWARS (GAMEGLYPHS + 3)
+#define GLYPH_GALAXIA   (GAMEGLYPHS + 4)
+#define GLYPH_LAZARIAN  (GAMEGLYPHS + 5)
+#define GLYPH_MALZAK    (GAMEGLYPHS + 6)
 
 // EXPORTED STRUCTURES----------------------------------------------------
 
@@ -717,19 +915,21 @@ EXPORT struct KnownStruct
            crc64_h,
            crc64_l;
     UWORD  size;
-    SBYTE  key1,
+    SBYTE  startkey,
+           startkeyplayer,
+           key1,
            key2,
            key3,
            key4,
-           up,
-           down,
-           left,
-           right;
+           paddleup,
+           paddledown,
+           paddleleft,
+           paddleright;
     FLAG   analog;
     UBYTE  sensitivity,
            demultiplex,
            spriteflips; // PIPBUG: pipbug_biosver, SI50: s_id
-    SBYTE  udcflips,    // SI50: s_is
+    SBYTE  udgflips,    // SI50: s_is
            firstrow,
            lastrow;
     FLAG   swapped;
@@ -762,6 +962,7 @@ EXPORT struct KnownStruct
     UWORD  the2ndsize;
     UBYTE  cpl,
            bios;
+    SWORD  glyph;
 };
 
 EXPORT struct MachineStruct

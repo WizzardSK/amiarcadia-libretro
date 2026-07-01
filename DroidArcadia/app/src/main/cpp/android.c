@@ -106,10 +106,6 @@ EXPORT int        absxmin, absxmax,
                   p2bgcol[4],
                   p1sprcol[6],
                   p2sprcol[6],
-                  paddleup                 = -1,
-                  paddledown               = -1,
-                  paddleleft               = -1,
-                  paddleright              = -1,
                   ppc,
                   psgbase,
                   pvibase,
@@ -122,7 +118,7 @@ EXPORT int        absxmin, absxmax,
                   trainer_lives            = FALSE,
                   trainer_time             = FALSE,
                   trainer_invincibility    = FALSE,
-                  udcflips                 = 0,
+                  udgflips                 = 0,
                   undither                 = FALSE,
                   useff                    = TRUE,
                   whichgame                = -1,
@@ -184,7 +180,7 @@ IMPORT int        darkenbg,
                   slice_2650,
                   spriteflip,
                   spriteflips,
-                  udcflip;
+                  udgflip;
 
 IMPORT int        errno; // from errno.h
 
@@ -291,28 +287,38 @@ EXPORT const UWORD pencolours[4][GUESTCOLOURS] = {
     0xFC00, // orange                  1111,1 100,000 0,0000
     0xFC10, // pink                    1111,1 100,000 1,0000
 }, { // PVI colours                    RRRR,R    GGG,GGG   B,BBBB
-    0xFFFF, // white  (UVI #0, PVI #0) 1111,1    111,111   1,1111
-    0xB5A1, // yellow (UVI #1, PVI #1) 1011,0    101,101   0,0001
-            // yellow                  1011 0100 101 10100 0 0001000 B4 B4 08
-    0xB056, // purple (UVI #4, PVI #2) 1011,0    000,010   1,0110
-    0xF0E0, // red    (UVI #5, PVI #3) 1111,0    000,111   0,0000
-            // red                     1111 0001 000 11100 0 0000000 F1 1C 00
-    0x0DD7, // cyan   (UVI #2, PVI #4) 0000,1    101,110   1,0111
-    0x15A2, // green  (UVI #3, PVI #5) 0001,0    101,101   0,0010
-    0x197F, // blue   (UVI #6, PVI #6) 0001,1    001,011   1,1111
-            // blue                    0011 1111 001 01110 1 1111011 3F 4E FB
-    0x0000, // black  (UVI #7, PVI #7) 0000,0    000,000   0,0000
-    0xAB6A, // grey #1                 1010,1    101,011   0,1010
-            // grey #1                 1010 1010 101 01101 0 1010010 AA AD 52
-    0xA9D4, // dark yellow             1010,1    001,110   1,0100
-            // dark yellow             1010 1000 001 11000 1 0100100 A8 38 A4
-    0xA9D4, // dark purple             1010,1    001,110   1,0100
-    0x8164, // dark red                1000,0    001,011   0,0100
-    0x44D3, // dark cyan               0100,0    100,110   1,0011
-    0x0480, // dark green              0000,0    100,100   0,0000
-            // dark green              0000 0001 100 10000 0 0000000 01 90 00
-    0x3171, // dark blue               0011,0    001,011   1,0001
-    0x0000, // dark black              0000,0    000,000   0,0000
+    0xD75D, // white          (PVI #0) 1101,0010 1110,1001 1110,1100
+            //                         1101,0    1110,10   1110,1    = 1101,0111 0101,1101
+    0xDF20, // yellow         (PVI #1) 1101,0111 1110,0011 0000,0000
+            //                         1101,1    1110,01   0000,0    = 1101,1111 0010,0000
+    0xF91F, // purple         (PVI #2) 1111,1111 0010,0010 1111,1110
+            //                         1111,1    0010,00   1111,1    = 1111,1001 0001,1111
+    0xF8A0, // red            (PVI #3) 1111,1000 0001,0101 0000,0000
+            //                         1111,1    0001,01   0000,0    = 1111,1000 1010,0000
+    0x06FF, // cyan           (PVI #4) 0000,0100 1101,1011 1111,1111
+            //                         0000,0    1101,11   1111,1    = 0000,0110 1111,1111
+    0x0620, // green          (PVI #5) 0000,0000 1100,0110 0000,0000
+            //                         0000,0    1100,01   0000,0    = 0000,0110 0010,0000
+    0x007F, // blue           (PVI #6) 0000,0000 0000,1101 1111,1111
+            //                         0000,0    0000,11   1111,1    = 0000,0000 0111,1111
+    0x1083, // black          (PVI #7) 0001,0000 0001,0010 0001,1010
+            //                         0001,0    0001,00   0001,1    = 0001,0000 1000,0011
+    0x9F7D, // grey #1                 1101,0111 1110,1110 1110,1111
+            //                         1101,1    1110,11   1110,1    = 1101,1111 0111,1101
+    0xC527, // dark yellow             1010,0100 1010,0111 0011,1101
+            //                         1010,0    1010,01   0011,1    = 1010,0101 0010,0111
+    0xD0FA, // dark purple             1101,0110 0001,1111 1101,0100
+            //                         1101,0    0001,11   1101,0    = 1101,0000 1111,1010
+    0x8112, // dark red                1000,0101 0010,0001 0001,0001
+            //                         1000,0    0010,00   1001,0    = 1000,0001 0001,0010
+    0x2CF3, // dark cyan               0010,1100 1001,1011 1001,1111
+            //                         0010,1    1001,11   1001,1    = 0010,1100 1111,0011
+    0x2465, // dark green              0010,0100 1000,1101 0010,0111
+            //                         0010,0    1000,11   0010,1    = 0010,0100 0110,0101
+    0x008F, // dark blue               0000,0110 0001,0000 0111,1011
+            //                         0000,0    0001,00   0111,1    = 0000,0000 1000,1111
+    0x1083, // dark black              0001,0000 0001,0010 0001,1010
+            //                         0001,0    0001,00   0001,1    = 0001,0000 1000,0011
     0x2925, // grey #2                 0010,1    001,001   0,0101
     0x4A49, // grey #3                 0100,1    010,010   0,1001         
     0x766E, // grey #4                 0111,0    011,011   0,1110
@@ -803,7 +809,7 @@ EXPORT void engine_reset(void)
     {
     case ARCADIA:
         spriteflip =
-        udcflip    = 0;
+        udgflip    = 0;
         /* This clearing helps avoid these problems:
            (a) Resetting from Dr. Slump game screen to title screen turns
                on constant rumbling (due to sprite imagery being retained
@@ -855,7 +861,7 @@ EXPORT void engine_reset(void)
         for (i = 0x1D00; i <= 0x1D1F; i++)
         {   memory[i] = 0; // PSGs are cleared at reset
         }
-        if (whichgame != -1 && known[whichgame].hiscore)
+        if (whichgame != -1 && known[whichgame].hiscore) // hiscore field is used on Elektor as a flag meaning "inhibit interrupts"
         {   psu |= PSU_II;
         }
         if (whichgame == OMEGALANDINGPOS)
@@ -1082,18 +1088,10 @@ EXPORT int parse_bytes(FLAG reconfigure)
         memory[0x1F00 + PVI_SPRITE2BY] =
         memory[0x1F00 + PVI_SPRITE3BX] =
         memory[0x1F00 + PVI_SPRITE3BY] = 0xFE; // helps with Figure27.tvc
-
-        // make $8B9..$8BA = $0903 (important!)
-        memory[0x8B9] = 0x09;
-        memory[0x8BA] = 0x03;
-        memory[0x8BD] = 0x1F; // BCTA,UN
-        memory[0x8BE] = startaddr_h;
-        memory[0x8BF] = startaddr_l;
-        iar  = 0x8BD;
     }
 
     spriteflip     =
-    udcflip        = 0;
+    udgflip        = 0;
 
     progressing    =
     tracking       = FALSE;
@@ -1230,13 +1228,9 @@ EXPORT void unautosense(void)
     }
     sensitivity    = SENSITIVITY_DEFAULT;
     ppc            =  4;
-    paddleup       =
-    paddledown     =
-    paddleleft     =
-    paddleright    = -1;
     firstrow       = 26;
     lastrow        = -1;
-    udcflips       =
+    udgflips       =
     spriteflips    =  0;
     for (i = 0; i < 4; i++)
     {   protect[    i] =
@@ -2035,6 +2029,7 @@ EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG for
     for (y = 0; y < MAXBOXHEIGHT; y++)
     {   for (x = 0; x < MAXBOXWIDTH; x++)
         {   screen[x][y] = GUESTCOLOURS;
+            fgtable[y][x] = 0;
 }   }   }
 
 EXPORT void configure(FLAG same, FLAG all)
@@ -2119,10 +2114,6 @@ EXPORT void configure(FLAG same, FLAG all)
     {   p1sprcol[i]   = (int)   known[whichgame].p1sprcol[i];
         p2sprcol[i]   = (int)   known[whichgame].p2sprcol[i];
     }
-    paddleup          = (int)   known[whichgame].up;
-    paddledown        = (int)   known[whichgame].down;
-    paddleleft        = (int)   known[whichgame].left;
-    paddleright       = (int)   known[whichgame].right;
     whichoverlay      = (int)   known[whichgame].whichoverlay;
     if (known[whichgame].cpl)
     {   set_cpl(        (int)   known[whichgame].cpl);
@@ -2142,10 +2133,10 @@ EXPORT void configure(FLAG same, FLAG all)
     {   ppc = 2;
     }
 
-    if (known[whichgame].demultiplex || known[whichgame].spriteflips || known[whichgame].udcflips)
+    if (known[whichgame].demultiplex || known[whichgame].spriteflips || known[whichgame].udgflips)
     {   firstrow    =  known[whichgame].firstrow;
         lastrow     =  known[whichgame].lastrow;
-        udcflips    =  known[whichgame].udcflips;
+        udgflips    =  known[whichgame].udgflips;
         spriteflips =  known[whichgame].spriteflips;
         if (machine == INTERTON || machine == ELEKTOR)
         {   multisprite[0] = (known[whichgame].demultiplex & 0x80) ? TRUE : FALSE;
@@ -2163,6 +2154,9 @@ EXPORT void configure(FLAG same, FLAG all)
             protect[2]     = (known[whichgame].demultiplex & 0x02) ? TRUE : FALSE;
             protect[3]     = (known[whichgame].demultiplex & 0x01) ? TRUE : FALSE;
     }   }
+    else
+    {   spriteflips = udgflips = 0;
+    }
 
     make_stars();
     generate_autotext();
@@ -2268,19 +2262,27 @@ EXPORT void patchrom(void)
 
         memory[0x27BB] = trainer_time          ? 0xC0 : 0x16;     // RETC,lt               -> NOP       (energy)
     acase MEMMAP_LASERBATTLE:
-        // ADDI,r0 $01 (patient) vs. LODI,r0 $55 (impatient)
-        memory[ 0x269] = post                  ? 0x84 : 0x04;
+        memory[ 0x269] = post                  ? 0x84 : 0x04;     // ADDI,r0 1             -> LODI,r0 $55
         memory[ 0x26A] = post                  ? 0x01 : 0x55;
 
         memory[0x2715] = trainer_time          ? 0x00 : 0x02;     // SUBI,r0 2             -> SUBI,r0 0 (fuel)
+        memory[0x31F7] = trainer_time          ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
+        memory[0x6030] = trainer_time          ? 0xC0 : 0xCF;     // STRA,r0 $7CBE,r3      -> NOP
+        memory[0x6031] = trainer_time          ? 0xC0 : 0x7C;     //                          NOP
+        memory[0x6032] = trainer_time          ? 0xC0 : 0xBE;     //                          NOP
+        memory[0x603B] = trainer_time          ? 0xC0 : 0xCF;     // STRA,r0 $7CBC,r3      -> NOP
+        memory[0x603C] = trainer_time          ? 0xC0 : 0x7C;     //                          NOP
+        memory[0x603D] = trainer_time          ? 0xC0 : 0xBC;     //                          NOP
+        memory[0x6044] = trainer_time          ? 0xC0 : 0xCF;     // STRA,r0 $7CBA,r3      -> NOP
+        memory[0x6045] = trainer_time          ? 0xC0 : 0x7C;     //                          NOP
+        memory[0x6046] = trainer_time          ? 0xC0 : 0xBA;     //                          NOP
 
         memory[0x520D] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
 
         memory[0x50DC] = trainer_invincibility ? 0x20 : 0x0C;     // LODA,r0 $5C4B         -> EORZ    r0
         memory[0x50DD] = trainer_invincibility ? 0x17 : 0x1C;     //                          RETC,un
     acase MEMMAP_LAZARIAN:
-        // ADDI,r0 $01 (patient) vs. LODI,r0 $55 (impatient)
-        memory[ 0x281] = post                  ? 0x84 : 0x04;
+        memory[ 0x281] = post                  ? 0x84 : 0x04;     // ADDI,r0 1             -> LODI,r0 $55
         memory[ 0x282] = post                  ? 0x01 : 0x55;
 
         memory[0x30A2] = trainer_invincibility ? 0x20 : 0x0D;     // LODA,r1 $3C01         -> EORZ    r0
@@ -2288,7 +2290,8 @@ EXPORT void patchrom(void)
 
         memory[0x31A8] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
 
-        memory[0x46E2] = trainer_time          ? 0x00 : 0x02;     // SUBI,r0 2             -> SUBI,r0 0 (fuel)
+        memory[0x4094] = trainer_time          ? 0x00 : 0x01;     // LODI,r0 1             -> LODI,r0 0 (fuel)
+        memory[0x46E2] = trainer_time          ? 0x00 : 0x02;     // SUBI,r0 2             -> SUBI,r0 0
     acase MEMMAP_MALZAK1:
         // STRA,r0 $1800 (patient) vs. BCTA,un $00A0 (impatient)
         memory[  0x52] = post                  ? 0xCC : 0x1F;
@@ -2350,6 +2353,12 @@ EXPORT void patchrom(void)
         case _3DSOCCERBPOS:
         case _3DSOCCERENHPOS:
             memory[ 0x181] = trainer_time          ? 0x00 : 0xFF; // ADDI,r0 $FF           -> ADDI,r0 0
+        acase AGGRESSORPOS1:
+        case AGGRESSORPOS2:
+            memory[ 0xD6C] = trainer_invincibility ? 0x77 : 0xF5; // TMI,r1  $10           -> PPSU    $C0
+            memory[ 0xD6D] = trainer_invincibility ? 0xC0 : 0x10;
+            memory[ 0xD7A] = trainer_invincibility ? 0x77 : 0xF5; // TMI,r1  $10           -> PPSU    $C0
+            memory[ 0xD7B] = trainer_invincibility ? 0xC0 : 0x10;
         acase AIRSEAATTACKPOS:
             memory[ 0x60D] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0 (player 1)
             memory[ 0x65A] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0 (player 2)
@@ -2371,6 +2380,11 @@ EXPORT void patchrom(void)
             memory[  0xE4] = trainer_time          ? 0xC0 : 0x18; //                          NOP
             memory[  0xE5] = trainer_time          ? 0xC0 : 0xFD; //                          NOP
             memory[ 0xBFB] = trainer_time          ? 0x17 : 0x0C; // LODA,r0 $18F8         -> RETC,un
+        acase AMAZONEPOS:
+            memory[ 0x9C1] = trainer_time          ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
+            memory[ 0xABE] = trainer_time          ? 0x00 : 0x01; // LODI,r0 1             -> LODI,r0 0
+            memory[ 0xEDE] = trainer_time          ? 0x00 : 0x05; // LODI,r1 5             -> LODI,r1 0
+            memory[ 0xF0A] = trainer_time          ? 0x00 : 0x01; // LODI,r1 1             -> LODI,r1 0
         acase ASTEROIDSPOS:
             memory[ 0x976] = trainer_invincibility ? 0x3F : 0x0F; // LODA,r3 SPRITECOLLIDE -> BSTA,un $1446
             memory[ 0x977] = trainer_invincibility ? 0x14 : 0x1F;
@@ -2386,14 +2400,14 @@ EXPORT void patchrom(void)
             memory[ 0x174] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase ATTACKFROMSPACEPOS:
             memory[ 0xBB2] = trainer_invincibility ? 0x1B : 0x98; // BCFR,eq $BA9          -> BCTR,un $BA9
+        acase A_BASKETBALLPOS:
+            memory[ 0x112] = trainer_time          ? 0x00 : 0x01; // SUBI,r1 1             -> SUBI,r1 0
         acase A_BOXINGPOS:
             memory[ 0x6B7] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
         acase A_GOLFPOS1:
         case A_GOLFPOS2:
         case A_GOLFODPOS:
             memory[ 0xDC1] = trainer_time          ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
-        acase A_BASKETBALLPOS:
-            memory[ 0x112] = trainer_time          ? 0x00 : 0x01; // SUBI,r1 1             -> SUBI,r1 0
         acase BREAKAWAYPOS:
             memory[ 0x356] = trainer_lives         ? 0x00 : 0xFF; // ADDI,r0 $FF           -> ADDI,r0 0
         acase BREAKOUTPOS:
@@ -2432,6 +2446,10 @@ EXPORT void patchrom(void)
         case COMEFRUTASPOS2:
         case COMEFRUTASPOS3:
             memory[ 0xB6E] = trainer_lives         ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+        acase CRAZYCRABPOS:
+            memory[  0xAA] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+
+            memory[ 0x675] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase CRAZYGOBBLERPOS:
             memory[ 0x2D9] = trainer_invincibility ? 0x1F : 0x0C; // LODA,r0 $18DC         -> BCTA,un $33A
             memory[ 0x2DA] = trainer_invincibility ? 0x03 : 0x18;
@@ -2446,6 +2464,9 @@ EXPORT void patchrom(void)
             memory[0x2D97] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
 
             memory[ 0x703] = trainer_time          ? 0x00 : 0x01; // LODI,r0 1             -> LODI,r0 0
+        acase E_HUNTINGPOS:
+            memory[ 0xFBA] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (ammo)
+            memory[0x106A] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (time)
         acase ENTERPRISE3POS:
             memory[0x114C] = trainer_time          ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase ESCAPEPOS:
@@ -2537,6 +2558,9 @@ EXPORT void patchrom(void)
             memory[ 0x9A0] = trainer_invincibility ? 0x17 : 0x20; // EORZ    r0            -> RETC,un      (level 2)          
         acase HOMERUNPOS:
             memory[ 0x233] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+        acase I_HUNTINGPOS:
+            memory[ 0x5BA] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (ammo)
+            memory[ 0x66A] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (time)
         acase I_BOXINGPOS:
             memory[ 0x100] = trainer_time          ? 0x00 : 0x01; // SUBI,r2 1             -> SUBI,r2 0
         acase I_CIRCUSPOS:
@@ -2592,6 +2616,8 @@ EXPORT void patchrom(void)
             memory[ 0x345] = trainer_time          ? 0x00 : 0xFF;
         acase JUNGLERPOS:
             memory[ 0x149] = trainer_lives         ? 0x00 : 0x01;
+        acase KOTONOHAPOS:
+            memory[ 0x875] = trainer_lives         ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
         acase LASERATTACKPOS:
             memory[ 0x2E8] = trainer_lives         ? 0xC0 : 0xC8; // STRR,r0 *$2D9         -> NOP
             memory[ 0x2E9] = trainer_lives         ? 0xC0 : 0xEF; //                          NOP
@@ -2613,6 +2639,8 @@ EXPORT void patchrom(void)
             memory[ 0x72F] = trainer_time          ? 0x00 : 0xFF; // ADDI,r0 $FF           -> ADDI,r0 0
             memory[ 0x730] = trainer_time          ? 0xC0 : 0x94; // DAR,r0                -> NOP
             memory[ 0x740] = trainer_time          ? 0x00 : 0xFF; // ADDI,r1 $FF           -> ADDI,r1 0
+        acase MONSTERMANPOS:
+            memory[ 0x675] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase MOONLANDING1POS:
         case MOONLANDING2POS:
             memory[ 0xA89] = trainer_time          ? 0x04 : 0x03; // LODZ    r3            -> LODI,r0 $F0
@@ -2631,6 +2659,14 @@ EXPORT void patchrom(void)
             memory[ 0xC32] = trainer_time          ? 0xC0 : 0x00; //                          NOP
 
             memory[ 0xC56] = trainer_invincibility ? 0x00 : 0x0A; // BCTR,eq $C61          -> BCTR,eq $C57
+        acase MUNCHANDCRUNCH1POS:
+        case MUNCHANDCRUNCH2POS:
+            memory[ 0x3BC] = trainer_invincibility ? 0x00 : 0x20; // ANDI,r1 $20           -> ANDI,r1 0
+
+            memory[ 0x660] = trainer_time          ? 0xC0 : 0xD0; // RRL,r0                -> NOP
+            memory[ 0x662] = trainer_time          ? 0xFF : 0xFE; // ANDI,r0 $FE           -> ANDI,r0 $FF
+
+            memory[ 0x77E] = trainer_lives         ? 0x00 : 0x10; // SUBI,r1 $10           -> SUBI,r0 0
         acase OMEGALANDINGPOS:
             // player-enemy collisions
             memory[ 0xF00] = trainer_invincibility ? 0x1B : 0x18; // BCTR,eq $F13          -> BCTR,un $F13
@@ -2679,6 +2715,9 @@ EXPORT void patchrom(void)
             memory[ 0xBED] = trainer_time          ? 0x00 : 0x01; // SUBI,r6 1             -> SUBI,r6 0
         acase ROUTE16POS:
             memory[ 0xA7A] = trainer_lives         ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+        acase SHOOTGALPOS:
+            memory[ 0x5AE] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (ammo)
+            memory[ 0x65E] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (time)
         acase SPACEATTACKAPOS:
             memory[ 0x18B] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
 
@@ -3612,83 +3651,19 @@ EXPORT void writeport(int port, UBYTE data)
 }   }
 
 JNIEXPORT jint JNICALL Java_com_amigan_droidarcadia_GameInfoActivity_getglyph(JNIEnv* env, jobject this)
-{   switch (whichgame)
-    {
-    case _3DATTACKPOS:                              return  0;
-    case _3DSOCCERAPOS:     case _3DSOCCERBPOS:     case _3DSOCCERENHPOS:
-                                                    return  1;
-    case HOMERUNPOS:                                return  2;
-    case ALIENINVPOS:       case ALIENINV1POS:      case ALIENINV2POS: case ALIENINV3POS: case ALIENINV4POS:
-                                                    return  3;
-    case ASTROINVPOS:       case ASTROINVODPOS:     return  4;
-    case AUTORACEPOS:       case AUTORACEODPOS:     return  5;
-    case BASEBALLPOS:                               return  6;
-    case A_BASKETBALLPOS:                           return  7;
-    case BATTLEPOS:                                 return  8;
-    case A_BLACKJACKPOS:                            return  9;
-    case A_BOWLINGPOS:                              return 10;
-    case A_CAPTUREPOS:                              return 11;
-    case CATTRAXPOS:                                return 12;
-    case A_CIRCUSPOS:                               return 13;
-    case A_COMBATPOS:       case A_COMBATODPOS:     return 14;
-    case CRAZYCLIMBERPOS:                           return 15;
-    case CRAZYGOBBLERPOS:                           return 16;
-    case VIDLEXEGPOS:       case VIDLEXGEPOS:       return 17;
-    case DORAEMONPOS:                               return 18;
-    case DRSLUMPPOS:                                return 19;
-    case ESCAPEPOS:                                 return 20;
-    case GRIDIRON1POS:      case GRIDIRON2POS:      return 21;
-    case FROGGER1POS:       case FROGGER2POS:       case FROGGER3POS:
-                                                    return 22;
-    case FUNKYFISHPOS:                              return 23;
-    case A_GOLFPOS1:        case A_GOLFPOS2:        case A_GOLFODPOS:
-                                                    return 24;
-    case GUNDAMPOS:                                 return 25;
-    case HOBOPOS1:          case HOBOPOS2:          return 26;
-    case A_HORSERACINGPOS:                          return 27;
-    case JOURNEYPOS:                                return 28;
-    case JUMPBUG1POS:       case JUMPBUG2POS:       return 29;
-    case JUNGLERPOS:                                return 30;
-    case MACROSSPOS:                                return 31;
-    case MISSILEWARPOS:                             return 32;
-    case MONACOPOS:                                 return 33;
-    case NIBBLEMENPOS:      case SUPERGOBBLERPOS:   return 34;
-    case OCEANBATTLEPOS:                            return 35;
-    case PARASHOOTERPOS:                            return 36;
-    case PLEIADESPOS:                               return 37;
-    case R2DTANKPOS:                                return 38;
-    case REDCLASHPOS:       case REDCLASHODPOS:     return 39;
-    case ROBOTKILLERPOS:                            return 40;
-    case ROUTE16POS:                                return 41;
-    case _2DSOCCERPOS:      case _2DSOCCERODPOS:    return 42;
-    case SPACEATTACKAPOS:   case SPACEATTACKBPOS:   case SPACEATTACKCPOS:
-                                                    return 43;
-    case SPACEBUSTERPOS:                            return 44;
-    case SPACEMISSIONPOS:                           return 45;
-    case SPACERAIDERSPOS:                           return 46;
-    case SPACESQUADRON1POS: case SPACESQUADRON2POS: return 47;
-    case SPACEVULTURESPOS:  case MOTHERSHIPPOS:     return 48;
-    case SPIDERSPOS:        case SPIDERSODPOS:      return 49;
-    case SUPERBUG1POS:      case SUPERBUG2POS:      return 50;
-    case TANKSALOTPOS:                              return 51;
-    case TENNISPOS:                                 return 52;
-    case THEENDPOS1:        case THEENDPOS2:        return 53;
-    case TURTLESPOS:                                return 54;
-    // new ones
-    case A_BOXINGPOS:                               return 55;
-    case BRAINQUIZPOS:                              return 56;
-    case BREAKAWAYPOS:                              return 57;
-    case STARCHESSPOS:      case STARCHESSENHPOS:   return 58;
-    adefault:
-        if      (machine == ARCADIA)                return 59;
-        else if (machine == INTERTON)               return 60;
-        else if (machine == ELEKTOR)                return 61;
-        else if (memmap  == MEMMAP_ASTROWARS)       return 62;
-        else if (memmap  == MEMMAP_GALAXIA)         return 63;
-        else if (memmap  == MEMMAP_LASERBATTLE || memmap == MEMMAP_LAZARIAN) return 64;
-        else if (machine == MALZAK)                 return 65;
-        return 0; // should never happen
-}   }
+{   if (whichgame == -1 || known[whichgame].glyph == -1)
+    {   if      (machine == ARCADIA)                return GLYPH_ARCADIA;
+        else if (machine == INTERTON)               return GLYPH_INTERTON;
+        else if (machine == ELEKTOR)                return GLYPH_ELEKTOR;
+        else if (memmap  == MEMMAP_ASTROWARS)       return GLYPH_ASTROWARS;
+        else if (memmap  == MEMMAP_GALAXIA)         return GLYPH_GALAXIA;
+        else if (memmap  == MEMMAP_LASERBATTLE || memmap == MEMMAP_LAZARIAN) return GLYPH_LAZARIAN;
+        else if (machine == MALZAK)                 return GLYPH_MALZAK;
+        else                                        return GLYPH_ARCADIA; // should never happen
+    }
+
+    return known[whichgame].glyph;
+}
 
 JNIEXPORT jint JNICALL Java_com_amigan_droidarcadia_GameInfoActivity_getbox(JNIEnv* env, jobject this)
 {   int rc;
@@ -3796,7 +3771,7 @@ JNIEXPORT jint JNICALL Java_com_amigan_droidarcadia_GameInfoActivity_getbox(JNIE
     acase WINTERSPORTSPOS:   rc = 56 + 10;
     acase HIPPODROMEPOS:
     case  229:               rc = 56 + 11;
-    acase HUNTINGPOS:        rc = 56 + 12;
+    acase I_HUNTINGPOS:      rc = 56 + 12;
     acase CHESS1POS:         rc = 56 + 13;
     acase MOTOCROSSPOS:      rc = 56 + 14;
     acase _4INAROWPOS:

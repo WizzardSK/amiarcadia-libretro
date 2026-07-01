@@ -23,7 +23,7 @@ public class ArcadiaHiScoresActivity extends Activity
                        hs_37, hs_38, hs_39, hs_40,
                        hs_41, hs_42, hs_43, hs_44,
                        hs_45, hs_46, hs_47, hs_48,
-                       hs_49, hs_50, hs_51,
+                       hs_49, hs_50, hs_51, hs_52,
                        hsd_1,  hsd_2,  hsd_3,  hsd_4,
                        hsd_5,  hsd_6,  hsd_7,  hsd_8,
                        hsd_9,  hsd_10, hsd_11, hsd_12,
@@ -36,7 +36,7 @@ public class ArcadiaHiScoresActivity extends Activity
                        hsd_37, hsd_38, hsd_39, hsd_40,
                        hsd_41, hsd_42, hsd_43, hsd_44,
                        hsd_45, hsd_46, hsd_47, hsd_48,
-                       hsd_49, hsd_50, hsd_51;
+                       hsd_49, hsd_50, hsd_51, hsd_52;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,118 +47,122 @@ public class ArcadiaHiScoresActivity extends Activity
         {   setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         }
 
-                 hs_1           = findViewById(R.id.hs_1);
-                 hs_2           = findViewById(R.id.hs_2);
-                 hs_3           = findViewById(R.id.hs_3);
-                 hs_4           = findViewById(R.id.hs_4);
-                 hs_5           = findViewById(R.id.hs_5);
-                 hs_6           = findViewById(R.id.hs_6);
-                 hs_7           = findViewById(R.id.hs_7);
-                 hs_8           = findViewById(R.id.hs_8);
-                 hs_9           = findViewById(R.id.hs_9);
-                 hs_10          = findViewById(R.id.hs_10);
-                 hs_11          = findViewById(R.id.hs_11);
-                 hs_12          = findViewById(R.id.hs_12);
-                 hs_13          = findViewById(R.id.hs_13);
-                 hs_14          = findViewById(R.id.hs_14);
-                 hs_15          = findViewById(R.id.hs_15);
-                 hs_16          = findViewById(R.id.hs_16);
-                 hs_17          = findViewById(R.id.hs_17);
-                 hs_18          = findViewById(R.id.hs_18);
-                 hs_19          = findViewById(R.id.hs_19);
-                 hs_20          = findViewById(R.id.hs_20);
-                 hs_21          = findViewById(R.id.hs_21);
-                 hs_22          = findViewById(R.id.hs_22);
-                 hs_23          = findViewById(R.id.hs_23);
-                 hs_24          = findViewById(R.id.hs_24);
-                 hs_25          = findViewById(R.id.hs_25);
-                 hs_26          = findViewById(R.id.hs_26);
-                 hs_27          = findViewById(R.id.hs_27);
-                 hs_28          = findViewById(R.id.hs_28);
-                 hs_29          = findViewById(R.id.hs_29);
-                 hs_30          = findViewById(R.id.hs_30);
-                 hs_31          = findViewById(R.id.hs_31);
-                 hs_32          = findViewById(R.id.hs_32);
-                 hs_33          = findViewById(R.id.hs_33);
-                 hs_34          = findViewById(R.id.hs_34);
-                 hs_35          = findViewById(R.id.hs_35);
-                 hs_36          = findViewById(R.id.hs_36);
-                 hs_37          = findViewById(R.id.hs_37);
-                 hs_38          = findViewById(R.id.hs_38);
-                 hs_39          = findViewById(R.id.hs_39);
-                 hs_40          = findViewById(R.id.hs_40);
-                 hs_41          = findViewById(R.id.hs_41);
-                 hs_42          = findViewById(R.id.hs_42);
-                 hs_43          = findViewById(R.id.hs_43);
-                 hs_44          = findViewById(R.id.hs_44);
-                 hs_45          = findViewById(R.id.hs_45);
-                 hs_46          = findViewById(R.id.hs_46);
-                 hs_47          = findViewById(R.id.hs_47);
-                 hs_48          = findViewById(R.id.hs_48);
-                 hs_49          = findViewById(R.id.hs_49);
-                 hs_50          = findViewById(R.id.hs_50);
-                 hs_51          = findViewById(R.id.hs_51);
-                 hsd_1          = findViewById(R.id.hsd_1);
-                 hsd_2          = findViewById(R.id.hsd_2);
-                 hsd_3          = findViewById(R.id.hsd_3);
-                 hsd_4          = findViewById(R.id.hsd_4);
-                 hsd_5          = findViewById(R.id.hsd_5);
-                 hsd_6          = findViewById(R.id.hsd_6);
-                 hsd_7          = findViewById(R.id.hsd_7);
-                 hsd_8          = findViewById(R.id.hsd_8);
-                 hsd_9          = findViewById(R.id.hsd_9);
-                 hsd_10         = findViewById(R.id.hsd_10);
-                 hsd_11         = findViewById(R.id.hsd_11);
-                 hsd_12         = findViewById(R.id.hsd_12);
-                 hsd_13         = findViewById(R.id.hsd_13);
-                 hsd_14         = findViewById(R.id.hsd_14);
-                 hsd_15         = findViewById(R.id.hsd_15);
-                 hsd_16         = findViewById(R.id.hsd_16);
-                 hsd_17         = findViewById(R.id.hsd_17);
-                 hsd_18         = findViewById(R.id.hsd_18);
-                 hsd_19         = findViewById(R.id.hsd_19);
-                 hsd_20         = findViewById(R.id.hsd_20);
-                 hsd_21         = findViewById(R.id.hsd_21);
-                 hsd_22         = findViewById(R.id.hsd_22);
-                 hsd_23         = findViewById(R.id.hsd_23);
-                 hsd_24         = findViewById(R.id.hsd_24);
-                 hsd_25         = findViewById(R.id.hsd_25);
-                 hsd_26         = findViewById(R.id.hsd_26);
-                 hsd_27         = findViewById(R.id.hsd_27);
-                 hsd_28         = findViewById(R.id.hsd_28);
-                 hsd_29         = findViewById(R.id.hsd_29);
-                 hsd_30         = findViewById(R.id.hsd_30);
-                 hsd_31         = findViewById(R.id.hsd_31);
-                 hsd_32         = findViewById(R.id.hsd_32);
-                 hsd_33         = findViewById(R.id.hsd_33);
-                 hsd_34         = findViewById(R.id.hsd_34);
-                 hsd_35         = findViewById(R.id.hsd_35);
-                 hsd_36         = findViewById(R.id.hsd_36);
-                 hsd_37         = findViewById(R.id.hsd_37);
-                 hsd_38         = findViewById(R.id.hsd_38);
-                 hsd_39         = findViewById(R.id.hsd_39);
-                 hsd_40         = findViewById(R.id.hsd_40);
-                 hsd_41         = findViewById(R.id.hsd_41);
-                 hsd_42         = findViewById(R.id.hsd_42);
-                 hsd_43         = findViewById(R.id.hsd_43);
-                 hsd_44         = findViewById(R.id.hsd_44);
-                 hsd_45         = findViewById(R.id.hsd_45);
-                 hsd_46         = findViewById(R.id.hsd_46);
-                 hsd_47         = findViewById(R.id.hsd_47);
-                 hsd_48         = findViewById(R.id.hsd_48);
-                 hsd_49         = findViewById(R.id.hsd_49);
-                 hsd_50         = findViewById(R.id.hsd_50);
-                 hsd_51         = findViewById(R.id.hsd_51);
+        hs_1           = findViewById(R.id.hs_1);
+        hs_2           = findViewById(R.id.hs_2);
+        hs_3           = findViewById(R.id.hs_3);
+        hs_4           = findViewById(R.id.hs_4);
+        hs_5           = findViewById(R.id.hs_5);
+        hs_6           = findViewById(R.id.hs_6);
+        hs_7           = findViewById(R.id.hs_7);
+        hs_8           = findViewById(R.id.hs_8);
+        hs_9           = findViewById(R.id.hs_9);
+        hs_10          = findViewById(R.id.hs_10);
+        hs_11          = findViewById(R.id.hs_11);
+        hs_12          = findViewById(R.id.hs_12);
+        hs_13          = findViewById(R.id.hs_13);
+        hs_14          = findViewById(R.id.hs_14);
+        hs_15          = findViewById(R.id.hs_15);
+        hs_16          = findViewById(R.id.hs_16);
+        hs_17          = findViewById(R.id.hs_17);
+        hs_18          = findViewById(R.id.hs_18);
+        hs_19          = findViewById(R.id.hs_19);
+        hs_20          = findViewById(R.id.hs_20);
+        hs_21          = findViewById(R.id.hs_21);
+        hs_22          = findViewById(R.id.hs_22);
+        hs_23          = findViewById(R.id.hs_23);
+        hs_24          = findViewById(R.id.hs_24);
+        hs_25          = findViewById(R.id.hs_25);
+        hs_26          = findViewById(R.id.hs_26);
+        hs_27          = findViewById(R.id.hs_27);
+        hs_28          = findViewById(R.id.hs_28);
+        hs_29          = findViewById(R.id.hs_29);
+        hs_30          = findViewById(R.id.hs_30);
+        hs_31          = findViewById(R.id.hs_31);
+        hs_32          = findViewById(R.id.hs_32);
+        hs_33          = findViewById(R.id.hs_33);
+        hs_34          = findViewById(R.id.hs_34);
+        hs_35          = findViewById(R.id.hs_35);
+        hs_36          = findViewById(R.id.hs_36);
+        hs_37          = findViewById(R.id.hs_37);
+        hs_38          = findViewById(R.id.hs_38);
+        hs_39          = findViewById(R.id.hs_39);
+        hs_40          = findViewById(R.id.hs_40);
+        hs_41          = findViewById(R.id.hs_41);
+        hs_42          = findViewById(R.id.hs_42);
+        hs_43          = findViewById(R.id.hs_43);
+        hs_44          = findViewById(R.id.hs_44);
+        hs_45          = findViewById(R.id.hs_45);
+        hs_46          = findViewById(R.id.hs_46);
+        hs_47          = findViewById(R.id.hs_47);
+        hs_48          = findViewById(R.id.hs_48);
+        hs_49          = findViewById(R.id.hs_49);
+        hs_50          = findViewById(R.id.hs_50);
+        hs_51          = findViewById(R.id.hs_51);
+        hs_52          = findViewById(R.id.hs_52);
+
+        hsd_1          = findViewById(R.id.hsd_1);
+        hsd_2          = findViewById(R.id.hsd_2);
+        hsd_3          = findViewById(R.id.hsd_3);
+        hsd_4          = findViewById(R.id.hsd_4);
+        hsd_5          = findViewById(R.id.hsd_5);
+        hsd_6          = findViewById(R.id.hsd_6);
+        hsd_7          = findViewById(R.id.hsd_7);
+        hsd_8          = findViewById(R.id.hsd_8);
+        hsd_9          = findViewById(R.id.hsd_9);
+        hsd_10         = findViewById(R.id.hsd_10);
+        hsd_11         = findViewById(R.id.hsd_11);
+        hsd_12         = findViewById(R.id.hsd_12);
+        hsd_13         = findViewById(R.id.hsd_13);
+        hsd_14         = findViewById(R.id.hsd_14);
+        hsd_15         = findViewById(R.id.hsd_15);
+        hsd_16         = findViewById(R.id.hsd_16);
+        hsd_17         = findViewById(R.id.hsd_17);
+        hsd_18         = findViewById(R.id.hsd_18);
+        hsd_19         = findViewById(R.id.hsd_19);
+        hsd_20         = findViewById(R.id.hsd_20);
+        hsd_21         = findViewById(R.id.hsd_21);
+        hsd_22         = findViewById(R.id.hsd_22);
+        hsd_23         = findViewById(R.id.hsd_23);
+        hsd_24         = findViewById(R.id.hsd_24);
+        hsd_25         = findViewById(R.id.hsd_25);
+        hsd_26         = findViewById(R.id.hsd_26);
+        hsd_27         = findViewById(R.id.hsd_27);
+        hsd_28         = findViewById(R.id.hsd_28);
+        hsd_29         = findViewById(R.id.hsd_29);
+        hsd_30         = findViewById(R.id.hsd_30);
+        hsd_31         = findViewById(R.id.hsd_31);
+        hsd_32         = findViewById(R.id.hsd_32);
+        hsd_33         = findViewById(R.id.hsd_33);
+        hsd_34         = findViewById(R.id.hsd_34);
+        hsd_35         = findViewById(R.id.hsd_35);
+        hsd_36         = findViewById(R.id.hsd_36);
+        hsd_37         = findViewById(R.id.hsd_37);
+        hsd_38         = findViewById(R.id.hsd_38);
+        hsd_39         = findViewById(R.id.hsd_39);
+        hsd_40         = findViewById(R.id.hsd_40);
+        hsd_41         = findViewById(R.id.hsd_41);
+        hsd_42         = findViewById(R.id.hsd_42);
+        hsd_43         = findViewById(R.id.hsd_43);
+        hsd_44         = findViewById(R.id.hsd_44);
+        hsd_45         = findViewById(R.id.hsd_45);
+        hsd_46         = findViewById(R.id.hsd_46);
+        hsd_47         = findViewById(R.id.hsd_47);
+        hsd_48         = findViewById(R.id.hsd_48);
+        hsd_49         = findViewById(R.id.hsd_49);
+        hsd_50         = findViewById(R.id.hsd_50);
+        hsd_51         = findViewById(R.id.hsd_51);
+        hsd_52         = findViewById(R.id.hsd_52);
+
         TextView button_clearhs = findViewById(R.id.button_clearhs);
 
-        for (int i = 0; i < 51 + 6; i++)
+        for (int i = 0; i < 52 + 6; i++)
         {   MainActivity.hiscore[i] = gethiscore(i);
             MainActivity.hiscoredate[i] = gethiscoredate(i);
         }
         doscores();
         
         button_clearhs.setOnClickListener((view) ->
-        {   for (int i = 0; i < 51; i++)
+        {   for (int i = 0; i < 52; i++)
             {   MainActivity.hiscore[i] = 0;
                 MainActivity.hiscoredate[i] = "-";
                 sethiscore(i, MainActivity.hiscore[i], MainActivity.hiscoredate[i]);
@@ -225,6 +229,7 @@ public class ArcadiaHiScoresActivity extends Activity
         hs_49.setText(String.valueOf(MainActivity.hiscore[48]));
         hs_50.setText(String.valueOf(MainActivity.hiscore[49]));
         hs_51.setText(String.valueOf(MainActivity.hiscore[50]));
+        hs_52.setText(String.valueOf(MainActivity.hiscore[51]));
 
         hsd_1.setText(MainActivity.hiscoredate[0]);
         hsd_2.setText(MainActivity.hiscoredate[1]);
@@ -277,4 +282,5 @@ public class ArcadiaHiScoresActivity extends Activity
         hsd_49.setText(MainActivity.hiscoredate[48]);
         hsd_50.setText(MainActivity.hiscoredate[49]);
         hsd_51.setText(MainActivity.hiscoredate[50]);
+        hsd_52.setText(MainActivity.hiscoredate[51]);
 }   }

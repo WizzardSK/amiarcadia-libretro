@@ -565,12 +565,12 @@ EXPORT void galaxia_drawscreen(void)
     if (galaxia_scrolly < 0)
     {   for (b = 240 + galaxia_scrolly; b < 240; b++)
         {   for (a = 4*8; a < 14*8; a++)
-            {   changepixel(a, b, BLACK);
+            {   changebgpixel(a, b, BLACK);
     }   }   }
     elif (galaxia_scrolly > 0)
     {   for (b = 0; b < galaxia_scrolly; b++)
         {   for (a = 4*8; a < 14*8; a++)
-            {   changepixel(a, b, BLACK);
+            {   changebgpixel(a, b, BLACK);
     }   }   }
 
     for (b = 2; b < 32; b++) // Y from machine's point of view
@@ -861,7 +861,7 @@ EXPORT UBYTE zaccaria_readport(int port)
                  %01=3 credits
                  %00=2  credits
                 bits 1..0: coin slot A:
-                 %00=½ credit
+                 %00=ï¿½ credit
                  %01=1 credit
                  %10=2 credits
                  %11=3 credits */
@@ -1141,7 +1141,7 @@ EXPORT void zaccaria_emuinput(void)
 
         if (console_reset)
         {   if (!stale[3])
-            {   coinop_coinb |= 1; // miserly coin slot B (½C or 1C)
+            {   coinop_coinb |= 1; // miserly coin slot B (ï¿½C or 1C)
                 if (!(old_coinb & 1))
                 {   play_sample(SAMPLE_COIN);
             }   }
