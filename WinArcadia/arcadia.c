@@ -27,8 +27,8 @@
 
 #define UDGFLIPS         7
 
-#define UVIXTOSCREENX(x) (USG_XMARGIN + x - absxmin)
-#define UVIYTOSCREENY(y) (USG_YMARGIN + y - absymin)
+#define UVIXTOSCREENX(x) (USG_XMARGIN + (x) - absxmin)
+#define UVIYTOSCREENY(y) (USG_YMARGIN + (y) - absymin)
 
 // EXPORTED VARIABLES-----------------------------------------------------
 
@@ -46,7 +46,7 @@ IMPORT       ULONG                 arcadia_viewcontrolsas,
                                    demultiplex,
                                    downframes,
                                    frames,
-                                   jff[2],
+                                   jf[2],
                                    oldcycles,
                                    region,
                                    swapped,
@@ -59,6 +59,7 @@ IMPORT       TEXT                  file_game[MAX_PATH + 1],
                                    fn_game[MAX_PATH + 1],    // the entire pathname (path and file)
                                    fn_project[MAX_PATH + 1], // the entire pathname (path and file)
                                    friendly[FRIENDLYLENGTH + 1],
+                                   interpretstr[1024 + 1],
                                    netmsg_out[80 + 1],
                                    path_projects[MAX_PATH + 1],
                                    ProjectBuffer[PROJECTSIZE],
@@ -98,10 +99,6 @@ IMPORT       int                   absxmin, absxmax,
                                    p2bgcol[4],
                                    p1sprcol[6],
                                    p2sprcol[6],
-                                   paddleup,
-                                   paddledown,
-                                   paddleleft,
-                                   paddleright,
                                    randomizememory,
                                    recmode,
                                    requirebutton[2],
@@ -120,13 +117,13 @@ IMPORT       int                   absxmin, absxmax,
                                    usestubs,
                                    watchwrites,
                                    whichgame;
+IMPORT       float                 dividend;
 IMPORT       STRPTR                colourname[8];
 IMPORT       ASCREEN               screen[BOXWIDTH][BOXHEIGHT];
 IMPORT       UBYTE                 memory[32768],
                                    opcode,
                                    OutputBuffer[18],
-                                   psu,
-                                   sx[2], sy[2];
+                                   psu;
 IMPORT       UWORD                 console[4],
                                    iar,
                                    keypads[2][NUMKEYS],
@@ -137,21 +134,23 @@ IMPORT       MEMFLAG               memflags[ALLTOKENS];
 IMPORT const UBYTE                 table_opcolours_2650[2][256];
 IMPORT const int                   guest_to_ansi_colour[8];
 IMPORT       struct ConditionalStruct wp[ALLTOKENS];
-IMPORT const struct KeyTableStruct keytable[16];
-IMPORT const struct KindStruct     filekind[KINDS];
-IMPORT const struct KnownStruct    known[KNOWNGAMES];
-IMPORT       struct MachineStruct  machines[MACHINES];
+IMPORT       struct IdealStruct       idealfreq_ntsc[256],
+                                      idealfreq_pal[256];
+IMPORT const struct KeyTableStruct    keytable[NUMKEYS];
+IMPORT const struct KindStruct        filekind[KINDS];
+IMPORT const struct KnownStruct       known[KNOWNGAMES];
+IMPORT       struct MachineStruct     machines[MACHINES];
+IMPORT       struct NoteStruct        notes[NOTES + 1];
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 
 #ifdef WIN32
     IMPORT       int               CatalogPtr,
                                    colourset;
     IMPORT       UBYTE             fgtable[BOXHEIGHT][BOXWIDTH];
     IMPORT       ULONG             pencolours[COLOURSETS][PENS];
-    IMPORT       HWND              SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef AMIGA
     IMPORT       struct Catalog*   CatalogPtr;
-    IMPORT       struct Window*    SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef BENCHMARK_GFX
     IMPORT       ULONG             cycles_2650;
@@ -564,9 +563,9 @@ MODULE void a_playerinput(int source, int dest)
     {   t = IOBuffer[offset++];
         uviwrite((UWORD) (A_P1PADDLE     -  dest     ),           t              );
         if (bgc_cached & 0x40) // paddle interpolation bit
-        {   ax[dest] = sx[dest] = t;
+        {   ax[dest] = t;
         } else
-        {   ay[dest] = sy[dest] = t;
+        {   ay[dest] = t;
         }
         t = IOBuffer[offset++];
         uviwrite((UWORD) (A_P1LEFTKEYS   + (dest * 4)), (UBYTE) ((t & 0xF0) >> 4)); // bits 7..4 -> bits 3..0
@@ -590,14 +589,14 @@ MODULE void a_playerinput(int source, int dest)
       // || hostcontroller[source] == CONTROLLER_1STAJOY
          || hostcontroller[source] == CONTROLLER_1STAPAD
         )
-        {   jg = jff[0];
+        {   jg = jf[0];
         } elif
         (   hostcontroller[source] == CONTROLLER_2NDDJOY
          || hostcontroller[source] == CONTROLLER_2NDDPAD
          || hostcontroller[source] == CONTROLLER_2NDAJOY
          || hostcontroller[source] == CONTROLLER_2NDAPAD
         )
-        {   jg = jff[1];
+        {   jg = jf[1];
         } else
         {   jg = 0;
         }
@@ -654,33 +653,33 @@ MODULE void a_playerinput(int source, int dest)
         t |= (UBYTE) (0x04 * KeyDown(keypads[source][ 4])); // "4"  key (Arcadia)
         t |= (UBYTE) (0x02 * KeyDown(keypads[source][ 7])); // "7"  key (Arcadia)
         t |= (UBYTE) (0x01 * KeyDown(keypads[source][10])); // "Cl" key (Arcadia)
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_1) && (jff[source] & DAPTER_1)) t |= 8;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_4) && (jff[source] & DAPTER_4)) t |= 4;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_7) && (jff[source] & DAPTER_7)) t |= 2;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_C) && (jff[source] & DAPTER_C)) t |= 1;
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    ==  1) t |= 8;
-            elif (paddleup    ==  4) t |= 4;
-            elif (paddleup    ==  7) t |= 2;
-            elif (paddleup    == 10) t |= 1;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  ==  1) t |= 8;
-            elif (paddledown  ==  4) t |= 4;
-            elif (paddledown  ==  7) t |= 2;
-            elif (paddledown  == 10) t |= 1;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  ==  1) t |= 8;
-            elif (paddleleft  ==  4) t |= 4;
-            elif (paddleleft  ==  7) t |= 2;
-            elif (paddleleft  == 10) t |= 1;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright ==  1) t |= 8;
-            elif (paddleright ==  4) t |= 4;
-            elif (paddleright ==  7) t |= 2;
-            elif (paddleright == 10) t |= 1;
-        }
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_1) && (jf[source] & DAPTER_1)) t |= 8;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_4) && (jf[source] & DAPTER_4)) t |= 4;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_7) && (jf[source] & DAPTER_7)) t |= 2;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_C) && (jf[source] & DAPTER_C)) t |= 1;
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_1 ) t |= 8;
+                elif (known[whichgame].paddleup    == GUESTKEY_4 ) t |= 4;
+                elif (known[whichgame].paddleup    == GUESTKEY_7 ) t |= 2;
+                elif (known[whichgame].paddleup    == GUESTKEY_CL) t |= 1;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_1 ) t |= 8;
+                elif (known[whichgame].paddledown  == GUESTKEY_4 ) t |= 4;
+                elif (known[whichgame].paddledown  == GUESTKEY_7 ) t |= 2;
+                elif (known[whichgame].paddledown  == GUESTKEY_CL) t |= 1;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_1 ) t |= 8;
+                elif (known[whichgame].paddleleft  == GUESTKEY_4 ) t |= 4;
+                elif (known[whichgame].paddleleft  == GUESTKEY_7 ) t |= 2;
+                elif (known[whichgame].paddleleft  == GUESTKEY_CL) t |= 1;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_1 ) t |= 8;
+                elif (known[whichgame].paddleright == GUESTKEY_4 ) t |= 4;
+                elif (known[whichgame].paddleright == GUESTKEY_7 ) t |= 2;
+                elif (known[whichgame].paddleright == GUESTKEY_CL) t |= 1;
+        }   }
         uviwrite((UWORD) (A_P1LEFTKEYS   + (dest * 4)), t);
 
         // middle column
@@ -689,33 +688,33 @@ MODULE void a_playerinput(int source, int dest)
         t |= (UBYTE) (0x04 * KeyDown(keypads[source][ 5])); // "5"  key (Arcadia)
         t |= (UBYTE) (0x02 * KeyDown(keypads[source][ 8])); // "8"  key (Arcadia)
         t |= (UBYTE) (0x01 * KeyDown(keypads[source][11])); // "0"  key (Arcadia)
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_2) && (jff[source] & DAPTER_2)) t |= 8;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_5) && (jff[source] & DAPTER_5)) t |= 4;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_8) && (jff[source] & DAPTER_8)) t |= 2;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_0) && (jff[source] & DAPTER_0)) t |= 1;
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    ==  2) t |= 8;
-            elif (paddleup    ==  5) t |= 4;
-            elif (paddleup    ==  8) t |= 2;
-            elif (paddleup    ==  0) t |= 1;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  ==  2) t |= 8;
-            elif (paddledown  ==  5) t |= 4;
-            elif (paddledown  ==  8) t |= 2;
-            elif (paddledown  ==  0) t |= 1;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  ==  2) t |= 8;
-            elif (paddleleft  ==  5) t |= 4;
-            elif (paddleleft  ==  8) t |= 2;
-            elif (paddleleft  ==  0) t |= 1;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright ==  2) t |= 8;
-            elif (paddleright ==  5) t |= 4;
-            elif (paddleright ==  8) t |= 2;
-            elif (paddleright ==  0) t |= 1;
-        }
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_2) && (jf[source] & DAPTER_2)) t |= 8;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_5) && (jf[source] & DAPTER_5)) t |= 4;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_8) && (jf[source] & DAPTER_8)) t |= 2;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_0) && (jf[source] & DAPTER_0)) t |= 1;
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_2 ) t |= 8;
+                elif (known[whichgame].paddleup    == GUESTKEY_5 ) t |= 4;
+                elif (known[whichgame].paddleup    == GUESTKEY_8 ) t |= 2;
+                elif (known[whichgame].paddleup    == GUESTKEY_0 ) t |= 1;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_2 ) t |= 8;
+                elif (known[whichgame].paddledown  == GUESTKEY_5 ) t |= 4;
+                elif (known[whichgame].paddledown  == GUESTKEY_8 ) t |= 2;
+                elif (known[whichgame].paddledown  == GUESTKEY_0 ) t |= 1;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_2 ) t |= 8;
+                elif (known[whichgame].paddleleft  == GUESTKEY_5 ) t |= 4;
+                elif (known[whichgame].paddleleft  == GUESTKEY_8 ) t |= 2;
+                elif (known[whichgame].paddleleft  == GUESTKEY_0 ) t |= 1;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_2 ) t |= 8;
+                elif (known[whichgame].paddleright == GUESTKEY_5 ) t |= 4;
+                elif (known[whichgame].paddleright == GUESTKEY_8 ) t |= 2;
+                elif (known[whichgame].paddleright == GUESTKEY_0 ) t |= 1;
+        }   }
         uviwrite((UWORD) (A_P1MIDDLEKEYS + (dest * 4)), t);
 
         // right column
@@ -724,33 +723,33 @@ MODULE void a_playerinput(int source, int dest)
         t |= (UBYTE) (0x04 * KeyDown(keypads[source][ 6])); // "6"  key (Arcadia)
         t |= (UBYTE) (0x02 * KeyDown(keypads[source][ 9])); // "9"  key (Arcadia)
         t |= (UBYTE) (0x01 * KeyDown(keypads[source][12])); // "En" key (Arcadia)
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_3) && (jff[source] & DAPTER_3)) t |= 8;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_6) && (jff[source] & DAPTER_6)) t |= 4;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_9) && (jff[source] & DAPTER_9)) t |= 2;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_E) && (jff[source] & DAPTER_E)) t |= 1;
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    ==  3) t |= 8;
-            elif (paddleup    ==  6) t |= 4;
-            elif (paddleup    ==  9) t |= 2;
-            elif (paddleup    == 11) t |= 1;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  ==  3) t |= 8;
-            elif (paddledown  ==  6) t |= 4;
-            elif (paddledown  ==  9) t |= 2;
-            elif (paddledown  == 11) t |= 1;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  ==  3) t |= 8;
-            elif (paddleleft  ==  6) t |= 4;
-            elif (paddleleft  ==  9) t |= 2;
-            elif (paddleleft  == 11) t |= 1;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright ==  3) t |= 8;
-            elif (paddleright ==  6) t |= 4;
-            elif (paddleright ==  9) t |= 2;
-            elif (paddleright == 11) t |= 1;
-        }
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_3) && (jf[source] & DAPTER_3)) t |= 8;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_6) && (jf[source] & DAPTER_6)) t |= 4;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_9) && (jf[source] & DAPTER_9)) t |= 2;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_E) && (jf[source] & DAPTER_E)) t |= 1;
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_3 ) t |= 8;
+                elif (known[whichgame].paddleup    == GUESTKEY_6 ) t |= 4;
+                elif (known[whichgame].paddleup    == GUESTKEY_9 ) t |= 2;
+                elif (known[whichgame].paddleup    == GUESTKEY_EN) t |= 1;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_3 ) t |= 8;
+                elif (known[whichgame].paddledown  == GUESTKEY_6 ) t |= 4;
+                elif (known[whichgame].paddledown  == GUESTKEY_9 ) t |= 2;
+                elif (known[whichgame].paddledown  == GUESTKEY_EN) t |= 1;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_3 ) t |= 8;
+                elif (known[whichgame].paddleleft  == GUESTKEY_6 ) t |= 4;
+                elif (known[whichgame].paddleleft  == GUESTKEY_9 ) t |= 2;
+                elif (known[whichgame].paddleleft  == GUESTKEY_EN) t |= 1;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_3 ) t |= 8;
+                elif (known[whichgame].paddleright == GUESTKEY_6 ) t |= 4;
+                elif (known[whichgame].paddleright == GUESTKEY_9 ) t |= 2;
+                elif (known[whichgame].paddleright == GUESTKEY_EN) t |= 1;
+        }   }
         uviwrite((UWORD) (A_P1RIGHTKEYS  + (dest * 4)), t);
 
         // Palladium "column"
@@ -759,39 +758,37 @@ MODULE void a_playerinput(int source, int dest)
         t |= (UBYTE) (0x04 * KeyDown(keypads[source][15])); // "x3" key (Arcadia)
         t |= (UBYTE) (0x02 * KeyDown(keypads[source][14])); // "x2" key (Arcadia)
         t |= (UBYTE) (0x01 * KeyDown(keypads[source][13])); // "x1" key (Arcadia)
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    == 15) t |= 8;
-            elif (paddleup    == 14) t |= 4;
-            elif (paddleup    == 13) t |= 2;
-            elif (paddleup    == 12) t |= 1;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  == 15) t |= 8;
-            elif (paddledown  == 14) t |= 4;
-            elif (paddledown  == 13) t |= 2;
-            elif (paddledown  == 12) t |= 1;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  == 15) t |= 8;
-            elif (paddleleft  == 14) t |= 4;
-            elif (paddleleft  == 13) t |= 2;
-            elif (paddleleft  == 12) t |= 1;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright == 15) t |= 8;
-            elif (paddleright == 14) t |= 4;
-            elif (paddleright == 13) t |= 2;
-            elif (paddleright == 12) t |= 1;
-        }
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_X1) t |= 1;
+                elif (known[whichgame].paddleup    == GUESTKEY_X2) t |= 2;
+                elif (known[whichgame].paddleup    == GUESTKEY_X3) t |= 4;
+                elif (known[whichgame].paddleup    == GUESTKEY_X4) t |= 8;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_X1) t |= 1;
+                elif (known[whichgame].paddledown  == GUESTKEY_X2) t |= 2;
+                elif (known[whichgame].paddledown  == GUESTKEY_X3) t |= 4;
+                elif (known[whichgame].paddledown  == GUESTKEY_X4) t |= 8;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_X1) t |= 1;
+                elif (known[whichgame].paddleleft  == GUESTKEY_X2) t |= 2;
+                elif (known[whichgame].paddleleft  == GUESTKEY_X3) t |= 4;
+                elif (known[whichgame].paddleleft  == GUESTKEY_X4) t |= 8;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_X1) t |= 1;
+                elif (known[whichgame].paddleright == GUESTKEY_X2) t |= 2;
+                elif (known[whichgame].paddleright == GUESTKEY_X3) t |= 4;
+                elif (known[whichgame].paddleright == GUESTKEY_X4) t |= 8;
+        }   }
         uviwrite((UWORD) (A_P1PALLADIUM + (dest * 4)), t);
 
         engine_dopaddle(source, dest);
 
         if (bgc_cached & 0x40) // paddle interpolation bit
         {   uviwrite((UWORD) (A_P1PADDLE - dest), (UBYTE) ax[dest]);
-            sx[dest] = (UBYTE) ax[dest];
         } else
         {   uviwrite((UWORD) (A_P1PADDLE - dest), (UBYTE) ay[dest]);
-            sy[dest] = (UBYTE) ay[dest];
 }   }   }
 
 MODULE __inline void a_emuinput(void)
@@ -812,11 +809,16 @@ MODULE __inline void a_emuinput(void)
     p2rumble = 0;
 
     if (recmode != RECMODE_PLAY)
-    {   // assert(recmode == RECMODE_NORMAL || recmode == RECMODE_RECORD);
-
-        if (KeyDown(console[0]) || (jff[0] & JOYSTART) || (jff[1] & JOYSTART) || console_start) { t =  1; } else { t = 0; }
-        if (KeyDown(console[1]) || (jff[0] & JOYA    ) || (jff[1] & JOYA    ) || console_a    ) { t |= 2; }
-        if (KeyDown(console[2]) || (jff[0] & JOYB    ) || (jff[1] & JOYB    ) || console_b    ) { t |= 4; }
+    {   if (KeyDown(console[0]) || (jf[0] & JOYSTART) || (jf[1] & JOYSTART) || console_start)
+        {   t = 1;
+            if (whichgame != -1 && known[whichgame].startkey != -1)
+            {   memory[keytable[known[whichgame].startkey].a_address + (known[whichgame].startkeyplayer * 4)] |= keytable[known[whichgame].startkey].a_mask;
+        }   }
+        else
+        {   t = 0;
+        }
+        if (KeyDown(console[1]) || (jf[0] & JOYA    ) || (jf[1] & JOYA    ) || console_a    ) { t |= 2; }
+        if (KeyDown(console[2]) || (jf[0] & JOYB    ) || (jf[1] & JOYB    ) || console_b    ) { t |= 4; }
 
         uviwrite(A_CONSOLE, t);
 
@@ -937,7 +939,7 @@ EXPORT void uviwrite(UWORD address, UBYTE data)
      && conditional(&wp[address], data, TRUE, 0)
     )
     {   arcadia_stringchar(data, address);
-        DISCARD getfriendly((int) address);
+        DISCARD number_to_friendly((int) address, (STRPTR) friendly, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_DEBUG,
             LLL(MSG_UVI_HITWP, "UVI is writing $%X%s to %s at raster %ld!\n\n"),
@@ -1680,7 +1682,7 @@ MODULE __inline void do_sprites1(void)
             if (sprcollisions)
             {   uviwrite((UWORD) A_SPRITECOLLIDE, (UBYTE) (memory[A_SPRITECOLLIDE] & (~sprcollisions)));
             }
-            if (screen[cpux - absxmin][cpuy - absymin] != bgc) // we assume it works like this even in board mode
+            if (colltable[cpuy][cpux] & 0x10)
             {   uviwrite((UWORD) A_BGCOLLIDE,     (UBYTE) (memory[A_BGCOLLIDE    ] & (~sprpixel)));
                 for (whichsprite = 0; whichsprite < 4; whichsprite++)
                 {   if (sprpixel & (1 << whichsprite))
@@ -1868,7 +1870,7 @@ MODULE void drawfakesprites(void)
                                             yyy = y + yy - absymin;
 #ifdef WIN32
                                             if (demultiplex == 1) // transparent
-                                            {   if (xxx >= 0 && xxx <= absxmax - USG_XMARGIN - UVI_HIDELEFT && yyy >= USG_YMARGIN && yyy <= absymax)
+                                            {   if (xxx >= 0 && xxx <= absxmax - USG_XMARGIN - UVI_HIDELEFT && yyy >= USG_YMARGIN && yyy < machines[machine].height)
                                                 {   blendedcolour = blend(from_a[localflagging][spr[flipper][whichsprite].colour], pastbgc[yyy]);
                                                     screen[xxx][yyy] = from_a[localflagging][spr[flipper][whichsprite].colour];
                                                     drawrawpixel(xxx, yyy, blendedcolour);
@@ -1891,19 +1893,20 @@ MODULE void drawfakesprites(void)
                                     yyy = y + (yy * 2) - absymin;
 #ifdef WIN32
                                     if (demultiplex == 1) // transparent
-                                    {   if (yyy >= USG_YMARGIN && yyy <= absymax)
-                                        {   blendedcolour = blend(from_a[localflagging][spr[flipper][whichsprite].colour], pastbgc[yyy]);
-                                            screen[xxx][yyy] = from_a[localflagging][spr[flipper][whichsprite].colour];
-                                            drawrawpixel(xxx, yyy, blendedcolour);
-                                            fgtable[yyy][xxx] = 1;
-                                        }
-                                        yyy++;
-                                        if (yyy >= USG_YMARGIN && yyy <= absymax)
-                                        {   blendedcolour = blend(from_a[localflagging][spr[flipper][whichsprite].colour], pastbgc[yyy]);
-                                            screen[xxx][yyy] = from_a[localflagging][spr[flipper][whichsprite].colour];
-                                            drawrawpixel(xxx, yyy, blendedcolour);
-                                            fgtable[yyy][xxx] = 1;
-                                    }   }
+                                    {   if (xxx >= 0 && xxx <= absxmax - USG_XMARGIN - UVI_HIDELEFT)
+                                        {   if (yyy >= USG_YMARGIN && yyy < machines[machine].height)
+                                            {   blendedcolour = blend(from_a[localflagging][spr[flipper][whichsprite].colour], pastbgc[yyy]);
+                                                screen[xxx][yyy] = from_a[localflagging][spr[flipper][whichsprite].colour];
+                                                drawrawpixel(xxx, yyy, blendedcolour);
+                                                fgtable[yyy][xxx] = 1;
+                                            }
+                                            yyy++;
+                                            if (yyy >= USG_YMARGIN && yyy < machines[machine].height)
+                                            {   blendedcolour = blend(from_a[localflagging][spr[flipper][whichsprite].colour], pastbgc[yyy]);
+                                                screen[xxx][yyy] = from_a[localflagging][spr[flipper][whichsprite].colour];
+                                                drawrawpixel(xxx, yyy, blendedcolour);
+                                                fgtable[yyy][xxx] = 1;
+                                    }   }   }
                                     else // opaque
 #endif
                                     {   changeabspixel(xxx + absxmin, yyy +     absymin, from_a[localflagging][spr[flipper][whichsprite].colour]);
@@ -1982,7 +1985,8 @@ MODULE void drawfakeudgs(void)
                                 if (screen[UVIXTOSCREENX(xx)][UVIYTOSCREENY(yy)] == fgc)
                                 {   ok = FALSE;
                                     break; // for speed
-                }   }   }   }   }
+                                }
+                }   }   }   }
                 if (!ok)
                 {   continue;
                 }
@@ -1996,7 +2000,6 @@ MODULE void drawfakeudgs(void)
                         } else
                         {   imagedata = udgimgbuf[flipper][thechar - 56][y];
                         }
-
                         for (x = 0; x < 8; x++)
                         {   if (imagedata & (0x80 >> x))
                             {   xx = oldhoffset[flipper][row] + (column * 8) + x;
@@ -2587,7 +2590,7 @@ MODULE void run_cpu(int until)
 }   }
 
 EXPORT void arcadia_update_miniglow(void)
-{   if (machine != ARCADIA || !SubWindowPtr[SUBWINDOW_CONTROLS])
+{   if (machine != ARCADIA || !subwin[SUBWINDOW_CONTROLS].hwnd)
     {   return;
     }
 
@@ -2627,3 +2630,292 @@ MODULE ULONG blend(int colour1, int colour2)
     return result;
 }
 #endif
+
+EXPORT FLAG interpret_uvi(int address)
+{   FAST int flagging;
+
+    // assert(machine == ARCADIA);
+
+    flagging = (flagline && (psu & PSU_F)) ? 1 : 0;
+
+    switch (address)
+    {
+    case A_PITCH:
+        sprintf
+        (   interpretstr,
+            "%s %s\n" \
+            "%s %4.3f %s (note %s)",
+            LLL(MSG_BOARDMODE, "Board mode:"),
+            (memory[A_PITCH     ] & 0x80) ? LLL(MSG_ENGINE_YES2, "yes")
+                                          : LLL(MSG_ENGINE_NO2,  "no"),
+            LLL(MSG_PITCH, "Pitch:"),
+            (float) (dividend / ((memory[A_PITCH] & 0x7F) + 1)),
+            LLL(MSG_HERTZ, "Hz"),
+            (region == REGION_NTSC) ? (notes[idealfreq_ntsc[memory[A_PITCH] & 0x7F].whichnote].name) : (notes[idealfreq_pal[memory[A_PITCH] & 0x7F].whichnote].name)
+        );
+    acase A_GFXMODE:
+        sprintf
+        (   interpretstr,
+            "%s %s\n" \
+            "%s %d\n" \
+            "%s\n" \
+            "%s %s\n" \
+            "%s %s",
+            LLL(MSG_BLOCKMODE, "Block mode:"),
+            (memory[A_GFXMODE   ] & 0x80) ? LLL(MSG_ENGINE_YES2, "yes")
+                                          : LLL(MSG_ENGINE_NO2,  "no"),
+            LLL(MSG_CHARROWS, "Character rows:"),
+            (memory[A_GFXMODE] & 0x40) ? 26 : 13,
+            LLL(MSG_COLOURS, "Colours:"),
+            LLL(MSG_BOARDMODE, "Board mode:"),
+            colourname[from_a[flagging][(memory[A_GFXMODE] & 0x38) >> 3]],
+            LLL(MSG_OUTERBG, "Outer background:"),
+            colourname[from_a[flagging][memory[A_GFXMODE] & 0x07]]
+        );
+    acase A_VOLUME:
+        sprintf
+        (   interpretstr,
+            "%s %d %s\n" \
+            "%s %s\n" \
+            "%s %s\n" \
+            "%s %d %s 7",
+            LLL(MSG_HORIZSCROLLING, "Horizontal scrolling:"),
+            (memory[A_VOLUME] & 0xE0) >> 5,
+            LLL(MSG_PIXELS, "pixels"),
+            LLL(MSG_TONE, "Tone:"),
+            (memory[A_VOLUME] & 0x08) ? LLL(MSG_ENGINE_ON, "on")
+                                      : LLL(MSG_ENGINE_OFF, "off"),
+            LLL(MSG_NOISE, "Noise:"),
+            (memory[A_VOLUME] & 0x10) ? LLL(MSG_ENGINE_ON, "on")
+                                      : LLL(MSG_ENGINE_OFF, "off"),
+            LLL(MSG_VOLUME, "Volume:"),
+            memory[A_VOLUME] & 0x07,
+            LLL(MSG_OF, "of")
+        );
+    acase A_BGCOLOUR:
+        sprintf
+        (   interpretstr,
+            "%s %s\n" \
+            "%s %s\n",
+            LLL(MSG_VERTRES, "Vertical resolution:"),
+            (memory[A_BGCOLOUR] & 0x80) ? LLL(MSG_ENGINE_HIGH, "high")
+                                        : LLL(MSG_ENGINE_LOW,  "low"),
+            LLL(MSG_PADDLEINT, "Paddle interpolation:"),
+            (memory[A_BGCOLOUR] & 0x40) ? LLL(MSG_XAXIS, "X-axis")
+                                        : LLL(MSG_YAXIS, "Y-axis")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s\n" \
+            "%s %s, %s, %s, %s\n" \
+            "%s %s",
+            LLL(MSG_COLOURS, "Colours:"),
+            LLL(MSG_FOREGROUND, "Foreground:"),
+            colourname[from_a[flagging][  (memory[A_BGCOLOUR] & 0x38) >> 3          ]],
+            colourname[from_a[flagging][(((memory[A_BGCOLOUR] & 0x38) >> 3) + 2) % 8]],
+            colourname[from_a[flagging][(((memory[A_BGCOLOUR] & 0x38) >> 3) + 4) % 8]],
+            colourname[from_a[flagging][(((memory[A_BGCOLOUR] & 0x38) >> 3) + 6) % 8]],
+            LLL(MSG_INNERBG, "Inner background:"),
+            colourname[from_a[flagging][memory[A_BGCOLOUR] & 0x07]]
+        );
+    acase A_SPRITES01CTRL:
+        sprintf
+        (   interpretstr,
+            "Sprite heights: %s, %s\n" \
+            "%s %s, %s",
+            (memory[A_SPRITES01CTRL] & 0x80) ? "double" : "normal",
+            (memory[A_SPRITES01CTRL] & 0x40) ? "double" : "normal",
+            LLL(MSG_COLOURS, "Colours:"), // ideally "Sprite colours:" or similar
+            colourname[from_a[flagging][(memory[A_SPRITES01CTRL] & 0x38) >> 3]],
+            colourname[from_a[flagging][(memory[A_SPRITES01CTRL] & 0x07)     ]]
+        );
+    acase A_SPRITES23CTRL:
+        sprintf
+        (   interpretstr,
+            "Sprite heights: %s, %s\n" \
+            "%s %s, %s",
+            (memory[A_SPRITES23CTRL] & 0x80) ? "double" : "normal",
+            (memory[A_SPRITES23CTRL] & 0x40) ? "double" : "normal",
+            LLL(MSG_COLOURS, "Colours:"), // ideally "Sprite colours:" or similar
+            colourname[from_a[flagging][(memory[A_SPRITES23CTRL] & 0x38) >> 3]],
+            colourname[from_a[flagging][(memory[A_SPRITES23CTRL] & 0x07)     ]]
+        );
+    acase A_BGCOLLIDE:
+        sprintf
+        (   interpretstr,
+            "%s\n" \
+            "%s %s, %s, %s, %s",
+            LLL(MSG_COLLISIONS, "Collisions:"),
+            LLL(MSG_SPRVSBG, "Sprites vs. background:"),
+            (memory[A_BGCOLLIDE] & 0x01) ? LLL(MSG_ENGINE_NO2,  "no")
+                                         : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_BGCOLLIDE] & 0x02) ? LLL(MSG_ENGINE_NO2,  "no")
+                                         : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_BGCOLLIDE] & 0x04) ? LLL(MSG_ENGINE_NO2,  "no")
+                                         : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_BGCOLLIDE] & 0x08) ? LLL(MSG_ENGINE_NO2,  "no")
+                                         : LLL(MSG_ENGINE_YES2, "yes")
+        );
+    acase A_SPRITECOLLIDE:
+        sprintf
+        (   interpretstr,
+            "%s\n" \
+            "%s #0 %s #1/#2/#3: %s, %s, %s\n",
+            LLL(MSG_COLLISIONS, "Collisions:"),
+            LLL(MSG_SPRITE2, "Sprite"),
+            LLL(MSG_VERSUS, "vs."),
+            (memory[A_SPRITECOLLIDE] & 0x01) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x02) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x04) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s #1 %s #0/#2/#3: %s, %s, %s\n",
+            LLL(MSG_SPRITE2, "Sprite"),
+            LLL(MSG_VERSUS, "vs."),
+            (memory[A_SPRITECOLLIDE] & 0x01) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x08) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x10) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s #2 %s #0/#1/#3: %s, %s, %s\n",
+            LLL(MSG_SPRITE2, "Sprite"),
+            LLL(MSG_VERSUS, "vs."),
+            (memory[A_SPRITECOLLIDE] & 0x02) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x08) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x20) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s #3 %s #0/#1/#2: %s, %s, %s",
+            LLL(MSG_SPRITE2, "Sprite"),
+            LLL(MSG_VERSUS, "vs."),
+            (memory[A_SPRITECOLLIDE] & 0x04) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x10) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes"),
+            (memory[A_SPRITECOLLIDE] & 0x20) ? LLL(MSG_ENGINE_NO2,  "no")
+                                             : LLL(MSG_ENGINE_YES2, "yes")
+        );
+    acase A_P1LEFTKEYS:
+        sprintf
+        (   interpretstr,
+            "Left '1' button: %s\n" \
+            "Left '4' button: %s\n" \
+            "Left '7' button: %s\n" \
+            "Left 'Clear' button: %s",
+            (memory[A_P1LEFTKEYS] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P1LEFTKEYS] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P1LEFTKEYS] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P1LEFTKEYS] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P1MIDDLEKEYS:
+        sprintf
+        (   interpretstr,
+            "Left '2' button: %s\n" \
+            "Left '5' button: %s\n" \
+            "Left '8' button: %s\n" \
+            "Left '0' button: %s",
+            (memory[A_P1MIDDLEKEYS] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P1MIDDLEKEYS] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P1MIDDLEKEYS] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P1MIDDLEKEYS] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P1RIGHTKEYS:
+        sprintf
+        (   interpretstr,
+            "Left '3' button: %s\n" \
+            "Left '6' button: %s\n" \
+            "Left '9' button: %s\n" \
+            "Left 'Enter' button: %s",
+            (memory[A_P1RIGHTKEYS] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P1RIGHTKEYS] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P1RIGHTKEYS] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P1RIGHTKEYS] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P1PALLADIUM:
+        sprintf
+        (   interpretstr,
+            "Left 'x4' button: %s\n" \
+            "Left 'x3' button: %s\n" \
+            "Left 'x2' button: %s\n" \
+            "Left 'x1' button: %s",
+            (memory[A_P1PALLADIUM] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P1PALLADIUM] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P1PALLADIUM] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P1PALLADIUM] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P2LEFTKEYS:
+        sprintf
+        (   interpretstr,
+            "Right '1' button: %s\n" \
+            "Right '4' button: %s\n" \
+            "Right '7' button: %s\n" \
+            "Right 'Clear' button: %s",
+            (memory[A_P2LEFTKEYS] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P2LEFTKEYS] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P2LEFTKEYS] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P2LEFTKEYS] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P2MIDDLEKEYS:
+        sprintf
+        (   interpretstr,
+            "Right '2' button: %s\n" \
+            "Right '5' button: %s\n" \
+            "Right '8' button: %s\n" \
+            "Right '0' button: %s",
+            (memory[A_P2MIDDLEKEYS] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P2MIDDLEKEYS] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P2MIDDLEKEYS] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P2MIDDLEKEYS] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P2RIGHTKEYS:
+        sprintf
+        (   interpretstr,
+            "Right '3' button: %s\n" \
+            "Right '6' button: %s\n" \
+            "Right '9' button: %s\n" \
+            "Right 'Enter' button: %s",
+            (memory[A_P2RIGHTKEYS] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P2RIGHTKEYS] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P2RIGHTKEYS] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P2RIGHTKEYS] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_P2PALLADIUM:
+        sprintf
+        (   interpretstr,
+            "Right 'x4' button: %s\n" \
+            "Right 'x3' button: %s\n" \
+            "Right 'x2' button: %s\n" \
+            "Right 'x1' button: %s",
+            (memory[A_P2PALLADIUM] & 0x08) ? "pressed" : "unpressed",
+            (memory[A_P2PALLADIUM] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_P2PALLADIUM] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_P2PALLADIUM] & 0x01) ? "pressed" : "unpressed"
+        );
+    acase A_CONSOLE:
+        sprintf
+        (   interpretstr,
+            "'B' button: %s\n" \
+            "'A' button: %s\n" \
+            "'START' button: %s",
+            (memory[A_CONSOLE] & 0x04) ? "pressed" : "unpressed",
+            (memory[A_CONSOLE] & 0x02) ? "pressed" : "unpressed",
+            (memory[A_CONSOLE] & 0x01) ? "pressed" : "unpressed"
+        );
+    adefault:
+        return FALSE;
+    }
+
+    return TRUE;
+}

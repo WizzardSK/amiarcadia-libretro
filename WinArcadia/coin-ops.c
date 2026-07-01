@@ -40,15 +40,13 @@ IMPORT       UBYTE                awga_collide,
                                   g_bank1[1024],
                                   memory[32768],
                                   psu,
-                                  squeal,
-                                  sx[2],
-                                  sy[2];
+                                  squeal;
 IMPORT       UWORD                keypads[2][NUMKEYS];
 IMPORT       ULONG                autofire[2],
                                   collisions,
                                   downframes,
                                   frames,
-                                  jff[2],
+                                  jf[2],
                                   totalframes;
 IMPORT       int                  ax[2],
                                   ay[4],
@@ -681,7 +679,7 @@ MODULE UBYTE pviread(int address)
      && (memflags[address] & WATCHPOINT)
      && conditional(&wp[address], machines[machine].readonce, FALSE)
     )
-    {   DISCARD getfriendly(address);
+    {   DISCARD number_to_friendly(address, (STRPTR) friendly, TRUE, 0, 15);
         zprintf
         (   TEXTPEN_DEBUG,
             LLL(MSG_PVIREADING, "PVI is reading $%02X from address %s at raster %ld!\n"),
@@ -705,14 +703,14 @@ EXPORT void coinop_playerinput(int source, int dest)
   // || hostcontroller[source] == CONTROLLER_1STAJOY
      || hostcontroller[source] == CONTROLLER_1STAPAD
     )
-    {   jg = jff[0];
+    {   jg = jf[0];
     } elif
     (   hostcontroller[source] == CONTROLLER_2NDDJOY
      || hostcontroller[source] == CONTROLLER_2NDDPAD
      || hostcontroller[source] == CONTROLLER_2NDAJOY
      || hostcontroller[source] == CONTROLLER_2NDAPAD
     )
-    {   jg = jff[1];
+    {   jg = jf[1];
     } else
     {   jg = 0;
     }
@@ -855,7 +853,7 @@ EXPORT void coinop_playerinput(int source, int dest)
 
     engine_dopaddle(source, 0);
 
-    if (ax[0] < 64)
+    if (ax[0] <= 64)
     {   switch (memmap)
         {
         case MEMMAP_ASTROWARS:
@@ -872,7 +870,7 @@ EXPORT void coinop_playerinput(int source, int dest)
         case MEMMAP_MALZAK2:
             coinop_joy1left |= 1;
     }   }
-    elif (ax[0] > 192)
+    elif (ax[0] >= 192)
     {   switch (machine)
         {
         case ZACCARIA:
@@ -891,15 +889,11 @@ EXPORT void coinop_playerinput(int source, int dest)
             coinop_joy1right |= 1;
     }   }
 
-    if (ay[0] < 64)
+    if (ay[0] <= 64)
     {   coinop_joy1up |= 1;
-    } elif (ay[0] > 192)
+    } elif (ay[0] >= 192)
     {   coinop_joy1down |= 1;
-    }
-
-    sx[0] = (UBYTE) ax[0];
-    sy[0] = (UBYTE) ay[0];
-}
+}   }
 
 EXPORT void serialize_coinops(void)
 {   serialize_byte_int(&coinop_1p);

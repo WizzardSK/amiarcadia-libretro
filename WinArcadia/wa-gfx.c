@@ -67,7 +67,6 @@ typedef interface ID3DXFile*           LPD3DXFILE;
 EXPORT UBYTE           fgtable[BOXHEIGHT][BOXWIDTH];
 EXPORT ULONG           pencolours[COLOURSETS][PENS];
 EXPORT ULONG*          display           = NULL;
-EXPORT ASCREEN         miniscreen[MINIWIDTH][MINIHEIGHT];
 EXPORT IDirect3D9*     Direct3DInterface = NULL;
 
 // IMPORTED VARIABLES-----------------------------------------------------
@@ -81,6 +80,7 @@ IMPORT       UBYTE     bgc;
 IMPORT       ULONG     animframe,
                        frames,
                        mikit_bigctrls,
+                       paused,
                        pencolours[COLOURSETS][PENS],
                        redrawtime,
                        region,
@@ -108,6 +108,8 @@ IMPORT       int       anims,
                        filter,
                        fullscreen,
                        gifanims,
+                       guideray_x,
+                       guideray_y,
                        hostheight,
                        hostwidth,
                        iffanims,
@@ -120,8 +122,6 @@ IMPORT       int       anims,
                        menuheight,
                        minidestx,
                        minidesty,
-                       miniwidth,
-                       miniheight,
                        mnganims,
                        nextrow,
                        nextrow2,
@@ -151,6 +151,8 @@ IMPORT       int       anims,
                        stretching,
                        stretch43,
                        toolbarheight,
+                       trace,
+                       useguideray,
                        usemargins,
                        wide,
                        widthheight,
@@ -161,8 +163,7 @@ IMPORT       int       anims,
                        wsm,
                        xoffset,
                        yoffset;
-IMPORT       ULONG    *canvasdisplay[CANVASES],
-                      *pixelulong,
+IMPORT       ULONG    *pixelulong,
                       *stars;
 IMPORT       DWORD     winstyle;
 IMPORT       HBITMAP   BezelBitMap[BEZELS],
@@ -175,8 +176,7 @@ IMPORT       HWND      hDebugger,
                        hSideBar,
                        hStatusBar,
                        MagnifierWindowPtr,
-                       MainWindowPtr,
-                       SubWindowPtr[SUBWINDOWS];
+                       MainWindowPtr;
 IMPORT       POINT     ThePoint;
 IMPORT       RECT      therect;
 IMPORT const char                     g_szTestClassName[];
@@ -184,15 +184,14 @@ IMPORT const int                      memmap_to_smlimage[MEMMAPS],
                                       mikit_digitxloc[6],
                                       selbst_digitxloc[6];
 IMPORT const ULONG                    defpencolours[COLOURSETS][GUESTCOLOURS];
+IMPORT       struct CanvasStruct      canvas[CANVASES];
 IMPORT       struct HostMachineStruct hostmachines[MACHINES];
+IMPORT const struct KnownStruct       known[KNOWNGAMES];
 IMPORT       struct LangStruct        langs[LANGUAGES];
 IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct MemMapInfoStruct  memmapinfo[MEMMAPS];
 IMPORT const struct MemMapToStruct    memmap_to[MEMMAPS];
-IMPORT       struct
-{   BITMAPINFOHEADER Header;
-    DWORD            Colours[3];
-} CanvasBitMapInfo[CANVASES];
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 
 // function pointers
 IMPORT void (* drawpixel   ) (int x, int y, int   colour);
@@ -2289,8 +2288,9 @@ EXPORT void clearscreen(void)
     }
     therect.left    = 0;
     therect.right   = clientwidth;
-    /* Note that there is slight flickering caused by this; ideally
-       we would only fill the borders with grey, not the whole client area of the window. */
+    /* Note that there is slight flickering caused by this;
+    ideally we would only fill the borders with grey or black,
+    not the whole client area of the window. */
     OnScreenRastPort = GetDC(MainWindowPtr);
 
 #ifdef USEGRADIENT
@@ -2393,13 +2393,6 @@ EXPORT void redrawscreen(void)
         FillRect(OnScreenRastPort, &therect, hBrush[EMUBRUSH_GREY]);
         DISCARD ReleaseDC(MainWindowPtr, OnScreenRastPort);
     } */
-
-    if (miniwidth)
-    {   // assert(miniheight);
-        for (y = 0; y < miniheight; y++)
-        {   for (x = 0; x < miniwidth; x++)
-            {   canvasdisplay[CANVAS_MINI][x + (y * MINIWIDTH)] = pencolours[colourset][miniscreen[x][y]];
-    }   }   }
 
     if (BEZELABLE && bezel)
     {   HBITMAP OldBitmapPtr;
@@ -2640,12 +2633,11 @@ EXPORT void updatescreen(void)
         DISCARD ReleaseDC(MainWindowPtr, OnScreenRastPort);
     }
 
-    if (SubWindowPtr[SUBWINDOW_CONTROLS])
+    if (subwin[SUBWINDOW_CONTROLS].hwnd)
     {   switch (machine)
         {
         case MIKIT:
         case SELBST:
-            OnScreenRastPort = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS));
             for (i = 0; i < 6; i++)
             {   switch (machine)
                 {
@@ -2660,43 +2652,12 @@ EXPORT void updatescreen(void)
                     minidestx = selbst_digitxloc[i];
                     minidesty = SELBST_DIGITYLOC;
                 }
-                DISCARD StretchDIBits
-                (   OnScreenRastPort,
-                    minidestx,           // dest leftx
-                    minidesty,           // dest topy
-                    SPLITWIDTH,          // dest width
-                    SPLITHEIGHT,         // dest height
-                    SPLITDISTANCE * i,   // source leftx
-                    0,                   // source topy
-                    SPLITWIDTH,          // source width
-                    SPLITHEIGHT,         // source height
-                    canvasdisplay[CANVAS_MINI], // pointer to the bits
-                    (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_MINI], // pointer to BITMAPINFO structure
-                    DIB_RGB_COLORS,      // format of data
-                    SRCCOPY              // blit mode
-                );
+                wpa8(CANVAS_SPLIT1 + i, minidestx, minidesty);
             }
-            DISCARD ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS), OnScreenRastPort);
         acase INSTRUCTOR:
         case PHUNSY:
         case TYPERIGHT:
-            OnScreenRastPort = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS));
-            DISCARD StretchDIBits
-            (   OnScreenRastPort,
-                minidestx,            // dest leftx
-                minidesty,            // dest topy
-                miniwidth,            // dest width
-                miniheight,           // dest height
-                0,                    // source leftx
-                0,                    // source topy
-                miniwidth,            // source width
-                miniheight,           // source height
-                canvasdisplay[CANVAS_MINI], // pointer to the bits
-                (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_MINI], // pointer to BITMAPINFO structure
-                DIB_RGB_COLORS,       // format of data
-                SRCCOPY               // blit mode
-            );
-            DISCARD ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS), OnScreenRastPort);
+            wpa8(CANVAS_MINI, minidestx, minidesty);
     }   }
 
     if (recmode != RECMODE_NORMAL && animframe != frames)
@@ -3131,76 +3092,6 @@ EXPORT void update_menuheight(void)
 LRESULT CALLBACK TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
-
-EXPORT int getsmallimage1(int thegame, int thememmap)
-{   switch (thegame)
-    {
-    case  _3DATTACKPOS:                              return IDI_3DATTACK;
-    acase _3DSOCCERAPOS:     case _3DSOCCERBPOS:     case _3DSOCCERENHPOS:
-                                                     return IDI_3DSOCCER;
-    acase HOMERUNPOS:                                return IDI_HOMERUN;
-    acase ALIENINVPOS:       case ALIENINV1POS:      case ALIENINV2POS: case ALIENINV3POS: case ALIENINV4POS:
-                                                     return IDI_ALIENINVADERS;
-    acase ASTROINVPOS:       case ASTROINVODPOS:     return IDI_ASTROINVADER;
-    acase AUTORACEPOS:       case AUTORACEODPOS:     return IDI_AUTORACE;
-    acase BASEBALLPOS:                               return IDI_BASEBALL;
-    acase A_BASKETBALLPOS:                           return IDI_BASKETBALL;
-    acase BATTLEPOS:                                 return IDI_BATTLE;
-    acase A_BLACKJACKPOS:                            return IDI_BLACKJACK;
-    acase A_BOWLINGPOS:                              return IDI_BOWLING;
-    acase A_BOXINGPOS:                               return IDI_BOXING;
-    acase BRAINQUIZPOS:                              return IDI_BRAINQUIZ;
-    acase BREAKAWAYPOS:                              return IDI_BREAKAWAY;
-    acase A_CAPTUREPOS:                              return IDI_CAPTURE;
-    acase CATTRAXPOS:                                return IDI_CATTRAX;
-    acase A_CIRCUSPOS:                               return IDI_CIRCUS;
-    acase A_COMBATPOS:       case A_COMBATODPOS:     return IDI_COMBAT;
-    acase CRAZYCLIMBERPOS:                           return IDI_CRAZYCLIMBER;
-    acase CRAZYGOBBLERPOS:                           return IDI_CRAZYGOBBLER;
-    acase VIDLEXEGPOS:       case VIDLEXGEPOS:       return IDI_DICTIONARY;
-    acase DORAEMONPOS:                               return IDI_DORAEMON;
-    acase DRSLUMPPOS:                                return IDI_DRSLUMP;
-    acase ESCAPEPOS:                                 return IDI_ESCAPE;
-    acase GRIDIRON1POS:      case GRIDIRON2POS:      return IDI_GRIDIRON;
-    acase FROGGER1POS:       case FROGGER2POS:       case FROGGER3POS:
-                                                     return IDI_FROGGER;
-    acase FUNKYFISHPOS:                              return IDI_FUNKYFISH;
-    acase A_GOLFPOS1:        case A_GOLFPOS2:        case A_GOLFODPOS:
-                                                     return IDI_GOLF;
-    acase GUNDAMPOS:                                 return IDI_GUNDAM;
-    acase HOBOPOS1:          case HOBOPOS2:          return IDI_HOBO;
-    acase A_HORSERACINGPOS:                          return IDI_HORSERACING;
-    acase JOURNEYPOS:                                return IDI_JOURNEY;
-    acase JUMPBUG1POS:       case JUMPBUG2POS:       return IDI_JUMPBUG;
-    acase JUNGLERPOS:                                return IDI_JUNGLER;
-    acase MACROSSPOS:                                return IDI_MACROSS;
-    acase MISSILEWARPOS:                             return IDI_MISSILEWAR;
-    acase MONACOPOS:                                 return IDI_MONACO;
-    acase NIBBLEMENPOS:      case SUPERGOBBLERPOS:   return IDI_NIBBLEMEN;
-    acase OCEANBATTLEPOS:                            return IDI_OCEANBATTLE;
-    acase PARASHOOTERPOS:                            return IDI_PARASHOOTER;
-    acase PLEIADESPOS:                               return IDI_PLEIADES;
-    acase R2DTANKPOS:                                return IDI_R2DTANK;
-    acase REDCLASHPOS:       case REDCLASHODPOS:     return IDI_REDCLASH;
-    acase ROBOTKILLERPOS:                            return IDI_ROBOTKILLER;
-    acase ROUTE16POS:                                return IDI_ROUTE16;
-    acase _2DSOCCERPOS:      case _2DSOCCERODPOS:    return IDI_2DSOCCER;
-    acase SPACEATTACKAPOS:   case SPACEATTACKBPOS:   case SPACEATTACKCPOS:
-                                                     return IDI_SPACEATTACK;
-    acase SPACEBUSTERPOS:                            return IDI_SPACEBUSTER;
-    acase SPACEMISSIONPOS:                           return IDI_SPACEMISSION;
-    acase SPACERAIDERSPOS:                           return IDI_SPACERAIDERS;
-    acase SPACESQUADRON1POS: case SPACESQUADRON2POS: return IDI_SPACESQUADRON;
-    acase SPACEVULTURESPOS:  case MOTHERSHIPPOS:     return IDI_SPACEVULTURES;
-    acase SPIDERSPOS:        case SPIDERSODPOS:      return IDI_SPIDERS;
-    acase STARCHESSPOS:      case STARCHESSENHPOS:   return IDI_STARCHESS;
-    acase SUPERBUG1POS:      case SUPERBUG2POS:      return IDI_SUPERBUG;
-    acase TANKSALOTPOS:                              return IDI_TANKSALOT;
-    acase TENNISPOS:                                 return IDI_TENNIS;
-    acase THEENDPOS1:        case THEENDPOS2:        return IDI_THEEND;
-    acase TURTLESPOS:                                return IDI_TURTLES;
-    adefault:                                        return memmap_to[thememmap].icon;
-}   }
 
 EXPORT void resetcolour(int thecolourset, int whichcolour, FLAG update)
 {   // assert(!update);

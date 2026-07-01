@@ -36,11 +36,30 @@
 // EXPORTED VARIABLES-----------------------------------------------------
 
 EXPORT       TEXT                 letters[8 + 1];
+EXPORT const STRPTR               waveshape[16] = {
+  "\\_______________",                // %0000 single decay then off
+  "\\_______________",                // %0001 single decay then off
+  "\\_______________",                // %0010 single decay then off
+  "\\_______________",                // %0011 single decay then off
+  "/_______________",                 // %0100 single attack then off
+  "/_______________",                 // %0101 single attack then off
+  "/_______________",                 // %0110 single attack then off
+  "/_______________",                 // %0111 single attack then off
+  "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\", // %1000 repeated decay
+  "\\_______________",                // %1001 single decay then off
+  "\\/\\/\\/\\/\\/\\/\\/\\/",         // %1010 repeated decay-attack
+  "\\\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"", // %1011 single decay then hold
+  "////////////////",                 // %1100 repeated attack
+  "/\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",  // %1101 single attack then hold
+  "/\\/\\/\\/\\/\\/\\/\\/\\",         // %1110 repeated attack-decay
+  "/_______________"                  // %1111 single attack then off
+};
 
 // IMPORTED VARIABLES-----------------------------------------------------
 
 IMPORT       FLAG                 bangercharging;
-IMPORT       TEXT                 gtempstring[256 + 1];
+IMPORT       TEXT                 gtempstring[256 + 1],
+                                  interpretstr[1024 + 1];
 IMPORT       UBYTE                memory[32768],
                                   psl, psu,
                                   r[7],
@@ -90,24 +109,6 @@ MODULE int eof_readblock(int localsize);
 EXPORT void view_psgs(void)
 {   TRANSIENT       float  hertz;
     FAST            TEXT   tonestring[80 + 1];
-    PERSIST   const STRPTR waveshape[16] = {
-  "\\_______________",                // %0000 single decay then off
-  "\\_______________",                // %0001 single decay then off
-  "\\_______________",                // %0010 single decay then off
-  "\\_______________",                // %0011 single decay then off
-  "/_______________",                 // %0100 single attack then off
-  "/_______________",                 // %0101 single attack then off
-  "/_______________",                 // %0110 single attack then off
-  "/_______________",                 // %0111 single attack then off
-  "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\", // %1000 repeated decay
-  "\\_______________",                // %1001 single decay then off
-  "\\/\\/\\/\\/\\/\\/\\/\\/",         // %1010 repeated decay-attack
-  "\\\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"", // %1011 single decay then hold
-  "////////////////",                 // %1100 repeated attack
-  "/\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",  // %1101 single attack then hold
-  "/\\/\\/\\/\\/\\/\\/\\/\\",         // %1110 repeated attack-decay
-  "/_______________"                  // %1111 single attack then off
-};
 
     if (memmap != MEMMAP_F)
     {   return;
@@ -1822,7 +1823,6 @@ EXPORT void elektor_reset(void)
         memory[0x8BE] =  startaddr_h;
         memory[0x8BF] =  startaddr_l;
         iar           =  0x8BD;
-
         /* The below lines can be used instead of the above lines, but it won't work with Jagen...
         memory[0x8A2] = startaddr_h; // SADR_H
         memory[0x8A3] = startaddr_l; // SADR_L
@@ -1834,7 +1834,7 @@ EXPORT void elektor_reset(void)
     for (i = 0x1D00; i <= 0x1D1F; i++)
     {   memory[i] = 0; // PSGs are cleared at reset
     }
-    if (whichgame != -1 && known[whichgame].hiscore)
+    if (whichgame != -1 && known[whichgame].hiscore) // hiscore field is used on Elektor as a flag meaning "inhibit interrupts"
     {   psu |= PSU_II;
     }
     if (whichgame == OMEGALANDINGPOS)
@@ -1854,4 +1854,240 @@ EXPORT int hertz_to_note(float hertz)
     }   }
 
     return NOTES - 1;
+}
+
+EXPORT FLAG interpret_psgs(int address)
+{   FAST float hertz;
+
+    // assert(memmap == MEMMAP_F);
+
+    switch (address)
+    {
+    case PSG_PITCHA1_H:
+    case PSG_PITCHA1_L:
+        hertz = ((memory[PSG_PITCHA1_H] & 0x0F) == 0 && memory[PSG_PITCHA1_L] == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (((memory[PSG_PITCHA1_H] & 0x0F) * 256) + memory[PSG_PITCHA1_L]));
+        sprintf
+        (   interpretstr,
+            "Tone A1 pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_PITCHA2_H:
+    case PSG_PITCHA2_L:
+        hertz = ((memory[PSG_PITCHA2_H] & 0x0F) == 0 && memory[PSG_PITCHA2_L] == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (((memory[PSG_PITCHA2_H] & 0x0F) * 256) + memory[PSG_PITCHA2_L]));
+        sprintf
+        (   interpretstr,
+            "Tone A2 pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_PITCHB1_H:
+    case PSG_PITCHB1_L:
+        hertz = ((memory[PSG_PITCHB1_H] & 0x0F) == 0 && memory[PSG_PITCHB1_L] == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (((memory[PSG_PITCHB1_H] & 0x0F) * 256) + memory[PSG_PITCHB1_L]));
+        sprintf
+        (   interpretstr,
+            "Tone B1 pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_PITCHB2_H:
+    case PSG_PITCHB2_L:
+        hertz = ((memory[PSG_PITCHB2_H] & 0x0F) == 0 && memory[PSG_PITCHB2_L] == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (((memory[PSG_PITCHB2_H] & 0x0F) * 256) + memory[PSG_PITCHB2_L]));
+        sprintf
+        (   interpretstr,
+            "Tone B2 pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    case PSG_PITCHC1_H:
+    case PSG_PITCHC1_L:
+        hertz = ((memory[PSG_PITCHC1_H] & 0x0F) == 0 && memory[PSG_PITCHC1_L] == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (((memory[PSG_PITCHC1_H] & 0x0F) * 256) + memory[PSG_PITCHC1_L]));
+        sprintf
+        (   interpretstr,
+            "Tone C1 pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_PITCHC2_H:
+    case PSG_PITCHC2_L:
+        hertz = ((memory[PSG_PITCHC2_H] & 0x0F) == 0 && memory[PSG_PITCHC2_L] == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (((memory[PSG_PITCHC2_H] & 0x0F) * 256) + memory[PSG_PITCHC2_L]));
+        sprintf
+        (   interpretstr,
+            "Tone C2 pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_PITCHD1:
+        hertz = ((memory[PSG_PITCHD1]   & 0x1F) == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (memory[PSG_PITCHD1] & 0x1F));
+        sprintf
+        (   interpretstr,
+            "1st noises pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_PITCHD2:
+        hertz = ((memory[PSG_PITCHD2]   & 0x1F) == 0)
+              ? (float)  110837.0
+              : (float) (110837.0 / (memory[PSG_PITCHD2] & 0x1F));
+        sprintf
+        (   interpretstr,
+            "2nd noises pitch: %6.3f %s (note %s)",
+            hertz,
+            LLL( MSG_HERTZ, "Hz"),
+            notes[hertz_to_note(hertz)].name
+        );
+    acase PSG_MIXER1:
+        sprintf
+        (   interpretstr,
+            "Tone A1=%s, tone B1=%s, tone C1=%s\n" \
+            "Noise A1=%s, noise B1=%s, noise C1=%s\n" \
+            "I/O port A1=%s, I/O port B1=%s",
+            (memory[PSG_MIXER1] & 0x01) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER1] & 0x02) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER1] & 0x04) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER1] & 0x08) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER1] & 0x10) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER1] & 0x20) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER1] & 0x40) ? LLL( MSG_OUTPUT, "output") : LLL( MSG_DISABLED2, "disbld"),
+            (memory[PSG_MIXER1] & 0x80) ? LLL( MSG_OUTPUT, "output") : LLL( MSG_DISABLED2, "disbld")
+        );
+    acase PSG_MIXER2:
+        sprintf
+        (   interpretstr,
+            "Tone A2=%s, tone B2=%s, tone C2=%s\n" \
+            "Noise A2=%s, noise B2=%s, noise C2=%s\n" \
+            "I/O port A2=%s, I/O port B2=%s",
+            (memory[PSG_MIXER2] & 0x01) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER2] & 0x02) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER2] & 0x04) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER2] & 0x08) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER2] & 0x10) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER2] & 0x20) ? LLL( MSG_ENGINE_OFF3, "off") : LLL( MSG_ENGINE_ON3, "on"),
+            (memory[PSG_MIXER2] & 0x40) ? LLL( MSG_OUTPUT, "output") : LLL( MSG_DISABLED2, "disbld"),
+            (memory[PSG_MIXER2] & 0x80) ? LLL( MSG_OUTPUT, "output") : LLL( MSG_DISABLED2, "disbld")
+        );
+    acase PSG_AMPLITUDEA1:
+        sprintf
+        (   interpretstr,
+            "A1 amplitude mode: %s\n" \
+            "A1 volume: %d %s 15",
+            (memory[PSG_AMPLITUDEA1] & 0x10) ? LLL( MSG_AMPMODE_ENVELOPE, "envlpe") : LLL( MSG_AMPMODE_NORMAL, "normal"),
+            (int) (memory[PSG_AMPLITUDEA1] & 0x0F),
+            LLL(MSG_OF, "of")
+        );
+    acase PSG_AMPLITUDEB1:
+        sprintf
+        (   interpretstr,
+            "B1 amplitude mode: %s\n" \
+            "B1 volume: %d %s 15",
+            (memory[PSG_AMPLITUDEB1] & 0x10) ? LLL( MSG_AMPMODE_ENVELOPE, "envlpe") : LLL( MSG_AMPMODE_NORMAL, "normal"),
+            (int) (memory[PSG_AMPLITUDEB1] & 0x0F),
+            LLL(MSG_OF, "of")
+        );
+    acase PSG_AMPLITUDEC1:
+        sprintf
+        (   interpretstr,
+            "C1 amplitude mode: %s\n" \
+            "C1 volume: %d %s 15",
+            (memory[PSG_AMPLITUDEC1] & 0x10) ? LLL( MSG_AMPMODE_ENVELOPE, "envlpe") : LLL( MSG_AMPMODE_NORMAL, "normal"),
+            (int) (memory[PSG_AMPLITUDEC1] & 0x0F),
+            LLL(MSG_OF, "of")
+        );
+    acase PSG_AMPLITUDEA2:
+        sprintf
+        (   interpretstr,
+            "A2 amplitude mode: %s\n" \
+            "A2 volume: %d %s 15",
+            (memory[PSG_AMPLITUDEA2] & 0x10) ? LLL( MSG_AMPMODE_ENVELOPE, "envlpe") : LLL( MSG_AMPMODE_NORMAL, "normal"),
+            (int) (memory[PSG_AMPLITUDEA2] & 0x0F),
+            LLL(MSG_OF, "of")
+        );
+    acase PSG_AMPLITUDEB2:
+        sprintf
+        (   interpretstr,
+            "B2 amplitude mode: %s\n" \
+            "B2 volume: %d %s 15",
+            (memory[PSG_AMPLITUDEB2] & 0x10) ? LLL( MSG_AMPMODE_ENVELOPE, "envlpe") : LLL( MSG_AMPMODE_NORMAL, "normal"),
+            (int) (memory[PSG_AMPLITUDEB2] & 0x0F),
+            LLL(MSG_OF, "of")
+        );
+    acase PSG_AMPLITUDEC2:
+        sprintf
+        (   interpretstr,
+            "C2 amplitude mode: %s\n" \
+            "C2 volume: %d %s 15",
+            (memory[PSG_AMPLITUDEC2] & 0x10) ? LLL( MSG_AMPMODE_ENVELOPE, "envlpe") : LLL( MSG_AMPMODE_NORMAL, "normal"),
+            (int) (memory[PSG_AMPLITUDEC2] & 0x0F),
+            LLL(MSG_OF, "of")
+        );
+    acase PSG_PERIOD1_H:
+    case PSG_PERIOD1_L:
+        sprintf
+        (   interpretstr,
+            "1st envelope period: %4.3f %s",
+            (memory[PSG_PERIOD1_H] == 0 && memory[PSG_PERIOD1_L] == 0) ? (float) 6927.313 : (float) (6927.313 / ((memory[PSG_PERIOD1_H] * 256) + memory[PSG_PERIOD1_L])),
+            LLL( MSG_HERTZ, "Hz")
+        );
+    acase PSG_PERIOD2_H:
+    case PSG_PERIOD2_L:
+        sprintf
+        (   interpretstr,
+            "2nd envelope period: %4.3f %s",
+            (memory[PSG_PERIOD2_H] == 0 && memory[PSG_PERIOD2_L] == 0) ? (float) 6927.313 : (float) (6927.313 / ((memory[PSG_PERIOD2_H] * 256) + memory[PSG_PERIOD2_L])),
+            LLL( MSG_HERTZ, "Hz")
+        );
+    acase PSG_SHAPE1:
+        sprintf
+        (   interpretstr,
+            "1st envelope shape: %s\n" \
+            "%s %s\n" \
+            "%s %s\n" \
+            "%s %s\n" \
+            "%s %s",
+            waveshape[memory[PSG_SHAPE1] & 0x0F],
+            LLL(MSG_HOLD     , "Hold:"     ), (memory[PSG_SHAPE1] & 0x01) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off"),
+            LLL(MSG_ALTERNATE, "Alternate:"), (memory[PSG_SHAPE1] & 0x02) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off"),
+            LLL(MSG_ATTACK   , "Attack:"   ), (memory[PSG_SHAPE1] & 0x04) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off"),
+            LLL(MSG_CONTINUE , "Continue:" ), (memory[PSG_SHAPE1] & 0x08) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off")
+        );
+    acase PSG_SHAPE2:
+        sprintf
+        (   interpretstr,
+            "2nd envelope shape: %s\n" \
+            "%s %s\n" \
+            "%s %s\n" \
+            "%s %s\n" \
+            "%s %s",
+            waveshape[memory[PSG_SHAPE2] & 0x0F],
+            LLL(MSG_HOLD     , "Hold:"     ), (memory[PSG_SHAPE2] & 0x01) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off"),
+            LLL(MSG_ALTERNATE, "Alternate:"), (memory[PSG_SHAPE2] & 0x02) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off"),
+            LLL(MSG_ATTACK   , "Attack:"   ), (memory[PSG_SHAPE2] & 0x04) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off"),
+            LLL(MSG_CONTINUE , "Continue:" ), (memory[PSG_SHAPE2] & 0x08) ? LLL( MSG_ENGINE_ON3, "on") : LLL( MSG_ENGINE_OFF3, "off")
+        );
+    adefault:
+        return FALSE;
+    }
+
+    return TRUE;
 }

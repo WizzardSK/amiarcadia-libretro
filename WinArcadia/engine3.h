@@ -18,23 +18,35 @@ EXPORT const STRPTR pongvarname[VARIANTS] =
   "AY-3-8600: 2 Player Target"
 };
 
-EXPORT const struct KeyTableStruct keytable[16] =
-{   { A_P1MIDDLEKEYS, 0x01, IE_P1MIDDLEKEYS, 0x10, "0",  "+/2"   , 27, 30, DAPTER_0 }, //  0
-    { A_P1LEFTKEYS,   0x08, IE_P1LEFTKEYS,   0x80, "1",  "RCAS/D",  8, 11, DAPTER_1 }, //  1
-    { A_P1MIDDLEKEYS, 0x08, IE_P1MIDDLEKEYS, 0x80, "2",  "WCAS/E",  0,  1, DAPTER_2 }, //  2
-    { A_P1RIGHTKEYS,  0x08, IE_P1RIGHTKEYS,  0x80, "3",  "C/F"   , 10, 13, DAPTER_3 }, //  3
-    { A_P1LEFTKEYS,   0x04, IE_P1LEFTKEYS,   0x40, "4",  "BP/9"  , 14, 17, DAPTER_4 }, //  4
-    { A_P1MIDDLEKEYS, 0x04, IE_P1MIDDLEKEYS, 0x40, "5",  "REG/A" , 15, 18, DAPTER_5 }, //  5
-    { A_P1RIGHTKEYS,  0x04, IE_P1RIGHTKEYS,  0x40, "6",  "8/B"   , 16, 19, DAPTER_6 }, //  6
-    { A_P1LEFTKEYS,   0x02, IE_P1LEFTKEYS,   0x20, "7",  "PC/5"  , 20, 23, DAPTER_7 }, //  7
-    { A_P1MIDDLEKEYS, 0x02, IE_P1MIDDLEKEYS, 0x20, "8",  "MEM/6" , 21, 24, DAPTER_8 }, //  8
-    { A_P1RIGHTKEYS,  0x02, IE_P1RIGHTKEYS,  0x20, "9",  "4/7"   , 22, 25, DAPTER_9 }, //  9
-    { A_P1LEFTKEYS,   0x01, IE_P1LEFTKEYS,   0x10, "Cl", "-/1"   , 26, 29, DAPTER_C }, // 10
-    { A_P1RIGHTKEYS,  0x01, IE_P1RIGHTKEYS,  0x10, "En", "0/3"   , 28, 31, DAPTER_E }, // 11
-    { A_P1PALLADIUM,  0x08, 0,                  0, "x1", "?"     ,  2,  5, 0        }, // 12
-    { A_P1PALLADIUM,  0x04, 0,                  0, "x2", "?"     ,  3,  6, 0        }, // 13
-    { A_P1PALLADIUM,  0x02, 0,                  0, "x3", "?"     ,  4,  7, 0        }, // 14
-    { A_P1PALLADIUM,  0x01, 0,                  0, "x4", "?"     ,  9, 12, 0        }  // 15
+EXPORT const struct KeyTableStruct keytable[NUMKEYS] =
+{   { 0             , 0   , 0              ,    0, { -1, -1 },        0 }, //  0 GUESTKEY_1ST
+    { A_P1LEFTKEYS,   0x08, IE_P1LEFTKEYS,   0x80, {  8, 11 }, DAPTER_1 }, //  1 GUESTKEY_1
+    { A_P1MIDDLEKEYS, 0x08, IE_P1MIDDLEKEYS, 0x80, {  0,  1 }, DAPTER_2 }, //  2 GUESTKEY_2
+    { A_P1RIGHTKEYS,  0x08, IE_P1RIGHTKEYS,  0x80, { 10, 13 }, DAPTER_3 }, //  3 GUESTKEY_3
+    { A_P1LEFTKEYS,   0x04, IE_P1LEFTKEYS,   0x40, { 14, 17 }, DAPTER_4 }, //  4 GUESTKEY_4
+    { A_P1MIDDLEKEYS, 0x04, IE_P1MIDDLEKEYS, 0x40, { 15, 18 }, DAPTER_5 }, //  5 GUESTKEY_5
+    { A_P1RIGHTKEYS,  0x04, IE_P1RIGHTKEYS,  0x40, { 16, 19 }, DAPTER_6 }, //  6 GUESTKEY_6
+    { A_P1LEFTKEYS,   0x02, IE_P1LEFTKEYS,   0x20, { 20, 23 }, DAPTER_7 }, //  7 GUESTKEY_7
+    { A_P1MIDDLEKEYS, 0x02, IE_P1MIDDLEKEYS, 0x20, { 21, 24 }, DAPTER_8 }, //  8 GUESTKEY_8
+    { A_P1RIGHTKEYS,  0x02, IE_P1RIGHTKEYS,  0x20, { 22, 25 }, DAPTER_9 }, //  9 GUESTKEY_9
+    { A_P1LEFTKEYS,   0x01, IE_P1LEFTKEYS,   0x10, { 26, 29 }, DAPTER_C }, // 10 GUESTKEY_CL
+    { A_P1MIDDLEKEYS, 0x01, IE_P1MIDDLEKEYS, 0x10, { 27, 30 }, DAPTER_0 }, // 11 GUESTKEY_0
+    { A_P1RIGHTKEYS,  0x01, IE_P1RIGHTKEYS,  0x10, { 28, 31 }, DAPTER_E }, // 12 GUESTKEY_EN
+    { A_P1PALLADIUM,  0x01, 0,                  0, {  2,  5 },        0 }, // 13 GUESTKEY_X1
+    { A_P1PALLADIUM,  0x02, 0,                  0, {  3,  6 },        0 }, // 14 GUESTKEY_X2
+    { A_P1PALLADIUM,  0x04, 0,                  0, {  4,  7 },        0 }, // 15 GUESTKEY_X3
+    { A_P1PALLADIUM,  0x08, 0,                  0, {  9, 12 },        0 }, // 16 GUESTKEY_X4
+    { 0             , 0   , 0              ,    0, { -1, -1 },        0 }, // 17 GUESTKEY_2ND
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 18 GUESTKEY_3RD
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 19 GUESTKEY_4TH
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 20 GUESTKEY_UP
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 21 GUESTKEY_DN
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 22 GUESTKEY_LT
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 23 GUESTKEY_RT
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 24 GUESTKEY_UPLT
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 25 GUESTKEY_UPRT
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 26 GUESTKEY_DNLT
+    { 0             , 0   , 0,                  0, { -1, -1 },        0 }, // 27 GUESTKEY_DNRT
 };
 
 /* Codes are:
@@ -528,6 +540,9 @@ EXPORT const struct TODStruct tods[TIPSOFDAYS] = {
 // MSG_TOD20 is at the start of the array
 { MSG_TOD13,  "In the \"Help|Opodes...\" subwindow, you can click on an opcode to open the"   \
               "corresponding page of the CPU manual."                                         },
+{ MSG_TOD21,  "If the mouse is not assigned to any guest player, you can click on the"        \
+              " guest screen while holding the Shift key to run to the raster line under"     \
+              " the pointer."                                                                 },
 #ifdef WIN32
 { MSG_TODW1,  "You can drag and drop a file onto the main window to load it, or drag and"     \
               " drop a directory onto the main window to change the sidebar to that"          \
@@ -560,4 +575,85 @@ EXPORT const struct TODStruct tods[TIPSOFDAYS] = {
 { MSG_TODA6,  "In the floppy drives subwindow, you can click on the disk blocks overview"     \
               " to change which block is shown in the block contents grid."                   },
 #endif
+};
+
+EXPORT const int key_to_gid[2][17] = {
+{ -1,        //  0 GUESTKEY_1ST
+  IDC_LT_1,  //  1 GUESTKEY_1
+  IDC_LT_2,  //  2 GUESTKEY_2
+  IDC_LT_3,  //  3 GUESTKEY_3
+  IDC_LT_4,  //  4 GUESTKEY_4
+  IDC_LT_5,  //  5 GUESTKEY_5
+  IDC_LT_6,  //  6 GUESTKEY_6
+  IDC_LT_7,  //  7 GUESTKEY_7
+  IDC_LT_8,  //  8 GUESTKEY_8
+  IDC_LT_9,  //  9 GUESTKEY_9
+  IDC_LT_CL, // 10 GUESTKEY_CL
+  IDC_LT_0,  // 11 GUESTKEY_0
+  IDC_LT_EN, // 12 GUESTKEY_EN
+  IDC_LT_X1, // 13 GUESTKEY_X1
+  IDC_LT_X2, // 14 GUESTKEY_X2
+  IDC_LT_X3, // 15 GUESTKEY_X3
+  IDC_LT_X4  // 16 GUESTKEY_X4
+},
+{ -1,        //  0 GUESTKEY_1ST
+  IDC_RT_1,  //  1 GUESTKEY_1
+  IDC_RT_2,  //  2 GUESTKEY_2
+  IDC_RT_3,  //  3 GUESTKEY_3
+  IDC_RT_4,  //  4 GUESTKEY_4
+  IDC_RT_5,  //  5 GUESTKEY_5
+  IDC_RT_6,  //  6 GUESTKEY_6
+  IDC_RT_7,  //  7 GUESTKEY_7
+  IDC_RT_8,  //  8 GUESTKEY_8
+  IDC_RT_9,  //  9 GUESTKEY_9
+  IDC_RT_CL, // 10 GUESTKEY_CL
+  IDC_RT_0,  // 11 GUESTKEY_0
+  IDC_RT_EN, // 12 GUESTKEY_EN
+  IDC_RT_X1, // 13 GUESTKEY_X1
+  IDC_RT_X2, // 14 GUESTKEY_X2
+  IDC_RT_X3, // 15 GUESTKEY_X3
+  IDC_RT_X4  // 16 GUESTKEY_X4
+} };
+
+EXPORT const struct KeyHelpStruct keyhelp[40] = { // in overlay order
+{  0, GUESTKEY_2 , IDC_LT_2         }, //  0
+{  1, GUESTKEY_2 , IDC_RT_2         },
+{  0, GUESTKEY_X1, IDC_LT_X1        },
+{  0, GUESTKEY_X2, IDC_LT_X2        },
+{  0, GUESTKEY_X3, IDC_LT_X3        },
+{  1, GUESTKEY_X1, IDC_RT_X1        },
+{  1, GUESTKEY_X2, IDC_RT_X2        },
+{  1, GUESTKEY_X3, IDC_RT_X3        },
+{  0, GUESTKEY_1 , IDC_LT_1         },
+{  0, GUESTKEY_X4, IDC_LT_X4        },
+{  0, GUESTKEY_3 , IDC_LT_3         }, // 10
+{  1, GUESTKEY_1 , IDC_RT_1         },
+{  1, GUESTKEY_X4, IDC_RT_X4        },
+{  1, GUESTKEY_3 , IDC_RT_3         },
+{  0, GUESTKEY_4 , IDC_LT_4         },
+{  0, GUESTKEY_5 , IDC_LT_5         },
+{  0, GUESTKEY_6 , IDC_LT_6         },
+{  1, GUESTKEY_4 , IDC_RT_4         },
+{  1, GUESTKEY_5 , IDC_RT_5         },
+{  1, GUESTKEY_6 , IDC_RT_6         },
+{  0, GUESTKEY_7 , IDC_LT_7         }, // 20
+{  0, GUESTKEY_8 , IDC_LT_8         },
+{  0, GUESTKEY_9 , IDC_LT_9         },
+{  1, GUESTKEY_7 , IDC_RT_7         },
+{  1, GUESTKEY_8 , IDC_RT_8         },
+{  1, GUESTKEY_9 , IDC_RT_9         },
+{  0, GUESTKEY_CL, IDC_LT_CL        },
+{  0, GUESTKEY_0 , IDC_LT_0         },
+{  0, GUESTKEY_EN, IDC_LT_EN        },
+{  1, GUESTKEY_CL, IDC_RT_CL        },
+{  1, GUESTKEY_0 , IDC_RT_0         }, // 30
+{  1, GUESTKEY_EN, IDC_RT_EN        },
+{  0, GUESTKEY_1ST,IDL_GAMEINFO_1ST },
+{  0, GUESTKEY_2ND,IDL_GAMEINFO_2ND },
+{  0, GUESTKEY_3RD,IDL_GAMEINFO_3RD },
+{  0, GUESTKEY_4TH,IDL_GAMEINFO_4TH }, // 35
+{  0, GUESTKEY_2 , IDC_LT_EXTRAFIRE1}, // 36
+{  0, GUESTKEY_2 , IDC_LT_EXTRAFIRE2},
+{  1, GUESTKEY_2 , IDC_RT_EXTRAFIRE1},
+{  1, GUESTKEY_2 , IDC_RT_EXTRAFIRE2}, // 39
 };

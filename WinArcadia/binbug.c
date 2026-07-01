@@ -94,7 +94,7 @@ IMPORT       ULONG                    autofire[2],
                                       cycles_2650,
                                       downframes,
                                       frames,
-                                      jff[2],
+                                      jf[2],
                                       oldcycles,
                                       region,
                                       swapped,
@@ -111,6 +111,7 @@ IMPORT       int                      ambient,
                                       cpux,
                                       cpuy,
                                       debugdrive,
+                                      diskblocksize,
                                       drawmode,
                                       drawunlit,
                                       drive_mode,
@@ -145,17 +146,16 @@ IMPORT       struct KindStruct        filekind[KINDS];
 IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct PrinterStruct     printer[2];
 IMPORT       struct RTCStruct         rtc;
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 IMPORT const struct CodeCommentStruct codecomment[];
 IMPORT       ASCREEN                  screen[BOXWIDTH][BOXHEIGHT];
 IMPORT       MEMFLAG                  memflags[ALLTOKENS];
 IMPORT       UBYTE*                   IOBuffer;
 #ifdef WIN32
     IMPORT   int                      CatalogPtr;
-    IMPORT   HWND                     SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef AMIGA
     IMPORT   struct Catalog*          CatalogPtr;
-    IMPORT   struct Window*           SubWindowPtr[SUBWINDOWS];
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
@@ -509,6 +509,8 @@ EXPORT void binbug_setmemmap(void)
     }
     trackreg = 0;
 
+    diskblocksize = BINBUG_BLOCKSIZE;
+
     binbug_changebios(FALSE); // this also handles COMMENTED flag
 }
 
@@ -766,15 +768,15 @@ EXPORT UBYTE binbug_readport(int port)
     if
     (   drive[curdrive].track       != oldtrack
      || drive[curdrive].sector      != oldsector
+     || drive[curdrive].blockoffset != oldoffset
      || drivestatus                 != oldstatus
      || drive_mode                  != oldmode
-     || drive[curdrive].blockoffset != oldoffset
     )
     {   if (viewingdrive != (int) curdrive)
         {   viewingdrive = (int) curdrive;
-            update_floppydrive(3, viewingdrive);
+            update_floppydrive(TRUE, viewingdrive);
         } else
-        {   update_floppydrive(1, viewingdrive);
+        {   update_floppydrive(FALSE, viewingdrive);
     }   }
 
     return t;
@@ -921,12 +923,13 @@ EXPORT void binbug_writeport(int port, UBYTE data)
                     sound_stop(GUESTCHANNELS + SAMPLE_GRIND);
                     sound_stop(GUESTCHANNELS + SAMPLE_SPIN);
                     drive[curdrive].headloaded = drive[curdrive].spinning = FALSE;
-                    update_floppydrive(1, curdrive);
+                    update_floppydrive(FALSE, curdrive);
                     timeoutat = (ULONG) -1;
                     if (verbosedisk)
                     {   zprintf(TEXTPEN_LOG, "Floppy drive #%d has unloaded head and spun down due to drive change.\n", curdrive);
                 }   }
                 curdrive = data;
+                viewingdrive = curdrive;
         }   }
         elif (verbosedisk)
         {   zprintf(TEXTPEN_VERBOSE, "Code at $%X attempted to change drive unit from %d to %d!\n", iar, curdrive, data);
@@ -934,7 +937,7 @@ EXPORT void binbug_writeport(int port, UBYTE data)
         RESETTIMEOUT;
         if (viewingdrive != (int) curdrive)
         {   viewingdrive = curdrive;
-            update_floppydrive(3, viewingdrive);
+            update_floppydrive(TRUE, viewingdrive);
         }
     acase 25: // ETI-641 printer
         euy_printchar(data, TRUE);
@@ -982,25 +985,17 @@ EXPORT void binbug_writeport(int port, UBYTE data)
     logport(port, data, TRUE);
 
     if
-    (   drive[curdrive].track  != oldtrack
-     || drive[curdrive].sector != oldsector
-    )
-    {   if (viewingdrive != (int) curdrive)
-        {   viewingdrive = (int) curdrive;
-            update_floppydrive(3, viewingdrive);
-        } else
-        {   update_floppydrive(2, viewingdrive);
-    }   }
-    elif
-    (   drivestatus                 != oldstatus
-     || drive_mode                  != oldmode
+    (   drive[curdrive].track       != oldtrack
+     || drive[curdrive].sector      != oldsector
      || drive[curdrive].blockoffset != oldoffset
+     || drivestatus                 != oldstatus
+     || drive_mode                  != oldmode
     )
     {   if (viewingdrive != (int) curdrive)
         {   viewingdrive = (int) curdrive;
-            update_floppydrive(3, viewingdrive);
+            update_floppydrive(TRUE, viewingdrive);
         } else
-        {   update_floppydrive(1, viewingdrive);
+        {   update_floppydrive(FALSE, viewingdrive);
 }   }   }
 
 EXPORT void binbug_viewscreen(void)
@@ -1173,14 +1168,14 @@ MODULE void binbug_playerinput(int source, int dest)
   // || hostcontroller[source] == CONTROLLER_1STAJOY
      || hostcontroller[source] == CONTROLLER_1STAPAD
     )
-    {   jg = jff[0];
+    {   jg = jf[0];
     } elif
     (   hostcontroller[source] == CONTROLLER_2NDDJOY
      || hostcontroller[source] == CONTROLLER_2NDDPAD
      || hostcontroller[source] == CONTROLLER_2NDAJOY
      || hostcontroller[source] == CONTROLLER_2NDAPAD
     )
-    {   jg = jff[1];
+    {   jg = jf[1];
     } else
     {   jg = 0;
     }
@@ -1416,7 +1411,7 @@ EXPORT void binbug_dir_disk(FLAG quiet, int whichdrive)
     }   }   }   }   }
 
     viewingdrive = whichdrive;
-    update_floppydrive(3, viewingdrive);
+    update_floppydrive(TRUE, viewingdrive);
 }
 
 MODULE UWORD followchain(int startblock, int endblock, int thesize, int bamtype, FLAG isprog, FLAG quiet, int whichdrive)
@@ -1663,7 +1658,7 @@ EXPORT FLAG binbug_load_disk(FLAG wantasl, int whichdrive)
 
     drive[whichdrive].inserted = TRUE;
     binbug_dir_disk(TRUE, whichdrive);
-    if (!SubWindowPtr[SUBWINDOW_FLOPPYDRIVE])
+    if (!subwin[SUBWINDOW_FLOPPYDRIVE].hwnd)
     {   open_floppydrive(FALSE);
     }
 

@@ -109,16 +109,11 @@ EXPORT       int                      base                     = BASE_HEX,
                                       p2bgcol[4],
                                       p1sprcol[6],
                                       p2sprcol[6],
-                                      paddleup                 = -1,
-                                      paddledown               = -1,
-                                      paddleleft               = -1,
-                                      paddleright              = -1,
                                       ppc,
                                       runtoframe               = FALSE,
                                       speedup                  = SPEED_4QUARTERS,
                                       udgflips                 =  0,
                                       usecsperframe[2],
-                                      whichkeyrect,
                                       whichoverlay;
 EXPORT       float                    chan_hertz[GUESTCHANNELS];
 
@@ -129,7 +124,6 @@ IMPORT       FLAG                     allglyphs,
                                       inframe,
                                       halted,
                                       multisprite[4],
-                                      need[SUBWINDOWS],
                                       protect[4];
 IMPORT       SBYTE                    galaxia_scrolly;
 IMPORT       UBYTE                    abeff1, abeff2,
@@ -157,10 +151,12 @@ IMPORT       UBYTE                    abeff1, abeff2,
                                       memory_effects[512],
                                       mux,
                                       neg1, neg2,
+                                      opcode,
                                       psl,
                                       psu,
                                       q_bank[16][16384],
                                       r[7],
+                                      rr,
                                       rate,
                                       s_tapeport,
                                       s_toggles,
@@ -206,7 +202,7 @@ IMPORT       ULONG                    analog,
                                       turbo,
                                       si50_bigctrls,
                                       swapped;
-IMPORT       char                     mn[256 + 1];
+IMPORT       char                     mn[1024 + 1];
 IMPORT       int                      ambient,
                                       autocoin,
                                       ax[2], // analog paddle X-coords
@@ -270,6 +266,7 @@ IMPORT       int                      ambient,
                                       pipbug_vdu,
                                       pong_variant,
                                       post,
+                                      pvibase,
                                       queuepos,
                                       quiet,
                                       recmode,
@@ -349,7 +346,9 @@ IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct MemMapInfoStruct  memmapinfo[MEMMAPS];
 IMPORT       struct MonitorStruct     monitor[MONITORGADS];
 IMPORT       struct OpcodeStruct      opcodes[3][256];
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 IMPORT const struct CodeCommentStruct codecomment[];
+IMPORT const struct KeyHelpStruct     keyhelp[40];
 IMPORT const struct KnownStruct       known[KNOWNGAMES];
 #ifdef AMIGA
     IMPORT       LONG                 emupens[EMUBRUSHES],
@@ -359,11 +358,9 @@ IMPORT const struct KnownStruct       known[KNOWNGAMES];
     IMPORT       struct Catalog*      CatalogPtr;
     IMPORT       struct Library*      SocketBase;
     IMPORT       struct Gadget*       gadgets[GIDS + 1];
-    IMPORT       struct Window       *MainWindowPtr,
-                                     *SubWindowPtr[SUBWINDOWS];
+    IMPORT       struct Window*       MainWindowPtr;
     IMPORT       Object*              images[IMAGES];
     IMPORT const int                  memmap_to_smlimage[MEMMAPS];
-    IMPORT const struct KeyHelpStruct keyhelp[36];
 #endif
 #ifdef WIN32
     IMPORT       FLAG                 hurry,
@@ -385,12 +382,14 @@ IMPORT const struct KnownStruct       known[KNOWNGAMES];
     IMPORT       HICON                smlicon;
     IMPORT       HWND                 hStatusBar,
                                       MainWindowPtr,
-                                      RichTextGadget,
-                                      SubWindowPtr[SUBWINDOWS];
+                                      RichTextGadget;
     IMPORT       UBYTE*               pixelubyte;
     IMPORT       ULONG*               pixelulong;
     IMPORT       CHARFORMAT2          fgformat;
-    IMPORT const struct KeyHelpStruct keyhelp[40];
+    IMPORT const UBYTE                from_a[2][24];
+    IMPORT struct IdealStruct         idealfreq_ntsc[256],
+                                      idealfreq_pal[256];
+    IMPORT struct NoteStruct          notes[NOTES + 1];
 #endif
 
 IMPORT void (* drawpixel) (int x, int y, int colour);
@@ -512,10 +511,6 @@ EXPORT void configure(void)
         key4            = 0;
         sensitivity[0]  =
         sensitivity[1]  = SENSITIVITY_DEFAULT;
-        paddleup        =
-        paddledown      =
-        paddleleft      =
-        paddleright     = -1;
         firstrow        = 26;
         lastrow         = -1;
         udgflips        =
@@ -528,9 +523,9 @@ EXPORT void configure(void)
         // we deliberately leave region, flagline, darkenbg, s_io, s_is, s_id alone
 
         if (machine == MALZAK || machine == ZACCARIA || machine == PONG)
-        {   changemachine(newmachine, memmap,                      FALSE, FALSE, FALSE);
+        {   changemachine(newmachine, memmap,                      FALSE, 0, FALSE);
         } else
-        {   changemachine(newmachine, machines[newmachine].memmap, FALSE, FALSE, FALSE);
+        {   changemachine(newmachine, machines[newmachine].memmap, FALSE, 0, FALSE);
         }
         whichoverlay    = memmapinfo[memmap].overlay;
     } else
@@ -588,7 +583,7 @@ EXPORT void configure(void)
         acase PHUNSY: phunsy_biosver  = known[whichgame].bios;
         acase SELBST: selbst_biosver  = known[whichgame].bios;
         }
-        changemachine(known[whichgame].machine, known[whichgame].memmap, FALSE, FALSE, FALSE);
+        changemachine(known[whichgame].machine, known[whichgame].memmap, FALSE, 0, FALSE);
 
         switch (machine)
         {
@@ -636,10 +631,6 @@ EXPORT void configure(void)
         {   p1sprcol[i]   = (int)   known[whichgame].p1sprcol[i];
             p2sprcol[i]   = (int)   known[whichgame].p2sprcol[i];
         }
-        paddleup          = (int)   known[whichgame].up;
-        paddledown        = (int)   known[whichgame].down;
-        paddleleft        = (int)   known[whichgame].left;
-        paddleright       = (int)   known[whichgame].right;
         if (known[whichgame].firstcodecomment != -1)
         {   // assert(known[whichgame].lastcodecomment != -1);
             for (i = known[whichgame].firstcodecomment; i <= known[whichgame].lastcodecomment; i++)
@@ -674,7 +665,11 @@ EXPORT void configure(void)
                     protect[1]     = (known[whichgame].demultiplex & 0x04) ? TRUE : FALSE;
                     protect[2]     = (known[whichgame].demultiplex & 0x02) ? TRUE : FALSE;
                     protect[3]     = (known[whichgame].demultiplex & 0x01) ? TRUE : FALSE;
-        }   }   }
+            }   }
+            else
+            {   spriteflips = 0;
+                udgflips = 0;
+        }   }
 
 #ifdef VERBOSE
         zprintf(TEXTPEN_VERBOSE, "Autosensed game #%d.\n", whichgame);
@@ -1058,6 +1053,7 @@ EXPORT FLAG loadzip(STRPTR passedname, FLAG auditing, FLAG quiet)
 
         if
         (   !stricmp((const char*) buf, "BIN")
+         || !stricmp((const char*) buf, "ROM")
          || !stricmp((const char*) buf, "TVC")
          || (   !auditing
              && (   !stricmp((const char*) buf, "AOF")
@@ -1653,14 +1649,14 @@ EXPORT void wait_second(void)
             if (badframes >= BADFRAMES)
             {   badframes = 0;
                 frameskip++;
-                if (SubWindowPtr[SUBWINDOW_SPEED])
+                if (subwin[SUBWINDOW_SPEED].hwnd)
                 {
 #ifdef WIN32
                     sprintf(gtempstring, "%d", frameskip);
                     st_set(SUBWINDOW_SPEED, IDC_FRAMESKIP_NUM);
 #endif
 #ifdef AMIGA
-                    SetGadgetAttrs(gadgets[GID_SD_IN2], SubWindowPtr[SUBWINDOW_SPEED], NULL, INTEGER_Number, (ULONG) frameskip, TAG_DONE); // this autorefreshes
+                    SetGadgetAttrs(gadgets[GID_SD_IN2], subwin[SUBWINDOW_SPEED].hwnd, NULL, INTEGER_Number, (ULONG) frameskip, TAG_DONE); // this autorefreshes
 #endif
                     sl_set(SUBWINDOW_SPEED, IDC_FRAMESKIP, frameskip);
         }   }   }
@@ -2001,6 +1997,7 @@ EXPORT void zprintf(UNUSED int whichcolour, const char* format, ...)
     FAST      int     i,
                       length;
 #ifdef WIN32
+    PERSIST   FLAG    already = FALSE;
     FAST      UBYTE   currenttextpen;
     FAST      int     j,
                       prevpos;
@@ -2054,7 +2051,7 @@ PERSIST const int textpen_to_rgb[] =
 #ifdef WIN32
     if
     (   ( climode && !consoleopened)
-     || (!climode && !SubWindowPtr[SUBWINDOW_OUTPUT])
+     || (!climode && !subwin[SUBWINDOW_OUTPUT].hwnd)
     )
     {   open_output(TRUE);
     }
@@ -2169,9 +2166,11 @@ PERSIST const int textpen_to_rgb[] =
             );
         }
 
-        if (!quitting && storedmenu1 == -1 && storedmenu2 == -1)
-        {   wa_checkinput();
+        if (!already && !quitting && storedmenu1 == -1 && storedmenu2 == -1)
+        {   already = TRUE;
+            wa_checkinput();
             process_code();
+            already = FALSE;
     }   }
 #endif
 #ifdef AMIGA
@@ -3194,10 +3193,11 @@ EXPORT void make_opcodetip(int i, STRPTR stringptr)
 }
 
 EXPORT void make_memorytip(int address, STRPTR stringptr)
-{   FAST int i,
-             oldverbosity;
+{   FAST UWORD oldiar;
+    FAST int   i,
+               oldverbosity;
 
-    DISCARD getfriendly(address);
+    number_to_friendly(address, (STRPTR) friendly, TRUE, 0, 15, TRUE);
     sprintf
     (   stringptr,
         "%s %s\n",
@@ -3205,22 +3205,25 @@ EXPORT void make_memorytip(int address, STRPTR stringptr)
         friendly
     );
     if (mirror_r[address] != address)
-    {   DISCARD getfriendly(mirror_r[address]);
+    {   DISCARD number_to_friendly(mirror_r[address], (STRPTR) friendly, TRUE, 0, 15, TRUE);
         sprintf(ENDOF(stringptr), LLL(MSG_READMIRROR,  "Read mirror of %s." ), friendly);
         strcat(stringptr, "\n");
     }
     if (mirror_w[address] != address)
-    {   DISCARD getfriendly(mirror_w[address]);
+    {   DISCARD number_to_friendly(mirror_w[address], (STRPTR) friendly, TRUE, 0, 15, TRUE);
         sprintf(ENDOF(stringptr), LLL(MSG_WRITEMIRROR, "Write mirror of %s."), friendly);
         strcat(stringptr, "\n");
     }
 
     sprintf(ENDOF(stringptr), "%s: $%02X\n", LLL(MSG_CONTENTS, "Contents"), memory[address]);
     oldverbosity = verbosity;
-    verbosity = 2;
-    disassemble_2650(address, address, TRUE);
+    verbosity = VERBOSITY_MAXIMUM;
+    oldiar = iar;
+    iar = address;
+    tracecpu_2650(FALSE, TRUE);
+    iar = oldiar;
     verbosity = oldverbosity;
-    strcat(stringptr, &mn[8]);
+    strcat(stringptr, mn);
 
     // machine-specific code comments
     if (machines[machine].firstcodecomment != -1)
@@ -3256,8 +3259,7 @@ EXPORT void make_memorytip(int address, STRPTR stringptr)
 }
 
 EXPORT void make_monitortip(int address, STRPTR stringptr)
-{   DISCARD getfriendly(address);
-    strcpy(stringptr, (const char*) friendly);
+{   DISCARD number_to_friendly(address, stringptr, TRUE, 0, 15, TRUE);
     show_data_comment(address, 2, stringptr);
 }
 
@@ -3270,17 +3272,11 @@ EXPORT void make_overlaytip(int i, STRPTR stringptr)
     {   i = 1;
     }
 
-    if     (keyhelp[i].seq == key1)
-    {   extrakey = keypads[keyhelp[i].player][ 0];
-    } elif (keyhelp[i].seq == key2)
-    {   extrakey = keypads[keyhelp[i].player][21];
-    } elif (keyhelp[i].seq == key3)
-    {   extrakey = keypads[keyhelp[i].player][22];
-    } elif (keyhelp[i].seq == key4)
-    {   extrakey = keypads[keyhelp[i].player][23];
-    } else
-    {   extrakey = -1;
-    }
+    if   (keyhelp[i].seq == key1) extrakey = keypads[keyhelp[i].player][GUESTKEY_1ST];
+    elif (keyhelp[i].seq == key2) extrakey = keypads[keyhelp[i].player][GUESTKEY_2ND];
+    elif (keyhelp[i].seq == key3) extrakey = keypads[keyhelp[i].player][GUESTKEY_3RD];
+    elif (keyhelp[i].seq == key4) extrakey = keypads[keyhelp[i].player][GUESTKEY_4TH];
+    else                          extrakey = -1;
 
     if (extrakey == -1)
     {   sprintf
@@ -3293,7 +3289,7 @@ EXPORT void make_overlaytip(int i, STRPTR stringptr)
             ),
             overlays[whichoverlay][i],
             overlays[memmapinfo[memmap].overlay][i],
-            keyname[keypads[keyhelp[i].player][keyhelp[i].pos]].name
+            keyname[keypads[keyhelp[i].player][keyhelp[i].seq]].name
         );
     } else
     {   sprintf
@@ -3306,7 +3302,7 @@ EXPORT void make_overlaytip(int i, STRPTR stringptr)
             ),
             overlays[whichoverlay][i],
             overlays[memmapinfo[memmap].overlay][i],
-            keyname[keypads[keyhelp[i].player][keyhelp[i].pos]].name,
+            keyname[keypads[keyhelp[i].player][keyhelp[i].seq]].name,
             keyname[extrakey].name
         );
 }   }
@@ -3326,10 +3322,10 @@ EXPORT void make_overlayspecialtip(int left, int right, int id, STRPTR stringptr
         ),
         overlays[memmapinfo[memmap].overlay][left],
         overlays[              whichoverlay][left],
-        keyname[keypads[keyhelp[left].player][keyhelp[left].pos]].name,
+        keyname[keypads[keyhelp[left].player][keyhelp[left].seq]].name,
         id == 32 ? keyname[keypads[0][0]].name : keyname[keypads[0][id - 12]].name, // 32 -> 0, 33..35 -> 21..23
         overlays[whichoverlay][right],
-        keyname[keypads[keyhelp[right].player][keyhelp[right].pos]].name,
+        keyname[keypads[keyhelp[right].player][keyhelp[right].seq]].name,
         id == 32 ? keyname[keypads[1][0]].name : keyname[keypads[1][id - 12]].name  // 32 -> 0, 33..35 -> 21..23
     );
 }
@@ -3350,8 +3346,7 @@ EXPORT void patchrom(void)
     switch (memmap)
     {
     case MEMMAP_ASTROWARS:
-        // ADDI,r0 $01 (patient) vs. LODI,r0 $55 (impatient)
-        memory[ 0x198] = post                  ? 0x84 : 0x04;
+        memory[ 0x198] = post                  ? 0x84 : 0x04;     // ADDI,r0 1             -> LODI,r0 $55
         memory[ 0x199] = post                  ? 0x01 : 0x55;
 
         memory[ 0xEB2] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
@@ -3362,8 +3357,7 @@ EXPORT void patchrom(void)
         memory[0x11A4] = trainer_invincibility ? 0x00 : 0x22; // bombs
         memory[0x2548] = trainer_invincibility ? 0x00 : 0x22; // bullets
     acase MEMMAP_GALAXIA:
-        // ADDI,r0 $01 (patient) vs. LODI,r0 $55 (impatient)
-        memory[ 0x179] = post                  ? 0x84 : 0x04;
+        memory[ 0x179] = post                  ? 0x84 : 0x04;     // ADDI,r0 1             -> LODI,r0 $55
         memory[ 0x17A] = post                  ? 0x01 : 0x55;
 
         memory[ 0x6F1] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
@@ -3373,19 +3367,27 @@ EXPORT void patchrom(void)
 
         memory[0x27BB] = trainer_time          ? 0xC0 : 0x16;     // RETC,lt               -> NOP       (energy)
     acase MEMMAP_LASERBATTLE:
-        // ADDI,r0 $01 (patient) vs. LODI,r0 $55 (impatient)
-        memory[ 0x269] = post                  ? 0x84 : 0x04;
+        memory[ 0x269] = post                  ? 0x84 : 0x04;     // ADDI,r0 1             -> LODI,r0 $55
         memory[ 0x26A] = post                  ? 0x01 : 0x55;
 
         memory[0x2715] = trainer_time          ? 0x00 : 0x02;     // SUBI,r0 2             -> SUBI,r0 0 (fuel)
+        memory[0x31F7] = trainer_time          ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
+        memory[0x6030] = trainer_time          ? 0xC0 : 0xCF;     // STRA,r0 $7CBE,r3      -> NOP
+        memory[0x6031] = trainer_time          ? 0xC0 : 0x7C;     //                          NOP
+        memory[0x6032] = trainer_time          ? 0xC0 : 0xBE;     //                          NOP
+        memory[0x603B] = trainer_time          ? 0xC0 : 0xCF;     // STRA,r0 $7CBC,r3      -> NOP
+        memory[0x603C] = trainer_time          ? 0xC0 : 0x7C;     //                          NOP
+        memory[0x603D] = trainer_time          ? 0xC0 : 0xBC;     //                          NOP
+        memory[0x6044] = trainer_time          ? 0xC0 : 0xCF;     // STRA,r0 $7CBA,r3      -> NOP
+        memory[0x6045] = trainer_time          ? 0xC0 : 0x7C;     //                          NOP
+        memory[0x6046] = trainer_time          ? 0xC0 : 0xBA;     //                          NOP
 
         memory[0x520D] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
 
         memory[0x50DC] = trainer_invincibility ? 0x20 : 0x0C;     // LODA,r0 $5C4B         -> EORZ    r0
         memory[0x50DD] = trainer_invincibility ? 0x17 : 0x1C;     //                          RETC,un
     acase MEMMAP_LAZARIAN:
-        // ADDI,r0 $01 (patient) vs. LODI,r0 $55 (impatient)
-        memory[ 0x281] = post                  ? 0x84 : 0x04;
+        memory[ 0x281] = post                  ? 0x84 : 0x04;     // ADDI,r0 1             -> LODI,r0 $55
         memory[ 0x282] = post                  ? 0x01 : 0x55;
 
         memory[0x30A2] = trainer_invincibility ? 0x20 : 0x0D;     // LODA,r1 $3C01         -> EORZ    r0
@@ -3393,10 +3395,10 @@ EXPORT void patchrom(void)
 
         memory[0x31A8] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
 
-        memory[0x46E2] = trainer_time          ? 0x00 : 0x02;     // SUBI,r0 2             -> SUBI,r0 0 (fuel)
+        memory[0x4094] = trainer_time          ? 0x00 : 0x01;     // LODI,r0 1             -> LODI,r0 0 (fuel)
+        memory[0x46E2] = trainer_time          ? 0x00 : 0x02;     // SUBI,r0 2             -> SUBI,r0 0
     acase MEMMAP_MALZAK1:
-        // STRA,r0 $1800 (patient) vs. BCTA,un $00A0 (impatient)
-        memory[  0x52] = post                  ? 0xCC : 0x1F;
+        memory[  0x52] = post                  ? 0xCC : 0x1F;     // STRA,r0 $1800         -> BCTA,un $0080
         memory[  0x53] = post                  ? 0x18 : 0x00;
         memory[  0x54] = post                  ? 0x00 : 0xA0;
 
@@ -3407,8 +3409,7 @@ EXPORT void patchrom(void)
         memory[0x41FD] = trainer_invincibility ? 0x42 : 0x24;
         memory[0x41FE] = trainer_invincibility ? 0x09 : 0x00;
     acase MEMMAP_MALZAK2:
-        // LODI,r0 $00 (patient) vs. LODI,r0 $01 (impatient)
-        memory[  0x84] = post                  ? 0x00 : 0x01;
+        memory[  0x84] = post                  ? 0x00 : 0x01;     // LODI,r0 0             -> LODI,r0 1
 
         memory[0x24AD] = trainer_lives         ? 0x00 : 0x01;     // SUBI,r0 1             -> SUBI,r0 0
 
@@ -3455,6 +3456,12 @@ EXPORT void patchrom(void)
         case _3DSOCCERBPOS:
         case _3DSOCCERENHPOS:
             memory[ 0x181] = trainer_time          ? 0x00 : 0xFF; // ADDI,r0 $FF           -> ADDI,r0 0
+        acase AGGRESSORPOS1:
+        case AGGRESSORPOS2:
+            memory[ 0xD6C] = trainer_invincibility ? 0x77 : 0xF5; // TMI,r1  $10           -> PPSU    $C0
+            memory[ 0xD6D] = trainer_invincibility ? 0xC0 : 0x10;
+            memory[ 0xD7A] = trainer_invincibility ? 0x77 : 0xF5; // TMI,r1  $10           -> PPSU    $C0
+            memory[ 0xD7B] = trainer_invincibility ? 0xC0 : 0x10;
         acase AIRSEAATTACKPOS:
             memory[ 0x60D] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0 (player 1)
             memory[ 0x65A] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0 (player 2)
@@ -3476,6 +3483,11 @@ EXPORT void patchrom(void)
             memory[  0xE4] = trainer_time          ? 0xC0 : 0x18; //                          NOP
             memory[  0xE5] = trainer_time          ? 0xC0 : 0xFD; //                          NOP
             memory[ 0xBFB] = trainer_time          ? 0x17 : 0x0C; // LODA,r0 $18F8         -> RETC,un
+        acase AMAZONEPOS:
+            memory[ 0x9C1] = trainer_time          ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
+            memory[ 0xABE] = trainer_time          ? 0x00 : 0x01; // LODI,r0 1             -> LODI,r0 0
+            memory[ 0xEDE] = trainer_time          ? 0x00 : 0x05; // LODI,r1 5             -> LODI,r1 0
+            memory[ 0xF0A] = trainer_time          ? 0x00 : 0x01; // LODI,r1 1             -> LODI,r1 0
         acase ASTEROIDSPOS:
             memory[ 0x976] = trainer_invincibility ? 0x3F : 0x0F; // LODA,r3 SPRITECOLLIDE -> BSTA,un $1446
             memory[ 0x977] = trainer_invincibility ? 0x14 : 0x1F;
@@ -3495,14 +3507,14 @@ EXPORT void patchrom(void)
             memory[ 0x174] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase ATTACKFROMSPACEPOS:
             memory[ 0xBB2] = trainer_invincibility ? 0x1B : 0x98; // BCFR,eq $BA9          -> BCTR,un $BA9
+        acase A_BASKETBALLPOS:
+            memory[ 0x112] = trainer_time          ? 0x00 : 0x01; // SUBI,r1 1             -> SUBI,r1 0
         acase A_BOXINGPOS:
             memory[ 0x6B7] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
         acase A_GOLFPOS1:
         case A_GOLFPOS2:
         case A_GOLFODPOS:
             memory[ 0xDC1] = trainer_time          ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
-        acase A_BASKETBALLPOS:
-            memory[ 0x112] = trainer_time          ? 0x00 : 0x01; // SUBI,r1 1             -> SUBI,r1 0
         acase BREAKAWAYPOS:
             memory[ 0x356] = trainer_lives         ? 0x00 : 0xFF; // ADDI,r0 $FF           -> ADDI,r0 0
         acase BREAKOUTPOS:
@@ -3541,6 +3553,10 @@ EXPORT void patchrom(void)
         case COMEFRUTASPOS2:
         case COMEFRUTASPOS3:
             memory[ 0xB6E] = trainer_lives         ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+        acase CRAZYCRABPOS:
+            memory[  0xAA] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+
+            memory[ 0x675] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase CRAZYGOBBLERPOS:
             memory[ 0x2D9] = trainer_invincibility ? 0x1F : 0x0C; // LODA,r0 $18DC         -> BCTA,un $33A
             memory[ 0x2DA] = trainer_invincibility ? 0x03 : 0x18;
@@ -3555,6 +3571,9 @@ EXPORT void patchrom(void)
             memory[0x2D97] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
 
             memory[ 0x703] = trainer_time          ? 0x00 : 0x01; // LODI,r0 1             -> LODI,r0 0
+        acase E_HUNTINGPOS:
+            memory[ 0xFBA] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (ammo)
+            memory[0x106A] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (time)
         acase ENTERPRISE3POS:
             memory[0x114C] = trainer_time          ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase ESCAPEPOS:
@@ -3646,6 +3665,9 @@ EXPORT void patchrom(void)
             memory[ 0x9A0] = trainer_invincibility ? 0x17 : 0x20; // EORZ    r0            -> RETC,un      (level 2)
         acase HOMERUNPOS:
             memory[ 0x233] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+        acase I_HUNTINGPOS:
+            memory[ 0x5BA] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (ammo)
+            memory[ 0x66A] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (time)
         acase I_BOXINGPOS:
             memory[ 0x100] = trainer_time          ? 0x00 : 0x01; // SUBI,r2 1             -> SUBI,r2 0
         acase I_CIRCUSPOS:
@@ -3701,6 +3723,8 @@ EXPORT void patchrom(void)
             memory[ 0x345] = trainer_time          ? 0x00 : 0xFF;
         acase JUNGLERPOS:
             memory[ 0x149] = trainer_lives         ? 0x00 : 0x01;
+        acase KOTONOHAPOS:
+            memory[ 0x875] = trainer_lives         ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
         acase LASERATTACKPOS:
             memory[ 0x2E8] = trainer_lives         ? 0xC0 : 0xC8; // STRR,r0 *$2D9         -> NOP
             memory[ 0x2E9] = trainer_lives         ? 0xC0 : 0xEF; //                          NOP
@@ -3722,6 +3746,8 @@ EXPORT void patchrom(void)
             memory[ 0x72F] = trainer_time          ? 0x00 : 0xFF; // ADDI,r0 $FF           -> ADDI,r0 0
             memory[ 0x730] = trainer_time          ? 0xC0 : 0x94; // DAR,r0                -> NOP
             memory[ 0x740] = trainer_time          ? 0x00 : 0xFF; // ADDI,r1 $FF           -> ADDI,r1 0
+        acase MONSTERMANPOS:
+            memory[ 0x675] = trainer_lives         ? 0x00 : 0x01; // ADDI,r0 1             -> ADDI,r0 0
         acase MOONLANDING1POS:
         case MOONLANDING2POS:
             memory[ 0xA89] = trainer_time          ? 0x04 : 0x03; // LODZ    r3            -> LODI,r0 $F0
@@ -3740,6 +3766,14 @@ EXPORT void patchrom(void)
             memory[ 0xC32] = trainer_time          ? 0xC0 : 0x00; //                          NOP
 
             memory[ 0xC56] = trainer_invincibility ? 0x00 : 0x0A; // BCTR,eq $C61          -> BCTR,eq $C57
+        acase MUNCHANDCRUNCH1POS:
+        case MUNCHANDCRUNCH2POS:
+            memory[ 0x3BC] = trainer_invincibility ? 0x00 : 0x20; // ANDI,r1 $20           -> ANDI,r1 0
+
+            memory[ 0x660] = trainer_time          ? 0xC0 : 0xD0; // RRL,r0                -> NOP
+            memory[ 0x662] = trainer_time          ? 0xFF : 0xFE; // ANDI,r0 $FE           -> ANDI,r0 $FF
+
+            memory[ 0x77E] = trainer_lives         ? 0x00 : 0x10; // SUBI,r1 $10           -> SUBI,r0 0
         acase OMEGALANDINGPOS:
             // player-enemy collisions
             memory[ 0xF00] = trainer_invincibility ? 0x1B : 0x18; // BCTR,eq $F13          -> BCTR,un $F13
@@ -3788,6 +3822,9 @@ EXPORT void patchrom(void)
             memory[ 0xBED] = trainer_time          ? 0x00 : 0x01; // SUBI,r6 1             -> SUBI,r6 0
         acase ROUTE16POS:
             memory[ 0xA7A] = trainer_lives         ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
+        acase SHOOTGALPOS:
+            memory[ 0x5AE] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (ammo)
+            memory[ 0x65E] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0    (time)
         acase SPACEATTACKAPOS:
             memory[ 0x18B] = trainer_time          ? 0x00 : 0x01; // SUBI,r0 1             -> SUBI,r0 0
 
@@ -3960,52 +3997,23 @@ EXPORT void patchrom(void)
 EXPORT void keynames_from_overlay(void)
 {   int i;
 
-    machines[machine].keynames[0][ 2] = overlays[whichoverlay][ 0]; // 2
-    machines[machine].keynames[1][ 2] = overlays[whichoverlay][ 1]; // 2
-    machines[machine].keynames[0][13] = overlays[whichoverlay][ 2]; // x1
-    machines[machine].keynames[0][14] = overlays[whichoverlay][ 3]; // x2
-    machines[machine].keynames[0][15] = overlays[whichoverlay][ 4]; // x3
-    machines[machine].keynames[1][13] = overlays[whichoverlay][ 5]; // x1
-    machines[machine].keynames[1][14] = overlays[whichoverlay][ 6]; // x2
-    machines[machine].keynames[1][15] = overlays[whichoverlay][ 7]; // x3
-    machines[machine].keynames[0][ 1] = overlays[whichoverlay][ 8]; // 1
-    machines[machine].keynames[0][16] = overlays[whichoverlay][ 9]; // x4
-    machines[machine].keynames[0][ 3] = overlays[whichoverlay][10]; // 3
-    machines[machine].keynames[1][ 1] = overlays[whichoverlay][11]; // 1
-    machines[machine].keynames[1][16] = overlays[whichoverlay][12]; // x4
-    machines[machine].keynames[1][ 3] = overlays[whichoverlay][13]; // 3
-    machines[machine].keynames[0][ 4] = overlays[whichoverlay][14]; // 4
-    machines[machine].keynames[0][ 5] = overlays[whichoverlay][15]; // 5
-    machines[machine].keynames[0][ 6] = overlays[whichoverlay][16]; // 6
-    machines[machine].keynames[1][ 4] = overlays[whichoverlay][17]; // 4
-    machines[machine].keynames[1][ 5] = overlays[whichoverlay][18]; // 5
-    machines[machine].keynames[1][ 6] = overlays[whichoverlay][19]; // 6
-    machines[machine].keynames[0][ 7] = overlays[whichoverlay][20]; // 7
-    machines[machine].keynames[0][ 8] = overlays[whichoverlay][21]; // 8
-    machines[machine].keynames[0][ 9] = overlays[whichoverlay][22]; // 9
-    machines[machine].keynames[1][ 7] = overlays[whichoverlay][23]; // 7
-    machines[machine].keynames[1][ 8] = overlays[whichoverlay][24]; // 8
-    machines[machine].keynames[1][ 9] = overlays[whichoverlay][25]; // 9
-    machines[machine].keynames[0][10] = overlays[whichoverlay][26]; // Cl
-    machines[machine].keynames[0][11] = overlays[whichoverlay][27]; // 0
-    machines[machine].keynames[0][12] = overlays[whichoverlay][28]; // En
-    machines[machine].keynames[1][10] = overlays[whichoverlay][29]; // Cl
-    machines[machine].keynames[1][11] = overlays[whichoverlay][30]; // 0
-    machines[machine].keynames[1][12] = overlays[whichoverlay][31]; // En
+    for (i = 0; i < 32; i++)
+    {   machines[machine].keynames[keyhelp[i].player][keyhelp[i].seq] = overlays[whichoverlay][i];
+    }
 
     for (i = 0; i < 2; i++)
-    {   machines[machine].keynames[i][ 0] = LLL(MSG_1ST      , "1st" );
-        machines[machine].keynames[i][17] = LLL(MSG_KEY_UP   , "Up"  );
-        machines[machine].keynames[i][18] = LLL(MSG_KEY_DN   , "Dn"  );
-        machines[machine].keynames[i][19] = LLL(MSG_KEY_LT   , "Lt"  );
-        machines[machine].keynames[i][20] = LLL(MSG_KEY_RT   , "Rt"  );
-        machines[machine].keynames[i][21] = LLL(MSG_2ND      , "2nd" );
-        machines[machine].keynames[i][22] = LLL(MSG_3RD      , "3rd" );
-        machines[machine].keynames[i][23] = LLL(MSG_4TH      , "4th" );
-        machines[machine].keynames[i][24] = LLL(MSG_UPLEFT   , "UpLt");
-        machines[machine].keynames[i][25] = LLL(MSG_UPRIGHT  , "UpRt");
-        machines[machine].keynames[i][26] = LLL(MSG_DOWNLEFT , "DnLt");
-        machines[machine].keynames[i][27] = LLL(MSG_DOWNRIGHT, "DnRt");
+    {   machines[machine].keynames[i][GUESTKEY_1ST ] = LLL(MSG_1ST      , "1st" );
+        machines[machine].keynames[i][GUESTKEY_UP  ] = LLL(MSG_KEY_UP   , "Up"  );
+        machines[machine].keynames[i][GUESTKEY_DN  ] = LLL(MSG_KEY_DN   , "Dn"  );
+        machines[machine].keynames[i][GUESTKEY_LT  ] = LLL(MSG_KEY_LT   , "Lt"  );
+        machines[machine].keynames[i][GUESTKEY_RT  ] = LLL(MSG_KEY_RT   , "Rt"  );
+        machines[machine].keynames[i][GUESTKEY_2ND ] = LLL(MSG_2ND      , "2nd" );
+        machines[machine].keynames[i][GUESTKEY_3RD ] = LLL(MSG_3RD      , "3rd" );
+        machines[machine].keynames[i][GUESTKEY_4TH ] = LLL(MSG_4TH      , "4th" );
+        machines[machine].keynames[i][GUESTKEY_UPLT] = LLL(MSG_UPLEFT   , "UpLt");
+        machines[machine].keynames[i][GUESTKEY_UPRT] = LLL(MSG_UPRIGHT  , "UpRt");
+        machines[machine].keynames[i][GUESTKEY_DNLT] = LLL(MSG_DOWNLEFT , "DnLt");
+        machines[machine].keynames[i][GUESTKEY_DNRT] = LLL(MSG_DOWNRIGHT, "DnRt");
 }   }
 
 EXPORT void help_update(FLAG quiet)
@@ -4220,7 +4228,7 @@ EXPORT int parse_bytes(int mode)
     switch (kind)
     {
     case KIND_CMD:
-        changemachine(BINBUG, MEMMAP_BINBUG, FALSE, FALSE, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        changemachine(BINBUG, MEMMAP_BINBUG, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
         if (!load_cmd(filesize))
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "CMD");
             say((STRPTR) tempstring);
@@ -4229,7 +4237,7 @@ EXPORT int parse_bytes(int mode)
         engine_reset();
     return 2;
     case KIND_IMAG:
-        changemachine(CD2650, MEMMAP_CD2650, FALSE, FALSE, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        changemachine(CD2650, MEMMAP_CD2650, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
         if (!load_imag(filesize))
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "IMAG");
             say((STRPTR) tempstring);
@@ -4238,7 +4246,7 @@ EXPORT int parse_bytes(int mode)
         engine_reset();
     return 2;
     case KIND_MOD:
-        changemachine(TWIN, MEMMAP_TWIN, FALSE, FALSE, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        changemachine(TWIN, MEMMAP_TWIN, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
         if (!load_mod(filesize))
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "MOD");
             say((STRPTR) tempstring);
@@ -4253,7 +4261,7 @@ EXPORT int parse_bytes(int mode)
         }
 #endif
         if (machine != ELEKTOR)
-        {   changemachine(ELEKTOR, MEMMAP_F, FALSE, FALSE, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        {   changemachine(ELEKTOR, MEMMAP_F, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
         }
         if (load_eof(filesize) == 0)
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "EOF");
@@ -4328,7 +4336,7 @@ EXPORT int parse_bytes(int mode)
         {   macro_stop();
             strcpy((char*) fn_tape[1], (const char*) fn_game); // ie. MDCR unit
             DISCARD insert_mdcr(FALSE);
-            if (!SubWindowPtr[SUBWINDOW_TAPEDECK])
+            if (!subwin[SUBWINDOW_TAPEDECK].hwnd)
             {   open_tapedeck();
             }
             return 2;
@@ -4357,13 +4365,14 @@ EXPORT int parse_bytes(int mode)
     case KIND_TWIN:
         if (machine == TWIN)
         {   macro_stop();
-            if (drive[0].inserted && !drive[1].inserted)
-            {   strcpy((char*) drive[1].fn_disk, (const char*) fn_game);
-                load_disk(FALSE, 1, TRUE);
-            } else
-            {   strcpy((char*) drive[0].fn_disk, (const char*) fn_game);
-                load_disk(FALSE, 0, TRUE);
-            }
+            j = 0;
+            for (i = 0; i < machines[machine].drives; i++)
+            {   if (!drive[i].inserted)
+                {   j = i;
+                    break;
+            }   }
+            strcpy((char*) drive[j].fn_disk, (const char*) fn_game);
+            load_disk(FALSE, j, TRUE);
             return 2;
         } else
         {   say((STRPTR) LLL(MSG_BADFORMAT, "This file format is not supported for this guest!"));
@@ -4380,7 +4389,7 @@ EXPORT int parse_bytes(int mode)
         {   macro_stop();
             strcpy((char*) fn_tape[0], (const char*) fn_game);
             load_tape(FALSE);
-            if (!SubWindowPtr[SUBWINDOW_TAPEDECK])
+            if (!subwin[SUBWINDOW_TAPEDECK].hwnd)
             {   open_tapedeck();
             }
             return 2;
@@ -4431,7 +4440,7 @@ EXPORT int parse_bytes(int mode)
             {   strcpy((char*) fn_tape[2], (const char*) fn_game);
                 load_papertape(FALSE, 0);
             }
-            if (!SubWindowPtr[SUBWINDOW_PAPERTAPE])
+            if (!subwin[SUBWINDOW_PAPERTAPE].hwnd)
             {   open_papertape();
             }
             return 2;
@@ -4444,7 +4453,7 @@ EXPORT int parse_bytes(int mode)
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "TVC");
             return 0;
         }
-        changemachine(ELEKTOR, MEMMAP_F, FALSE, FALSE, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        changemachine(ELEKTOR, MEMMAP_F, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
         startaddr_h  = ReadByteAt(3);
         startaddr_l  = ReadByteAt(4);
         cheevosize   = filesize;
@@ -4476,9 +4485,9 @@ EXPORT int parse_bytes(int mode)
         newmachine = memmapinfo[newmemmap].machine;
         if (cosversion != machines[newmachine].cosversion)
         {   if
-            (   (newmachine == PIPBUG && cosversion == 41)
+            (   (newmachine == PIPBUG && cosversion >= 41)
              || (newmachine == BINBUG && cosversion >= 42)
-             || (newmachine == TWIN   && cosversion == 39)
+             || (newmachine == TWIN   && cosversion >= 39)
              || (newmachine == CD2650 && cosversion >= 42)
             )
             {   ; // OK
@@ -4500,7 +4509,7 @@ EXPORT int parse_bytes(int mode)
             say((STRPTR) tempstring);
         return 0;
         }
-        changemachine(memmapinfo[newmemmap].machine, newmemmap, FALSE, FALSE, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        changemachine(memmapinfo[newmemmap].machine, newmemmap, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
     acase KIND_BIN:
         if (filesize > 32 * KILOBYTE)
         {   say((STRPTR) LLL(MSG_ENGINE_TOOLARGE, "File is too large or corrupt!"));
@@ -4772,17 +4781,6 @@ EXPORT int parse_bytes(int mode)
         memory[0x1F00 + PVI_SPRITE2BY] =
         memory[0x1F00 + PVI_SPRITE3BX] =
         memory[0x1F00 + PVI_SPRITE3BY] = 0xFE; // helps with Figure27.tvc
-
-        // make $8B9..$8BA = $0903 (important!)
-        memory[0x8B9] = 0x09;
-        memory[0x8BA] = 0x03;
-        memory[0x8BD] = 0x1F; // BCTA,UN
-        memory[0x8BE] = startaddr_h;
-        memory[0x8BF] = startaddr_l;
-        iar  = 0x8BD;
-#ifdef VERBOSE
-        zprintf(TEXTPEN_VERBOSE, "Setting IAR to $%X.\n", iar);
-#endif
     acase KIND_AOF:
         if (load_aof(filesize, FALSE) == 0)
         {   game = FALSE;
@@ -4858,15 +4856,13 @@ EXPORT int parse_bytes(int mode)
         spriteflip =
         udgflip    = 0;
         reset_fps();
-    }
-
-    if (kind == KIND_COR)
-    {   recmode = RECMODE_PLAY;
-        recsize = filesize;
-        ghost_dips(FALSE);
-        if (generate)
-        {   macro_start();
-    }   }
+        if (kind == KIND_COR)
+        {   recmode = RECMODE_PLAY;
+            recsize = filesize;
+            ghost_dips(FALSE);
+            if (generate)
+            {   macro_start();
+    }   }   }
 
     generate_autotext();
     updatemenus();

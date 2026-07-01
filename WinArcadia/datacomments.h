@@ -928,7 +928,252 @@ EXPORT const struct DataCommentStruct datacomment[] = {
 { 0x60D1,     -1, "Index into command line"                                       },
 { 0x60D2,     -1, "Zero for normal user, non-zero for supervisor (read-only)"     },
 { 0x60D3,     -2, "Buffer address for disk I/O with DOS_RWByName"                 }, // 650 (LASTP1DOSDATACOMMENT)
-// FIRSTGAMEDATACOMMENT (651)
+// 1st PVI at $14xx (MALZAK) (FIRSTMALZAKDATACOMMENT)
+{ 0x1400, 0x1409, "Sprite #0 imagery"                                                            },
+{ 0x1410, 0x1419, "Sprite #1 imagery"                                                            },
+{ 0x1420, 0x1429, "Sprite #2 imagery"                                                            },
+{ 0x1440, 0x1449, "Sprite #3 imagery"                                                            },
+{ 0x1480, 0x14A7, "Vertical grid"                                                                },
+{ 0x14A8, 0x14AC, "Horizontal grid"                                                              },
+{ 0x14C0,     -1, "(76,54,32,10):\n"                                                             \
+                  "bits 7..6: sprite #3 size (%00..%11)\n"                                       \
+                  "bits 5..4: sprite #2 size (%00..%11)\n"                                       \
+                  "bits 3..2: sprite #1 size (%00..%11)\n"                                       \
+                  "bits 1..0: sprite #0 size (%00..%11)"                                         },
+{ 0x14C1,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #0 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #1 (inverted RGB)"                                },
+{ 0x14C2,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #2 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #3 (inverted RGB)"                                },
+{ 0x14C3,     -1, "(------,1,0):\n"                                                              \
+                  "bits 7..2: unused\n"                                                          \
+                  "bit 1: score format (0=2 groups of 2 digits, 1=1 group of 4 digits)\n"        \
+                  "bit 0: score position (0=top of screen, 1=bottom of screen)"                  },
+{ 0x14C6,     -1, "(-,654,3,210):\n"                                                             \
+                  "bit 7: unused\n"                                                              \
+                  "bits 6..4: grid colour (RGB)\n"                                               \
+                  "bit 3: grid/background enable flag (0=off, 1=on)\n"                           \
+                  "bits 2..0: background colour (RGB) (black if bit 3 is clear)"                 },
+{ 0x14C8,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 1st digit\n"                                          \
+                  "bits 3..0: BCD value of 2nd digit"                                            },
+{ 0x14C9,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 3rd digit\n"                                          \
+                  "bits 3..0: BCD value of 4th digit"                                            },
+{ 0x14CA,     -1, "(7654,3210):\n"                                                               \
+                  "Read-once!\n"                                                                 \
+                  "bits 7..4: sprites #0..#3 collisions with bkgrnd\n"                           \
+                  "bits 3..0: sprites #0..#3 displays complete"                                  },
+{ 0x14CB,     -1, "(-,6,543210):\n"                                                              \
+                  "Read-once!\n"                                                                 \
+                  "bit 7: unused\n"                                                              \
+                  "bit 6: vertical reset flag\n"                                                 \
+                  "bit 5: sprites #0/#1 collision\n"                                             \
+                  "bit 4: sprites #0/#2 collision\n"                                             \
+                  "bit 3: sprites #0/#3 collision\n"                                             \
+                  "bit 2: sprites #1/#2 collision\n"                                             \
+                  "bit 1: sprites #1/#3 collision\n"                                             \
+                  "bit 0: sprites #2/#3 collision"                                               },
+// 2nd PVI at $15xx (MALZAK)
+{ 0x1500, 0x1509, "Sprite #4 imagery"                                                            },
+{ 0x1510, 0x1519, "Sprite #5 imagery"                                                            },
+{ 0x1520, 0x1529, "Sprite #6 imagery"                                                            },
+{ 0x1540, 0x1549, "Sprite #7 imagery"                                                            },
+{ 0x1580, 0x15A7, "Vertical grid"                                                                },
+{ 0x15A8, 0x15AC, "Horizontal grid"                                                              },
+{ 0x15C0,     -1, "(76,54,32,10):\n"                                                             \
+                  "bits 7..6: sprite #7 size (%00..%11)\n"                                       \
+                  "bits 5..4: sprite #6 size (%00..%11)\n"                                       \
+                  "bits 3..2: sprite #5 size (%00..%11)\n"                                       \
+                  "bits 1..0: sprite #4 size (%00..%11)"                                         },
+{ 0x15C1,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #4 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #5 (inverted RGB)"                                },
+{ 0x15C2,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #6 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #7 (inverted RGB)"                                },
+{ 0x15C3,     -1, "(------,1,0):\n"                                                              \
+                  "bits 7..2: unused\n"                                                          \
+                  "bit 1: score format (0=2 groups of 2 digits, 1=1 group of 4 digits)\n"        \
+                  "bit 0: score position (0=top of screen, 1=bottom of screen)"                  },
+{ 0x15C6,     -1, "(-,654,3,210):\n"                                                             \
+                  "bit 7: unused\n"                                                              \
+                  "bits 6..4: grid colour (RGB)\n"                                               \
+                  "bit 3: grid/background enable flag (0=off, 1=on)\n"                           \
+                  "bits 2..0: background colour (RGB) (black if bit 3 is clear)"                 },
+{ 0x15C8,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 1st digit\n"                                          \
+                  "bits 3..0: BCD value of 2nd digit"                                            },
+{ 0x15C9,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 3rd digit\n"                                          \
+                  "bits 3..0: BCD value of 4th digit"                                            },
+{ 0x15CA,     -1, "(7654,3210):\n"                                                               \
+                  "Read-once!\n"                                                                 \
+                  "bits 7..4: sprites #4..#7 collisions with bkgrnd\n"                           \
+                  "bits 3..0: sprites #4..#7 displays complete"                                  },
+{ 0x15CB,     -1, "(-,6,543210):\n"                                                              \
+                  "Read-once!\n"                                                                 \
+                  "bit 7: unused\n"                                                              \
+                  "bit 6: vertical reset flag\n"                                                 \
+                  "bit 5: sprites #4/#5 collision\n"                                             \
+                  "bit 4: sprites #4/#6 collision\n"                                             \
+                  "bit 3: sprites #4/#7 collision\n"                                             \
+                  "bit 2: sprites #5/#6 collision\n"                                             \
+                  "bit 1: sprites #5/#7 collision\n"                                             \
+                  "bit 0: sprites #6/#7 collision"                                               },
+// 1st PVI at $15xx (ZACCARIA) (FIRSTZACCARIADATACOMMENT)
+{ 0x1500, 0x1509, "Sprite #0 imagery"                                                            },
+{ 0x1510, 0x1519, "Sprite #1 imagery"                                                            },
+{ 0x1520, 0x1529, "Sprite #2 imagery"                                                            },
+{ 0x1540, 0x1549, "Sprite #3 imagery"                                                            },
+{ 0x1580, 0x15A7, "Vertical grid"                                                                },
+{ 0x15A8, 0x15AC, "Horizontal grid"                                                              },
+{ 0x15C0,     -1, "(76,54,32,10):\n"                                                             \
+                  "bits 7..6: sprite #3 size (%00..%11)\n"                                       \
+                  "bits 5..4: sprite #2 size (%00..%11)\n"                                       \
+                  "bits 3..2: sprite #1 size (%00..%11)\n"                                       \
+                  "bits 1..0: sprite #0 size (%00..%11)"                                         },
+{ 0x15C1,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #0 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #1 (inverted RGB)"                                },
+{ 0x15C2,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #2 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #3 (inverted RGB)"                                },
+{ 0x15C3,     -1, "(------,1,0):\n"                                                              \
+                  "bits 7..2: unused\n"                                                          \
+                  "bit 1: score format (0=2 groups of 2 digits, 1=1 group of 4 digits)\n"        \
+                  "bit 0: score position (0=top of screen, 1=bottom of screen)"                  },
+{ 0x15C6,     -1, "(-,654,3,210):\n"                                                             \
+                  "bit 7: unused\n"                                                              \
+                  "bits 6..4: grid colour (RGB)\n"                                               \
+                  "bit 3: grid/background enable flag (0=off, 1=on)\n"                           \
+                  "bits 2..0: background colour (RGB) (black if bit 3 is clear)"                 },
+{ 0x15C8,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 1st digit\n"                                          \
+                  "bits 3..0: BCD value of 2nd digit"                                            },
+{ 0x15C9,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 3rd digit\n"                                          \
+                  "bits 3..0: BCD value of 4th digit"                                            },
+{ 0x15CA,     -1, "(7654,3210):\n"                                                               \
+                  "Read-once!\n"                                                                 \
+                  "bits 7..4: sprites #0..#3 collisions with bkgrnd\n"                           \
+                  "bits 3..0: sprites #0..#3 displays complete"                                  },
+{ 0x15CB,     -1, "(-,6,543210):\n"                                                              \
+                  "Read-once!\n"                                                                 \
+                  "bit 7: unused\n"                                                              \
+                  "bit 6: vertical reset flag\n"                                                 \
+                  "bit 5: sprites #0/#1 collision\n"                                             \
+                  "bit 4: sprites #0/#2 collision\n"                                             \
+                  "bit 3: sprites #0/#3 collision\n"                                             \
+                  "bit 2: sprites #1/#2 collision\n"                                             \
+                  "bit 1: sprites #1/#3 collision\n"                                             \
+                  "bit 0: sprites #2/#3 collision"                                               },
+// 2nd PVI at $16xx (Galaxia/Laser Battle/Lazarian)
+{ 0x1600, 0x1609, "Sprite #4 imagery"                                                            },
+{ 0x1610, 0x1619, "Sprite #5 imagery"                                                            },
+{ 0x1620, 0x1629, "Sprite #6 imagery"                                                            },
+{ 0x1640, 0x1649, "Sprite #7 imagery"                                                            },
+{ 0x1680, 0x16A7, "Vertical grid"                                                                },
+{ 0x16A8, 0x16AC, "Horizontal grid"                                                              },
+{ 0x16C0,     -1, "(76,54,32,10):\n"                                                             \
+                  "bits 7..6: sprite #7 size (%00..%11)\n"                                       \
+                  "bits 5..4: sprite #6 size (%00..%11)\n"                                       \
+                  "bits 3..2: sprite #5 size (%00..%11)\n"                                       \
+                  "bits 1..0: sprite #4 size (%00..%11)"                                         },
+{ 0x16C1,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #4 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #5 (inverted RGB)"                                },
+{ 0x16C2,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #6 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #7 (inverted RGB)"                                },
+{ 0x16C3,     -1, "(------,1,0):\n"                                                              \
+                  "bits 7..2: unused\n"                                                          \
+                  "bit 1: score format (0=2 groups of 2 digits, 1=1 group of 4 digits)\n"        \
+                  "bit 0: score position (0=top of screen, 1=bottom of screen)"                  },
+{ 0x16C6,     -1, "(-,654,3,210):\n"                                                             \
+                  "bit 7: unused\n"                                                              \
+                  "bits 6..4: grid colour (RGB)\n"                                               \
+                  "bit 3: grid/background enable flag (0=off, 1=on)\n"                           \
+                  "bits 2..0: background colour (RGB) (black if bit 3 is clear)"                 },
+{ 0x16C8,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 1st digit\n"                                          \
+                  "bits 3..0: BCD value of 2nd digit"                                            },
+{ 0x16C9,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 3rd digit\n"                                          \
+                  "bits 3..0: BCD value of 4th digit"                                            },
+{ 0x16CA,     -1, "(7654,3210):\n"                                                               \
+                  "Read-once!\n"                                                                 \
+                  "bits 7..4: sprites #4..#7 collisions with bkgrnd\n"                           \
+                  "bits 3..0: sprites #4..#7 displays complete"                                  },
+{ 0x16CB,     -1, "(-,6,543210):\n"                                                              \
+                  "Read-once!\n"                                                                 \
+                  "bit 7: unused\n"                                                              \
+                  "bit 6: vertical reset flag\n"                                                 \
+                  "bit 5: sprites #4/#5 collision\n"                                             \
+                  "bit 4: sprites #4/#6 collision\n"                                             \
+                  "bit 3: sprites #4/#7 collision\n"                                             \
+                  "bit 2: sprites #5/#6 collision\n"                                             \
+                  "bit 1: sprites #5/#7 collision\n"                                             \
+                  "bit 0: sprites #6/#7 collision"                                               },
+// 3rd PVI at $17xx (Galaxia/Laser Battle/Lazarian)
+{ 0x1700, 0x1709, "Sprite #8 imagery"                                                            },
+{ 0x1710, 0x1719, "Sprite #9 imagery"                                                            },
+{ 0x1720, 0x1729, "Sprite #10 imagery"                                                           },
+{ 0x1740, 0x1749, "Sprite #11 imagery"                                                           },
+{ 0x1780, 0x17A7, "Vertical grid"                                                                },
+{ 0x17A8, 0x17AC, "Horizontal grid"                                                              },
+{ 0x17C0,     -1, "(76,54,32,10):\n"                                                             \
+                  "bits 7..6: sprite #11 size (%00..%11)\n"                                      \
+                  "bits 5..4: sprite #10 size (%00..%11)\n"                                      \
+                  "bits 3..2: sprite #9 size (%00..%11)\n"                                       \
+                  "bits 1..0: sprite #8 size (%00..%11)"                                         },
+{ 0x17C1,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #8 (inverted RGB)\n"                              \
+                  "bits 2..0: colour of sprite #9 (inverted RGB)"                                },
+{ 0x17C2,     -1, "(--,543,210):\n"                                                              \
+                  "bits 7..6: unused\n"                                                          \
+                  "bits 5..3: colour of sprite #10 (inverted RGB)\n"                             \
+                  "bits 2..0: colour of sprite #11 (inverted RGB)"                               },
+{ 0x17C3,     -1, "(------,1,0):\n"                                                              \
+                  "bits 7..2: unused\n"                                                          \
+                  "bit 1: score format (0=2 groups of 2 digits, 1=1 group of 4 digits)\n"        \
+                  "bit 0: score position (0=top of screen, 1=bottom of screen)"                  },
+{ 0x17C6,     -1, "(-,654,3,210):\n"                                                             \
+                  "bit 7: unused\n"                                                              \
+                  "bits 6..4: grid colour (RGB)\n"                                               \
+                  "bit 3: grid/background enable flag (0=off, 1=on)\n"                           \
+                  "bits 2..0: background colour (RGB) (black if bit 3 is clear)"                 },
+{ 0x17C8,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 1st digit\n"                                          \
+                  "bits 3..0: BCD value of 2nd digit"                                            },
+{ 0x17C9,     -1, "(7654,3210):\n"                                                               \
+                  "bits 7..4: BCD value of 3rd digit\n"                                          \
+                  "bits 3..0: BCD value of 4th digit"                                            },
+{ 0x17CA,     -1, "(7654,3210):\n"                                                               \
+                  "Read-once!\n"                                                                 \
+                  "bits 7..4: sprites #8..#11 collisions with bkgrnd\n"                          \
+                  "bits 3..0: sprites #8..#11 displays complete"                                 },
+{ 0x17CB,     -1, "(-,6,543210):\n"                                                              \
+                  "Read-once!\n"                                                                 \
+                  "bit 7: unused\n"                                                              \
+                  "bit 6: vertical reset flag\n"                                                 \
+                  "bit 5: sprites #8/#9 collision\n"                                             \
+                  "bit 4: sprites #8/#10 collision\n"                                            \
+                  "bit 3: sprites #8/#11 collision\n"                                            \
+                  "bit 2: sprites #9/#10 collision\n"                                            \
+                  "bit 1: sprites #9/#11 collision\n"                                            \
+                  "bit 0: sprites #10/#11 collision"                                             },
+// FIRSTGAMEDATACOMMENT (726)
 // Examples 1 & 2 (Hobby Module) (0..1 + FIRSTGAMEDATACOMMENT)
 {  0x912,  0x91F, "DATA table for object and duplicate"                                          },
 {  0x938,  0x963, "Data table"                                                                   },

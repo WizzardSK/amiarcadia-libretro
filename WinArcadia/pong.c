@@ -167,9 +167,7 @@ IMPORT       FLAG                 inframe,
 IMPORT       ASCREEN              screen[BOXWIDTH][BOXHEIGHT];
 IMPORT       UWORD                console[4],
                                   keypads[2][NUMKEYS];
-IMPORT       UBYTE                OutputBuffer[18],
-                                  sx[2],
-                                  sy[2];
+IMPORT       UBYTE                OutputBuffer[18];
 IMPORT       UBYTE*               IOBuffer;
 IMPORT       ULONG                analog,
                                   autofire[2],
@@ -177,7 +175,7 @@ IMPORT       ULONG                analog,
                                   cycles_2650,
                                   downframes,
                                   frames,
-                                  jff[2],
+                                  jf[2],
                                   pong_machine,
                                   region,
                                   swapped,
@@ -213,12 +211,7 @@ IMPORT       int                  ax[2],
 IMPORT       FILE*                    MacroHandle;
 IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct HostMachineStruct hostmachines[MACHINES];
-#ifdef WIN32
-    IMPORT   HWND                     SubWindowPtr[SUBWINDOWS];
-#endif
-#ifdef AMIGA
-    IMPORT   struct Window*           SubWindowPtr[SUBWINDOWS];
-#endif
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 
 // MODULE VARIABLES-------------------------------------------------------
 
@@ -920,7 +913,7 @@ MODULE __inline void pong_emuinput(void)
 
         domouse();
 
-        if (KeyDown(console[0]) || (jff[0] & JOYSTART) || (jff[1] & JOYSTART) || console_start || wheremouse == 0)
+        if (KeyDown(console[0]) || (jf[0] & JOYSTART) || (jf[1] & JOYSTART) || console_start || wheremouse == 0)
         {   if (fresh_start)
             {   fresh_start = FALSE;
                 pong_start  = TRUE;
@@ -928,7 +921,7 @@ MODULE __inline void pong_emuinput(void)
         else
         {   fresh_start     = TRUE;
         }
-        if (KeyDown(console[1]) || (jff[0] & JOYA    ) || (jff[1] & JOYA    ) || console_a     || wheremouse == 1)
+        if (KeyDown(console[1]) || (jf[0] & JOYA    ) || (jf[1] & JOYA    ) || console_a     || wheremouse == 1)
         {   if (fresh_a)
             {   fresh_a     = FALSE;
                 pong_a      = TRUE;
@@ -936,7 +929,7 @@ MODULE __inline void pong_emuinput(void)
         else
         {   fresh_a         = TRUE;
         }
-        if (KeyDown(console[2]) || (jff[0] & JOYB    ) || (jff[1] & JOYB    ) || console_b     || wheremouse == 2)
+        if (KeyDown(console[2]) || (jf[0] & JOYB    ) || (jf[1] & JOYB    ) || console_b     || wheremouse == 2)
         {   if (fresh_b)
             {   fresh_b     = FALSE;
                 pong_b      = TRUE;
@@ -1033,9 +1026,9 @@ MODULE void pong_playerinput(int source, int dest)
 
     if (recmode == RECMODE_PLAY)
     {   t = IOBuffer[offset++];                    // 0 or  8
-        ax[dest    ] =  sx[dest] = t;
+        ax[dest    ] =  t;
         t = IOBuffer[offset++];                    // 1 or  9
-        ay[dest    ] =  sy[dest] = t;
+        ay[dest    ] =  t;
         playerfire[dest] = IOBuffer[offset++];     // 2 or 10
         gx[dest    ] =  IOBuffer[offset++] * 256;  // 3 or 11
         gx[dest    ] += IOBuffer[offset++];        // 4 or 12
@@ -1077,14 +1070,14 @@ MODULE void pong_playerinput(int source, int dest)
           // || hostcontroller[source] == CONTROLLER_1STAJOY
              || hostcontroller[source] == CONTROLLER_1STAPAD
             )
-            {   jg = jff[0];
+            {   jg = jf[0];
             } elif
             (   hostcontroller[source] == CONTROLLER_2NDDJOY
              || hostcontroller[source] == CONTROLLER_2NDDPAD
              || hostcontroller[source] == CONTROLLER_2NDAJOY
              || hostcontroller[source] == CONTROLLER_2NDAPAD
             )
-            {   jg = jff[1];
+            {   jg = jf[1];
             } else
             {   jg = 0;
             }
@@ -1114,13 +1107,13 @@ MODULE void pong_playerinput(int source, int dest)
 
             if (teamleft && dest == 0)
             {   moved = FALSE;
-                if ((jg & JOYFIRE4) || KeyDown(keypads[source][ 8]) || (jff[source] & DAPTER_8)) // "8"
+                if ((jg & JOYFIRE4) || KeyDown(keypads[source][ 8]) || (jf[source] & DAPTER_8)) // "8"
                 {   moved = TRUE;
                     ay[2] -= sensitivity[source];
                     if (ay[2] < 0)
                     {   ay[2] = 0;
                 }   }
-                if ((jg & (JOYFIRE2 | JOYFIRE3)) || KeyDown(keypads[source][11]) || (jff[source] & DAPTER_0)) // "0"
+                if ((jg & (JOYFIRE2 | JOYFIRE3)) || KeyDown(keypads[source][11]) || (jf[source] & DAPTER_0)) // "0"
                 {   moved = TRUE;
                     ay[2] += sensitivity[source];
                     if (ay[2] > 255)
@@ -1131,13 +1124,13 @@ MODULE void pong_playerinput(int source, int dest)
             }   }
             if (teamright && dest == 1)
             {   moved = FALSE;
-                if ((jg & JOYFIRE4) || KeyDown(keypads[source][ 8]) || (jff[source] & DAPTER_8)) // "8"
+                if ((jg & JOYFIRE4) || KeyDown(keypads[source][ 8]) || (jf[source] & DAPTER_8)) // "8"
                 {   moved = TRUE;
                     ay[3] -= sensitivity[source];
                     if (ay[3] < 0)
                     {   ay[3] = 0;
                 }   }
-                if ((jg & (JOYFIRE2 | JOYFIRE3)) || KeyDown(keypads[source][11]) || (jff[source] & DAPTER_0)) // "0"
+                if ((jg & (JOYFIRE2 | JOYFIRE3)) || KeyDown(keypads[source][11]) || (jf[source] & DAPTER_0)) // "0"
                 {   moved = TRUE;
                     ay[3] += sensitivity[source];
                     if (ay[3] > 255)
@@ -2297,7 +2290,7 @@ MODULE void calcspeed(void)
 }   }
 
 EXPORT void pong_updatedips(void)
-{   if (machine != PONG || !SubWindowPtr[SUBWINDOW_DIPS])
+{   if (machine != PONG || !subwin[SUBWINDOW_DIPS].hwnd)
     {   return;
     }
 

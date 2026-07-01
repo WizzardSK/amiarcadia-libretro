@@ -185,6 +185,7 @@ EXPORT TEXT   asciiname_long[259][9 + 1],
               fn_game[MAX_PATH + 1]    = "", // complete pathname of the game
               fn_save[MAX_PATH + 1],
               fn_script[MAX_PATH + 1]  = "",
+              fn_sym[MAX_PATH + 1]     = "",
               fromstr[5 + 1 + 1],
               MemoryStr[MEMGADGETS][2 + 1],
               netmsg_out[80 + 1]       = "",
@@ -354,7 +355,7 @@ EXPORT int    aifffile                 = FALSE,
               usespeech                = FALSE,
               usestubs                 = TRUE,
               verbosity                = 2,
-              viewingsprite            = 0,
+              viewingsprite            = VERBOSITY_MAXIMUM,
               viewspeedas              = VIEWAS_PERCENTS,
               warn                     = TRUE,
               watchreads               = TRUE,
@@ -384,12 +385,10 @@ EXPORT UWORD  console[4],
               netport                  = 6666;
 EXPORT FLAG   aborting                 = FALSE,
               bangercharging           = FALSE,
-              guestplaying[TOTALCHANNELS],
               ignore_cout,
               inframe                  = FALSE,
               loadedconfig             = FALSE,
               modal                    = FALSE,
-              need[SUBWINDOWS],
               softctrl                 = FALSE,
               softlshift               = FALSE,
               softrept                 = FALSE,
@@ -417,22 +416,22 @@ EXPORT FILE*                   MacroHandle  = NULL;
     EXPORT int                 showtod      = FALSE;
 #endif
 
-EXPORT struct MachineStruct machines[MACHINES] =                                                                                      // --labels-- keys     vers   cpf pvis ppc digits                             [--code--] [--data--]                                                                                                       hiscores                                     [---------------------------------------------------------------------------------------------------player 1 keys-------------------------------------------------------------------------------------------------------------------------------------------]  [---------------------------------------------------------------------------------------------------player 2 keys--------------------------------------------------------------------------------------------------------------------------------------------]
-{ { "ARCADIA"   ,                   0,                    0, MEMMAP_ARCADIA,     REGION_NTSC, { 60.1867202475031, 50.0804105952784 }, 2,   0,   29, 50, 0xFF, 38,     0.0, 0,  4, 0, { 1, 112, 254 },      0, FALSE,  -1,   -1, 355, 382, { "START" , "A"     , "B"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },  0, 51, TRUE , FALSE, 0,               0, { { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt" }, { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt"  } } }, // ARCADIA
-  { "INTERTON"  ,                   0,                    0, MEMMAP_D,           REGION_PAL , {  0.0            , 50.0804105952784 }, 2,  30,   37, 42,    0, 38,     0.0, 1,  4, 0, { 1, 112, 225 }, 0x1F00, FALSE,  -1,   -1,  98, 120, { "START" , "SELECT", "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, TRUE , FALSE, 0,               0, { { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt" }, { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt"  } } }, // INTERTON
-  { "ELEKTOR"   ,                   0,                    0, MEMMAP_F,           REGION_PAL , {  0.0            , 50.0804105952784 }, 2,  -1,   -1, 36,    0, 38,     0.0, 1,  4, 0, { 1, 111, 225 }, 0x1F00, FALSE,  -1,   -1,  -1,  -1, { "START" , "UC"    , "LC"    , "RESET"    }, { IMAGE_START, IMAGE_UC  , IMAGE_LC   , IMAGE_RESET   }, -1,  0, TRUE , FALSE, 0,               0, { { "1st"  , "RCAS" , "WCAS" , "C"    , "BP"   , "REG"  , "8"    , "PC"   , "MEM"  , "4"    , "-"    , "+"    , "0"    , "-----", "-----", "-----", "-----", "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt" }, { "1st"  , "D"    , "E"    , "F"    , "9"    , "A"    , "B"    , "5"    , "6"    , "7"    , "1"    , "2"    , "3"    , "-----", "-----", "-----", "-----", "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt"  } } }, // ELEKTOR
-  { "PIPBUG"    ,                   0,                    0, MEMMAP_PIPBUG1,     REGION_PAL , {  0.0            , 50.0             }, 1,  -1,   -1,  0,    0, 42, 20000.0, 0,  0, 4, { 0, 128, 255 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, FALSE, TRUE , 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // PIPBUG
-  { "BINBUG"    ,                   0,                    0, MEMMAP_BINBUG,      REGION_PAL , {  0.0            , 50.0             }, 1,  -1,   -1, 16,    0, 44, 20000.0, 0,  0, 0, { 0, 128, 255 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, TRUE , FALSE, BINBUG_DISKSIZE, 2, { { "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // BINBUG
-  { "INSTRUCTOR", INSTRUCTOR_BOXWIDTH, INSTRUCTOR_BOXHEIGHT, MEMMAP_O,           REGION_PAL , {  0.0            , 50.0             }, 1,FIRSTSI50EQUIV,LASTSI50EQUIV,32,0,36,17900.0,0,0,8,{0,0, 0 },      0, FALSE,1922, 2692, 305, 354, { "SENS"  , "INT"   , "MON"   , "RST"      }, { IMAGE_START, IMAGE_INT , IMAGE_MON  , IMAGE_RESET   }, -1,  0, FALSE, FALSE, 0,               0, { { "-----", "WCAS" , "BKPT" , "C"    , "RCAS" , "REG"  , "8"    , "STEP" , "MEM"  , "4"    , "RUN"  , "NXT"  , "0"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "D"    , "E"    , "F"    , "9"    , "A"    , "B"    , "5"    , "6"    , "7"    , "1"    , "2"    , "3"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // INSTRUCTOR
-  { "TWIN"      ,                   0,                    0, MEMMAP_TWIN,        REGION_NTSC, { 60.0            ,  0.0             }, 1,  -1,   -1, 55,    0, 40, 20800.0, 0,  0, 0, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, FALSE, FALSE, TWIN_DISKSIZE,   2,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // TWIN
-  { "CD2650"    ,                   0,                    0, MEMMAP_CD2650,      REGION_NTSC, { 59.4690265486726,  0.0             }, 1,  -1,   -1,  0,    0, 44, 19888.0, 0, 12, 0, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, FALSE, FALSE, CD2650_DISKSIZE, 4,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // CD2650
-  { "ZACCARIA"  ,     COINOP_BOXWIDTH,     COINOP_BOXHEIGHT, MEMMAP_ASTROWARS,   REGION_PAL , { 60.0            , 50.0             }, 1,  -1,   -1,  0,    0, 34, 23608.0, 0,  0, 0, { 0, 128, 255 }, 0x1500, TRUE ,  -1,   -1,  -1,  -1, { "1UP"   , "2UP"   , "Coin A", "Coin B"   }, { IMAGE_1UP  , IMAGE_2UP , IMAGE_COINA, IMAGE_COINB   }, 51,  6, TRUE , FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // ZACCARIA
-  { "MALZAK"    ,     COINOP_BOXWIDTH,     COINOP_BOXHEIGHT, MEMMAP_MALZAK1,     REGION_PAL , { 60.0            , 50.0             }, 1,  -1,   -1, 11,    0, 34,     0.0, 2,  0, 0, { 0, 128, 255 }, 0x1400, TRUE ,  -1,   -1,  -1,  -1, { "1UP"   , "2UP"   , "Coin"  , "Switch"   }, { IMAGE_1UP  , IMAGE_2UP , IMAGE_COINA, IMAGE_DIPS    }, 51,  6, TRUE , FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // MALZAK
-  { "PHUNSY"    ,                   0,                    0, MEMMAP_PHUNSY,      REGION_PAL,  {  0.0            , 50.0             }, 1,FIRSTPHUNSYEQUIV,LASTPHUNSYEQUIV,24,0,36,20032.0,0,0,0,{0,0,0},    0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, FALSE, FALSE, 0,               0, { { "-----", "0"    , "4"    , "8"    , "1"    , "5"    , "9"    , "2"   , "6"     , "A"    , "3"    , "7"    , "B"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "C"    , "D->M" , "RESET", "D"    , "M->D" , "HALT" , "E"    , "GO TO", "DUMPC", "F"    , "CLEAR", "LOADC", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // PHUNSY
-  { "PONG"      ,                   0,                    0, MEMMAP_8550,        REGION_PAL,  { 60.0            , 50.0             }, 2,  -1,   -1, 15,    0, 33,     1.0, 0,  0, 0, { 0, 128, 255 },      0, FALSE,  -1,   -1,  -1,  -1, { "Start" , "Game"  , "Serve" , "Bat size" }, { IMAGE_START2,IMAGE_GAME, IMAGE_SERVE, IMAGE_BATSIZE }, 57,  6, TRUE , FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // PONG
-  { "SELBST"    ,     SELBST_BOXWIDTH,     SELBST_BOXHEIGHT, MEMMAP_SELBST,      REGION_PAL,  { 60.0            , 50.0             }, 1,  -1,   -1, 24,    0, 39, 20000.0, 0,  0, 6, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, FALSE, TRUE , 0,               0, { { "-----", "C"    , "D"    , "E"    , "8"    , "9"    , "A"    , "4"   , "5"     , "6"    , "0"    , "1"    , "2"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "F"    , "CMD"  , "FLAG" , "B"    , "RUN"  , "MON"  , "7"    , "GOTO" , "PC"   , "3"    , "RST"  , "NXT"  , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // SELBST
-  { "MIKIT"     ,      MIKIT_BOXWIDTH,      MIKIT_BOXHEIGHT, MEMMAP_MIKIT,       REGION_PAL,  { 60.0            , 50.0             }, 1,  -1,   -1, 24,    0, 39, 20000.0, 0,  0, 6, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   }, -1,  0, FALSE, FALSE, 0,               0, { { "-----", "BLANK", "R"    , "C"    , "+"    , "G"    , "8"    , "H"   , "P"     , "4"    , "L"    , "S"    , "0"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // MIKIT
-  { "TYPERIGHT" ,  TYPERIGHT_BOXWIDTH,  TYPERIGHT_BOXHEIGHT, MEMMAP_TYPERIGHT,   REGION_PAL,  {  0.0            , 50.0             }, 1,  -1,   -1, 52,    0, 33,     1.0, 0,  0, 0, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "Class" , "Game"  , "Speed" , "Accuracy" }, { IMAGE_CLASS, IMAGE_GAME, IMAGE_START, IMAGE_A       }, 63, 23, FALSE, FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // TYPERIGHT
+EXPORT struct MachineStruct machines[MACHINES] =                                                                                      // --labels-- keys     vers   cpf pvis ppc digits                             [--code--] [--data--]                                                                                                                                          hiscores                                      [---------------------------------------------------------------------------------------------------player 1 keys-------------------------------------------------------------------------------------------------------------------------------------------]  [---------------------------------------------------------------------------------------------------player 2 keys--------------------------------------------------------------------------------------------------------------------------------------------]
+{ { "ARCADIA"   ,                   0,                    0, MEMMAP_ARCADIA,     REGION_NTSC, { 60.1867202475031, 50.0804105952784 }, 2,   0,   29, 50, 0xFF, 38,     0.0, 0,  4, 0, { 1, 112, 254 },      0, FALSE,  -1,   -1, 355, 382, { "START" , "A"     , "B"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },   ARCADIA_FIRSTHISCORE,   ARCADIA_HISCORES, TRUE,  FALSE, 0,               0, { { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt" }, { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt"  } } }, // ARCADIA
+  { "INTERTON"  ,                   0,                    0, MEMMAP_D,           REGION_PAL , {  0.0            , 50.0804105952784 }, 2,  30,   37, 42,    0, 38,     0.0, 1,  4, 0, { 1, 112, 225 }, 0x1F00, FALSE,  -1,   -1,  98, 120, { "START" , "SELECT", "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, TRUE , FALSE, 0,               0, { { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt" }, { "1st"  , "1"    , "2"    , "3"    , "4"    , "5"    , "6"    , "7"    , "8"    , "9"    , "Cl"   , "0"    , "En"   , "x1"   , "x2"   , "x3"   , "x4"   , "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt"  } } }, // INTERTON
+  { "ELEKTOR"   ,                   0,                    0, MEMMAP_F,           REGION_PAL , {  0.0            , 50.0804105952784 }, 2,  -1,   -1, 36,    0, 38,     0.0, 1,  4, 0, { 1, 111, 225 }, 0x1F00, FALSE,  -1,   -1,  -1,  -1, { "START" , "UC"    , "LC"    , "RESET"    }, { IMAGE_START, IMAGE_UC  , IMAGE_LC   , IMAGE_RESET   },                     -1,                  0, TRUE , FALSE, 0,               0, { { "1st"  , "RCAS" , "WCAS" , "C"    , "BP"   , "REG"  , "8"    , "PC"   , "MEM"  , "4"    , "-"    , "+"    , "0"    , "-----", "-----", "-----", "-----", "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt" }, { "1st"  , "D"    , "E"    , "F"    , "9"    , "A"    , "B"    , "5"    , "6"    , "7"    , "1"    , "2"    , "3"    , "-----", "-----", "-----", "-----", "Up"   , "Dn"   , "Lt"   , "Rt"   , "2nd"  , "3rd"  , "4th"  , "UpLt" , "UpRt" , "DnLt" , "DnRt"  } } }, // ELEKTOR
+  { "PIPBUG"    ,                   0,                    0, MEMMAP_PIPBUG1,     REGION_PAL , {  0.0            , 50.0             }, 1,  -1,   -1,  0,    0, 42, 20000.0, 0,  0, 4, { 0, 128, 255 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, FALSE, TRUE , 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // PIPBUG
+  { "BINBUG"    ,                   0,                    0, MEMMAP_BINBUG,      REGION_PAL , {  0.0            , 50.0             }, 1,  -1,   -1, 16,    0, 44, 20000.0, 0,  0, 0, { 0, 128, 255 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, TRUE , FALSE, BINBUG_DISKSIZE, 2, { { "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // BINBUG
+  { "INSTRUCTOR", INSTRUCTOR_BOXWIDTH, INSTRUCTOR_BOXHEIGHT, MEMMAP_O,           REGION_PAL , {  0.0            , 50.0             }, 1,FIRSTSI50EQUIV,LASTSI50EQUIV,32,0,36,17900.0,0,0,8,{0,0, 0 },      0, FALSE,1922, 2692, 305, 354, { "SENS"  , "INT"   , "MON"   , "RST"      }, { IMAGE_START, IMAGE_INT , IMAGE_MON  , IMAGE_RESET   },                     -1,                  0, FALSE, FALSE, 0,               0, { { "-----", "WCAS" , "BKPT" , "C"    , "RCAS" , "REG"  , "8"    , "STEP" , "MEM"  , "4"    , "RUN"  , "NXT"  , "0"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "D"    , "E"    , "F"    , "9"    , "A"    , "B"    , "5"    , "6"    , "7"    , "1"    , "2"    , "3"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // INSTRUCTOR
+  { "TWIN"      ,                   0,                    0, MEMMAP_TWIN,        REGION_NTSC, { 60.0            ,  0.0             }, 1,  -1,   -1, 55,    0, 41, 20800.0, 0,  0, 0, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, FALSE, FALSE, TWIN_DISKSIZE,   4,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // TWIN
+  { "CD2650"    ,                   0,                    0, MEMMAP_CD2650,      REGION_NTSC, { 59.4690265486726,  0.0             }, 1,  -1,   -1,  0,    0, 44, 19888.0, 0, 12, 0, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, FALSE, FALSE, CD2650_DISKSIZE, 4,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // CD2650
+  { "ZACCARIA"  ,     COINOP_BOXWIDTH,     COINOP_BOXHEIGHT, MEMMAP_ASTROWARS,   REGION_PAL , { 60.0            , 50.0             }, 1,  -1,   -1,  0,    0, 34, 23608.0, 0,  0, 0, { 0, 128, 255 }, 0x1500, TRUE ,  -1,   -1,  -1,  -1, { "1UP"   , "2UP"   , "Coin A", "Coin B"   }, { IMAGE_1UP  , IMAGE_2UP , IMAGE_COINA, IMAGE_COINB   },    COINOP_FIRSTHISCORE,    COINOP_HISCORES, TRUE,  FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // ZACCARIA
+  { "MALZAK"    ,     COINOP_BOXWIDTH,     COINOP_BOXHEIGHT, MEMMAP_MALZAK1,     REGION_PAL , { 60.0            , 50.0             }, 1,  -1,   -1, 11,    0, 34,     0.0, 2,  0, 0, { 0, 128, 255 }, 0x1400, TRUE ,  -1,   -1,FIRSTMALZAKDATACOMMENT,LASTMALZAKDATACOMMENT,{"1UP","2UP","Coin","Switch"},{IMAGE_1UP,IMAGE_2UP,IMAGE_COINA,IMAGE_DIPS},COINOP_FIRSTHISCORE, COINOP_HISCORES, TRUE,  FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // MALZAK
+  { "PHUNSY"    ,                   0,                    0, MEMMAP_PHUNSY,      REGION_PAL,  {  0.0            , 50.0             }, 1,FIRSTPHUNSYEQUIV,LASTPHUNSYEQUIV,24,0,36,20032.0,0,0,0,{0,0,0},    0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, FALSE, FALSE, 0,               0, { { "-----", "0"    , "4"    , "8"    , "1"    , "5"    , "9"    , "2"   , "6"     , "A"    , "3"    , "7"    , "B"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "C"    , "D->M" , "RESET", "D"    , "M->D" , "HALT" , "E"    , "GO TO", "DUMPC", "F"    , "CLEAR", "LOADC", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // PHUNSY
+  { "PONG"      ,                   0,                    0, MEMMAP_8550,        REGION_PAL,  { 60.0            , 50.0             }, 2,  -1,   -1, 15,    0, 33,     1.0, 0,  0, 0, { 0, 128, 255 },      0, FALSE,  -1,   -1,  -1,  -1, { "Start" , "Game"  , "Serve" , "Bat size" }, { IMAGE_START2,IMAGE_GAME, IMAGE_SERVE, IMAGE_BATSIZE },      PONG_FIRSTHISCORE,      PONG_HISCORES, TRUE,  FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // PONG
+  { "SELBST"    ,     SELBST_BOXWIDTH,     SELBST_BOXHEIGHT, MEMMAP_SELBST,      REGION_PAL,  { 60.0            , 50.0             }, 1,  -1,   -1, 24,    0, 39, 20000.0, 0,  0, 6, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, FALSE, TRUE , 0,               0, { { "-----", "C"    , "D"    , "E"    , "8"    , "9"    , "A"    , "4"   , "5"     , "6"    , "0"    , "1"    , "2"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "F"    , "CMD"  , "FLAG" , "B"    , "RUN"  , "MON"  , "7"    , "GOTO" , "PC"   , "3"    , "RST"  , "NXT"  , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // SELBST
+  { "MIKIT"     ,      MIKIT_BOXWIDTH,      MIKIT_BOXHEIGHT, MEMMAP_MIKIT,       REGION_PAL,  { 60.0            , 50.0             }, 1,  -1,   -1, 24,    0, 39, 20000.0, 0,  0, 6, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "-"     , "-"     , "-"     , "-"        }, { IMAGE_START, IMAGE_A   , IMAGE_B    , IMAGE_RESET   },                     -1,                  0, FALSE, FALSE, 0,               0, { { "-----", "BLANK", "R"    , "C"    , "+"    , "G"    , "8"    , "H"   , "P"     , "4"    , "L"    , "S"    , "0"    , "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----"}, { "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----", "-----" } } }, // MIKIT
+  { "TYPERIGHT" ,  TYPERIGHT_BOXWIDTH,  TYPERIGHT_BOXHEIGHT, MEMMAP_TYPERIGHT,   REGION_PAL,  {  0.0            , 50.0             }, 1,  -1,   -1, 52,    0, 33,     1.0, 0,  0, 0, { 0,   0,   0 },      0, FALSE,  -1,   -1,  -1,  -1, { "Class" , "Game"  , "Speed" , "Accuracy" }, { IMAGE_CLASS, IMAGE_GAME, IMAGE_START, IMAGE_A       }, TYPERIGHT_FIRSTHISCORE, TYPERIGHT_HISCORES, FALSE, FALSE, 0,               0,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }, // TYPERIGHT
 };
 
                                                                                                                        // - - - - L L L L R R R R L L L L R R R R L L L L L L L L R R R R R R R R L L L L L L L L L L L L R R R R R R R R R R R R
@@ -477,41 +476,80 @@ EXPORT struct MemMapInfoStruct memmapinfo[MEMMAPS] = {                          
 { TYPERIGHT , "VTech Type-right"                              ,     0,   TYPERIGHT_OVERLAY, "VTech, 1985"              , {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, FALSE, MENUOPT_TYPERIGHT   , {1,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0} }, // 30 MEMMAP_TYPERIGHT
 }; // There is no "s" at the end of "General Instrument"
 
-EXPORT const struct CanvasStruct canvas[CANVASES] = {
-{       AXESWIDTH,       AXESHEIGHT, SUBWINDOW_MONITOR_XVI },
-{ INDUSTRIALWIDTH, INDUSTRIALHEIGHT, SUBWINDOW_INDUSTRIAL  },
-{  MAGNIFIERWIDTH,  MAGNIFIERHEIGHT, 0                     },
-{     MEMMAPWIDTH,     MEMMAPHEIGHT, SUBWINDOW_MEMORY      },
-{       MINIWIDTH,       MINIHEIGHT, SUBWINDOW_CONTROLS    },
-{    PREVIEWWIDTH,    PREVIEWHEIGHT, SUBWINDOW_SPRITES     },
-{ PRINTERWIDTH_VIEW, PRINTERHEIGHT_VIEW, SUBWINDOW_PRINTER },
-{       ROLLWIDTH,       ROLLHEIGHT, SUBWINDOW_PAPERTAPE   },
-{       ROLLWIDTH,       ROLLHEIGHT, SUBWINDOW_PAPERTAPE   },
-{   WAVEFORMWIDTH,   WAVEFORMHEIGHT, SUBWINDOW_TAPEDECK    },
+EXPORT struct CanvasStruct canvas[CANVASES] = {
+{       AXESWIDTH,       AXESHEIGHT, IDC_AXES    , SUBWINDOW_MONITOR_XVI }, //  0
+{ INDUSTRIALWIDTH, INDUSTRIALHEIGHT, IDC_WFC     , SUBWINDOW_INDUSTRIAL  },
+{  MAGNIFIERWIDTH,  MAGNIFIERHEIGHT, -1          , -1                    },
+{     MEMMAPWIDTH,     MEMMAPHEIGHT, IDC_MEMMAP  , SUBWINDOW_MEMORY      },
+{       MINIWIDTH,       MINIHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    },
+{    PREVIEWWIDTH,    PREVIEWHEIGHT, IDC_PREVIEW , SUBWINDOW_SPRITES     }, //  5
+{ PRINTERWIDTH_VIEW,PRINTERHEIGHT_VIEW,IDC_PRINTER,SUBWINDOW_PRINTER     },
+{       ROLLWIDTH,       ROLLHEIGHT, IDC_ROLL    , SUBWINDOW_PAPERTAPE   },
+{       ROLLWIDTH,       ROLLHEIGHT, IDC_ROLL2   , SUBWINDOW_PAPERTAPE   },
+{   WAVEFORMWIDTH,   WAVEFORMHEIGHT, IDC_WAVEFORM, SUBWINDOW_TAPEDECK    },
+{      SPLITWIDTH,      SPLITHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    }, // 10
+{      SPLITWIDTH,      SPLITHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    },
+{      SPLITWIDTH,      SPLITHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    },
+{      SPLITWIDTH,      SPLITHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    },
+{      SPLITWIDTH,      SPLITHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    },
+{      SPLITWIDTH,      SPLITHEIGHT, IDC_CONTROLS, SUBWINDOW_CONTROLS    }, // 15
 #ifdef AMIGA
-{       BLOXWIDTH,       BLOXHEIGHT, SUBWINDOW_FLOPPYDRIVE },
-{       BLOXWIDTH,       BLOXHEIGHT, SUBWINDOW_FLOPPYDRIVE },
-{      SPLITWIDTH,      SPLITHEIGHT, SUBWINDOW_CONTROLS    },
-{      SPLITWIDTH,      SPLITHEIGHT, SUBWINDOW_CONTROLS    },
-{      SPLITWIDTH,      SPLITHEIGHT, SUBWINDOW_CONTROLS    },
-{      SPLITWIDTH,      SPLITHEIGHT, SUBWINDOW_CONTROLS    },
-{      SPLITWIDTH,      SPLITHEIGHT, SUBWINDOW_CONTROLS    },
-{      SPLITWIDTH,      SPLITHEIGHT, SUBWINDOW_CONTROLS    },
+{       BLOXWIDTH,       BLOXHEIGHT, IDC_PLATTER , SUBWINDOW_FLOPPYDRIVE }, // 16
 #endif
 };
 
-EXPORT const FLAG loopable[TOTALCHANNELS] =
-{ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, // synthetic sounds
-  FALSE, // explode
-  FALSE, // shoot
-  FALSE, // bang
-  FALSE, // coin
-  FALSE, // printer
-  FALSE, // click
-  TRUE,  // spin
-  FALSE, // step
-  TRUE,  // grind
-  TRUE,  // punch
+EXPORT struct ChannelStruct channel[TOTALCHANNELS] =
+{ // synthetic sounds
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  { TRUE  },
+  // samples
+  { FALSE }, // explode
+  { FALSE }, // shoot
+  { FALSE }, // bang
+  { FALSE }, // coin
+  { FALSE }, // printer
+  { FALSE }, // click
+  { TRUE  },  // spin
+  { FALSE }, // step
+  { TRUE  },  // grind
+  { TRUE  },  // punch
+};
+
+EXPORT struct SubWindowStruct subwin[SUBWINDOWS] = {
+{   MENUITEM_CONTROLS,         }, //  0
+{   MENUITEM_DIPSWITCHES,      }, //  1
+{   MENUITEM_GAMEINFO,         }, //  2
+{   MENUITEM_EDITMEMORY,       }, //  3
+{   MENUITEM_VIEWMONITOR_CPU,  }, //  4
+{   MENUITEM_OPCODES,          }, //  5
+{   MENUITEM_PALETTE,          }, //  6
+{   MENUITEM_TAPEDECK,         }, //  7
+{   MENUITEM_SPRITEVIEWER,     }, //  8
+{   MENUITEM_ADJUSTSPEED,      }, //  9
+{   MENUITEM_HOSTKYBD,         }, // 10
+{   MENUITEM_HOSTPADS,         }, // 11
+{   MENUITEM_VIEWMONITOR_XVI,  }, // 12
+{   MENUITEM_VIEWMONITOR_PSGS, }, // 13
+{   MENUITEM_MUSIC,            }, // 14
+{   -1,                        }, // 15 output subwindow
+{   MENUITEM_PRINTER,          }, // 16
+{   MENUITEM_FLOPPYDRIVE,      }, // 17
+{   MENUITEM_PAPERTAPE,        }, // 18
+{   MENUITEM_INDUSTRIAL,       }, // 19
 };
 
 EXPORT const int speedupnum[SPEED_MAX - SPEED_MIN + 1] =
@@ -524,76 +562,6 @@ EXPORT const int speedupnum[SPEED_MAX - SPEED_MIN + 1] =
     200,
     400,
     800
-}, SubWindowMenuItem[SUBWINDOWS] =
-{   MENUITEM_CONTROLS,         //  0
-    MENUITEM_DIPSWITCHES,      //  1
-    MENUITEM_GAMEINFO,         //  2
-    MENUITEM_EDITMEMORY,       //  3
-    MENUITEM_VIEWMONITOR_CPU,  //  4
-    MENUITEM_OPCODES,          //  5
-    MENUITEM_PALETTE,          //  6
-    MENUITEM_TAPEDECK,         //  7
-    MENUITEM_SPRITEVIEWER,     //  8
-    MENUITEM_ADJUSTSPEED,      //  9
-    MENUITEM_HOSTKYBD,         // 10
-    MENUITEM_HOSTPADS,         // 11
-    MENUITEM_VIEWMONITOR_XVI,  // 12
-    MENUITEM_VIEWMONITOR_PSGS, // 13
-    MENUITEM_MUSIC,            // 14
-    -1,                        // 15 output subwindow
-    MENUITEM_PRINTER,          // 16
-    MENUITEM_FLOPPYDRIVE,      // 17
-    MENUITEM_PAPERTAPE,        // 18
-    MENUITEM_INDUSTRIAL,       // 19
-}, num_to_num[NUMKEYS] =
-{ 11, // "0"/"+"
-   1, // "1"
-   2, // "2"
-   3, // "3"
-   4, // "4"
-   5, // "5"
-   6, // "6"
-   7, // "7"
-   8, // "8"
-   9, // "9"
-  10, // "Cl",
-  12, // "En"
-  13, // "x1"
-  14, // "x2"
-  15, // "x3"
-  16, // "x4"
-  17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27
-};
-
-EXPORT const struct GuestKeyStruct guestkeys[NUMKEYS] =
-{   { -1, -1 }, //  0
-    {  8, 11 },
-    {  0,  1 },
-    { 10, 13 },
-    { 14, 17 },
-    { 15, 18 }, //  5
-    { 16, 19 },
-    { 20, 23 },
-    { 21, 24 },
-    { 22, 25 },
-    { 26, 29 }, // 10
-    { 27, 30 },
-    { 28, 31 },
-    {  2,  5 },
-    {  3,  6 },
-    {  4,  7 }, // 15
-    {  9, 12 },
-    { -1, -1 }, // 17
-    { -1, -1 },
-    { -1, -1 },
-    { -1, -1 }, // 20
-    { -1, -1 },
-    { -1, -1 },
-    { -1, -1 },
-    { -1, -1 },
-    { -1, -1 }, // 25
-    { -1, -1 },
-    { -1, -1 }  // 27
 };
 
 // IMPORTED VARIABLES-----------------------------------------------------
@@ -639,7 +607,6 @@ IMPORT       TEXT                     autotext[GAMEINFOLINES][80 + 1],
                                       temppath_games[MAX_PATH + 1],
                                       userinput[MAX_PATH + 80 + 1],
                                       username[MAX_USERNAMELEN + 1];
-IMPORT       char                     mn[256 + 1];
 IMPORT       UWORD                    iar,
                                       ix,
                                       mirror_w[32768],
@@ -689,10 +656,6 @@ IMPORT       int                      angles,
                                       key4,
                                       lockhoriz,
                                       n1, n2, n3, n4,
-                                      paddleup,
-                                      paddledown,
-                                      paddleleft,
-                                      paddleright,
                                       pipbug_periph,
                                       pipbug_vdu,
                                       playerid,
@@ -740,7 +703,7 @@ IMPORT       MEMFLAG                  memflags[ALLTOKENS];
 IMPORT       struct DriveStruct       drive[DRIVES_MAX];
 IMPORT       struct KeyNameStruct     keyname[SCANCODES];
 IMPORT       struct KindStruct        filekind[KINDS];
-IMPORT const struct KeyTableStruct    keytable[16];
+IMPORT const struct KeyTableStruct    keytable[NUMKEYS];
 IMPORT const struct LBNoteStruct      lb_note[13 + 1];
 IMPORT       struct MonitorStruct     monitor[MONITORGADS];
 IMPORT const struct VolumeStruct      volume_3to16[8],
@@ -781,8 +744,7 @@ IMPORT       struct HostMachineStruct hostmachines[MACHINES];
     IMPORT       struct Catalog*      CatalogPtr;
     IMPORT       struct Image*        images[IMAGES];
     IMPORT       struct Library*      SocketBase;
-    IMPORT       struct Window       *MainWindowPtr,
-                                     *SubWindowPtr[SUBWINDOWS];
+    IMPORT       struct Window*       MainWindowPtr;
     IMPORT const int                  memmap_to_smlimage[MEMMAPS];
 #endif
 #ifdef WIN32
@@ -792,8 +754,7 @@ IMPORT       struct HostMachineStruct hostmachines[MACHINES];
     IMPORT WCHAR          voicename[80 + 1];
     IMPORT HWND           hStatusBar,
                           hToolbar,
-                          MainWindowPtr,
-                          SubWindowPtr[SUBWINDOWS];
+                          MainWindowPtr;
     IMPORT HDC            ControlsRastPtr1,
                           ControlsRastPtr2;
     IMPORT HINSTANCE      InstancePtr;
@@ -804,6 +765,7 @@ IMPORT       struct HostMachineStruct hostmachines[MACHINES];
                           priority,
                           realwide,
                           statusbarheight,
+                          viewpadsas2[2],
                           CatalogPtr; // APTR doesn't work
     IMPORT ULONG          speech_rate;
     IMPORT struct AssociationStruct assoc[ASSOCIATIONS];
@@ -986,7 +948,7 @@ EXPORT void poke_end(FLAG quiet, FLAG doke)
                 if (memflags[poketoken] & AUDIBLE)
                 {   playsound(TRUE);
             }   }
-            DISCARD getfriendly(poketoken);
+            DISCARD number_to_friendly(poketoken, friendly, TRUE, 0, 0, FALSE);
     }   }
 
     if (poketoken >= FIRSTTOKEN)
@@ -1044,9 +1006,7 @@ EXPORT void emu_pause(void)
         settitle();
         blanker_on();
         updatepointer(FALSE, TRUE);
-        if (useguideray)
-        {   draw_guide_ray(FALSE);
-        }
+        draw_guide_ray(FALSE);
         redrawscreen(); // helpful in frame skipping mode (ensures most
         // recent executed frame is shown, not a frame from a while ago).
         // And also needed for guide ray.
@@ -1070,10 +1030,8 @@ EXPORT void emu_unpause(void)
         settitle();
         blanker_off();
         updatepointer(FALSE, TRUE);
-        if (useguideray)
-        {   draw_guide_ray(TRUE);
-            redrawscreen();
-        }
+        draw_guide_ray(TRUE);
+        redrawscreen(); // for guide ray
 #ifdef WIN32
         if (cheevos)
         {
@@ -1269,8 +1227,8 @@ EXPORT void engine_setup(void)
     {   MemoryStr[i][2] = EOS;
     }
     for (i = 0; i < SUBWINDOWS; i++)
-    {   SubWindowPtr[i] = NULL;
-        need[i]         = FALSE;
+    {   subwin[i].hwnd = NULL;
+        subwin[i].need = FALSE;
     }
     StatusText[0][0] =
     StatusText[1][0] =
@@ -1314,7 +1272,7 @@ EXPORT void engine_setup(void)
     }
 
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   guestplaying[i]   = FALSE;
+    {   channel[i].playing        = FALSE;
     }
 
     for (i = 0; i < GUESTCHANNELS; i++)
@@ -1593,14 +1551,18 @@ EXPORT void engine_dopaddle(int source, int dest)
 
     if (analog)
     {   // host is digital or keyboard, guest is analog
-        if   (dx[dest] == -1) { ax[dest] -= sensitivity[source]; if (ax[dest] <   0) ax[dest] =   0; }
-        elif (dx[dest] ==  1) { ax[dest] += sensitivity[source]; if (ax[dest] > 255) ax[dest] = 255; }
-        elif (springloaded  )   ax[dest] =  machines[machine].digipos[1];
+        if (dx[dest] == 0 && dy[dest] == 0)
+        {   if (springloaded)
+            {   ax[dest] = ay[dest] = machines[machine].digipos[1];
+        }   }
+        else
+        {   if   (dx[dest] == -1) { ax[dest] -= sensitivity[source]; if (ax[dest] <   0) ax[dest] =   0; }
+            elif (dx[dest] ==  1) { ax[dest] += sensitivity[source]; if (ax[dest] > 255) ax[dest] = 255; }
 
-        if   (dy[dest] == -1) { ay[dest] -= sensitivity[source]; if (ay[dest] <   0) ay[dest] =   0; }
-        elif (dy[dest] ==  1) { ay[dest] += sensitivity[source]; if (ay[dest] > 255) ay[dest] = 255; }
-        elif (springloaded  )   ay[dest] =  machines[machine].digipos[1];
-    } else
+            if   (dy[dest] == -1) { ay[dest] -= sensitivity[source]; if (ay[dest] <   0) ay[dest] =   0; }
+            elif (dy[dest] ==  1) { ay[dest] += sensitivity[source]; if (ay[dest] > 255) ay[dest] = 255; }
+    }   }
+    else
     {   // host is digital or keyboard, guest is digital
         ax[dest] = machines[machine].digipos[dx[dest] + 1];
         ay[dest] = machines[machine].digipos[dy[dest] + 1];
@@ -1609,7 +1571,7 @@ EXPORT void engine_dopaddle(int source, int dest)
 EXPORT void update_controls(void)
 {   FAST int i;
 
-    if (!SubWindowPtr[SUBWINDOW_CONTROLS])
+    if (!subwin[SUBWINDOW_CONTROLS].hwnd)
     {   return;
     }
 
@@ -2158,19 +2120,19 @@ EXPORT void update_controls(void)
     }
 
     if (machine == ARCADIA || machine == INTERTON || machine == ELEKTOR)
-    {   if (dx[0] == -1) { newkeys[29] = 1; newkeys[31] = 0; } elif (dx[0] == 1) { newkeys[29] = 0; newkeys[31] = 1; } else { newkeys[29] = newkeys[31] = 0; }
-        if (dx[1] == -1) { newkeys[33] = 1; newkeys[35] = 0; } elif (dx[1] == 1) { newkeys[33] = 0; newkeys[35] = 1; } else { newkeys[33] = newkeys[35] = 0; }
-        if (dy[0] == -1) { newkeys[28] = 1; newkeys[30] = 0; } elif (dy[0] == 1) { newkeys[28] = 0; newkeys[30] = 1; } else { newkeys[28] = newkeys[30] = 0; }
-        if (dy[1] == -1) { newkeys[32] = 1; newkeys[34] = 0; } elif (dy[1] == 1) { newkeys[32] = 0; newkeys[34] = 1; } else { newkeys[32] = newkeys[34] = 0; }
+    {   if (dx[0] == -1 || ax[0] <= 64) { newkeys[29] = 1; newkeys[31] = 0; } elif (dx[0] == 1 || ax[0] >= 192) { newkeys[29] = 0; newkeys[31] = 1; } else { newkeys[29] = newkeys[31] = 0; }
+        if (dx[1] == -1 || ax[1] <= 64) { newkeys[33] = 1; newkeys[35] = 0; } elif (dx[1] == 1 || ax[1] >= 192) { newkeys[33] = 0; newkeys[35] = 1; } else { newkeys[33] = newkeys[35] = 0; }
+        if (dy[0] == -1 || ay[0] <= 64) { newkeys[28] = 1; newkeys[30] = 0; } elif (dy[0] == 1 || ay[0] >= 192) { newkeys[28] = 0; newkeys[30] = 1; } else { newkeys[28] = newkeys[30] = 0; }
+        if (dy[1] == -1 || ay[1] <= 64) { newkeys[32] = 1; newkeys[34] = 0; } elif (dy[1] == 1 || ay[1] >= 192) { newkeys[32] = 0; newkeys[34] = 1; } else { newkeys[32] = newkeys[34] = 0; }
     } elif (machine == PONG)
-    {   if (dy[0] == -1) { newkeys[11] = 1; newkeys[12] = 0; } elif (dy[0] == 1) { newkeys[11] = 0; newkeys[12] = 1; } else { newkeys[11] = newkeys[12] = 0; }
-        if (dy[1] == -1) { newkeys[13] = 1; newkeys[14] = 0; } elif (dy[1] == 1) { newkeys[13] = 0; newkeys[14] = 1; } else { newkeys[13] = newkeys[14] = 0; }
+    {   if (dy[0] == -1 || ay[0] <= 64) { newkeys[11] = 1; newkeys[12] = 0; } elif (dy[0] == 1 || ay[0] >= 192) { newkeys[11] = 0; newkeys[12] = 1; } else { newkeys[11] = newkeys[12] = 0; }
+        if (dy[1] == -1 || ay[1] <= 64) { newkeys[13] = 1; newkeys[14] = 0; } elif (dy[1] == 1 || ay[1] >= 192) { newkeys[13] = 0; newkeys[14] = 1; } else { newkeys[13] = newkeys[14] = 0; }
     }
 
 #ifdef WIN32
-    ControlsRastPtr1 = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS));
+    ControlsRastPtr1 = GetDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS));
     if (machine == PIPBUG)
-    {   ControlsRastPtr2 = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS2));
+    {   ControlsRastPtr2 = GetDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS2));
     }
 #endif
 
@@ -2194,16 +2156,16 @@ EXPORT void update_controls(void)
 #endif
 
 #ifdef WIN32
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS), ControlsRastPtr1);
+    ReleaseDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS), ControlsRastPtr1);
     if (machine == PIPBUG)
-    {   ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS2), ControlsRastPtr2);
+    {   ReleaseDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS2), ControlsRastPtr2);
     }
 #endif
 
-    update_controlstip();
+    update_controlstip(FALSE);
 }
 
-EXPORT void update_controlstip(void)
+EXPORT void update_controlstip(FLAG force)
 {   FAST int   i,
                mousex, mousey;
 #ifdef WIN32
@@ -2212,7 +2174,7 @@ EXPORT void update_controlstip(void)
 #endif
 
     if
-    (   !SubWindowPtr[SUBWINDOW_CONTROLS]
+    (   !subwin[SUBWINDOW_CONTROLS].hwnd
      || (    machine != ARCADIA
          && !machines[machine].pvis
          &&  machine != BINBUG
@@ -2227,13 +2189,13 @@ EXPORT void update_controlstip(void)
 
 #ifdef WIN32
     DISCARD GetCursorPos(&thepoint);
-    DISCARD GetWindowRect(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS), &therect);
+    DISCARD GetWindowRect(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS), &therect);
     mousex = thepoint.x - therect.left;
     mousey = thepoint.y - therect.top;
 #endif
 #ifdef AMIGA
-    mousex = (int) SubWindowPtr[SUBWINDOW_CONTROLS]->MouseX - images[whichimagery]->LeftEdge,
-    mousey = (int) SubWindowPtr[SUBWINDOW_CONTROLS]->MouseY - images[whichimagery]->TopEdge;
+    mousex = (int) subwin[SUBWINDOW_CONTROLS].hwnd->MouseX - images[whichimagery]->LeftEdge,
+    mousey = (int) subwin[SUBWINDOW_CONTROLS].hwnd->MouseY - images[whichimagery]->TopEdge;
 #endif
 
     for (i = 0; i < machines[machine].keys; i++)
@@ -2243,7 +2205,7 @@ EXPORT void update_controlstip(void)
          && mousey >= keyinfo[whichkeyrect][i].top
          && mousey <  keyinfo[whichkeyrect][i].top  + keyinfo[whichkeyrect][i].height
         )
-        {   if (i == oldcontrolkey)
+        {   if (!force && i == oldcontrolkey)
             {   return;
             }
             generate_controlstip(i);
@@ -2270,33 +2232,26 @@ DONE:
         st_set2(SUBWINDOW_CONTROLS, IDC_CONTROLS_HOSTMOUSE, controltip[4]);
 }   }
 
-EXPORT void controls_mousedown(int mousex, int mousey)
-{   FAST int   i, j;
+EXPORT int controls_getkey(int mousex, int mousey)
+{   FAST int   i;
 #ifdef WIN32
     FAST POINT thepoint;
     FAST RECT  therect;
-#endif
 
-    if (recmode == RECMODE_PLAY)
-    {   return;
-    }
-
-#ifdef WIN32
     thepoint.x = mousex;
     thepoint.y = mousey;
-    ClientToScreen(SubWindowPtr[SUBWINDOW_CONTROLS], &thepoint);
+    ClientToScreen(subwin[SUBWINDOW_CONTROLS].hwnd, &thepoint);
     if (machine == PIPBUG)
-    {   DISCARD GetWindowRect(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS2), &therect);
+    {   DISCARD GetWindowRect(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS2), &therect);
     } else
-    {   DISCARD GetWindowRect(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS ), &therect);
+    {   DISCARD GetWindowRect(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS ), &therect);
     }
     mousex = thepoint.x - therect.left;
     mousey = thepoint.y - therect.top;
 #endif
 
-    // assert(SubWindowPtr[SUBWINDOW_CONTROLS]);
+    // assert(subwin[SUBWINDOW_CONTROLS].hwnd);
 
-    wheremouse = -1;
     for (i = 0; i < machines[machine].keys; i++)
     {   if
         (   mousex >= keyinfo[whichkeyrect][i].left
@@ -2304,391 +2259,404 @@ EXPORT void controls_mousedown(int mousex, int mousey)
          && mousey >= keyinfo[whichkeyrect][i].top
          && mousey <  keyinfo[whichkeyrect][i].top  + keyinfo[whichkeyrect][i].height
         )
-        {   switch (machine)
+        {   return i;
+    }   }
+
+    return -1;
+}
+
+EXPORT void controls_mousedown(int whichkey)
+{   FAST int i;
+
+    wheremouse = -1;
+    switch (machine)
+    {
+    case ARCADIA:
+        if (whichkey == 3 || whichkey == 49) // RESET key or power switch
+        {   project_reset(TRUE);
+        } elif (whichkey == 48) // cartridge slot
+        {   project_open();
+        } elif (a_keyemul[whichkey].address != 0)
+        {   wheremouse = whichkey;
+            newkeys[whichkey] |= memory[a_keyemul[whichkey].mask];
+        } elif (whichkey >= 28 && whichkey <= 35) // directions
+        {   wheremouse = whichkey;
+        }
+    acase INTERTON:
+        if (whichkey == 3 || whichkey == 41) // RESET key or power switch
+        {   project_reset(TRUE);
+        } elif (whichkey == 40) // cartridge slot
+        {   project_open();
+        } elif (i_keyemul[whichkey].address != 0)
+        {   wheremouse = whichkey;
+            newkeys[whichkey] |= memory[i_keyemul[whichkey].mask];
+        } elif (whichkey >= 28 && whichkey <= 35) // directions
+        {   wheremouse = whichkey;
+        }
+    acase ELEKTOR:
+        if (e_keyemul[whichkey].address != 0)
+        {   wheremouse = whichkey;
+            newkeys[whichkey] |= memory[e_keyemul[whichkey].mask];
+        } elif (whichkey >= 28 && whichkey <= 35) // directions
+        {   wheremouse = whichkey;
+        }
+    acase INSTRUCTOR:
+        switch (whichkey)
+        {
+        case 28:
+        case 29:
+            if (subwin[SUBWINDOW_DIPS].hwnd)
+            {   close_subwindow(SUBWINDOW_DIPS);
+            } else
+            {   edit_dips();
+            }
+        acase 30:
+            if (subwin[SUBWINDOW_TAPEDECK].hwnd)
+            {   close_subwindow(SUBWINDOW_TAPEDECK);
+            } else
+            {   open_tapedeck();
+            }
+        acase 31:
+            if (subwin[SUBWINDOW_OPCODES].hwnd)
+            {   close_subwindow(SUBWINDOW_OPCODES);
+            } else
+            {   help_opcodes();
+            }
+        adefault:
+            wheremouse = whichkey;
+            newkeys[whichkey] |= keys_column[s_keyemul[whichkey].mask];
+        }
+    acase TWIN:
+        wheremouse = whichkey;
+        switch (whichkey)
+        {
+        case   0: thequeue[queuepos++] = (shift() ? '!'  : '1');
+        acase  1: thequeue[queuepos++] = (shift() ? QUOTES : '2');
+        acase  2: thequeue[queuepos++] = (shift() ? '#'  : '3');
+        acase  3: thequeue[queuepos++] = (shift() ? '$'  : '4');
+        acase  4: thequeue[queuepos++] = (shift() ? '%'  : '5');
+        acase  5: thequeue[queuepos++] = (shift() ? '&'  : '6');
+        acase  6: thequeue[queuepos++] = (shift() ? QUOTE  : '7');
+        acase  7: thequeue[queuepos++] = (shift() ? '('  : '8');
+        acase  8: thequeue[queuepos++] = (shift() ? ')'  : '9');
+        acase  9: thequeue[queuepos++] = (shift() ? ' '  : '0');
+        acase 10: thequeue[queuepos++] = (shift() ? '*'  : ':');
+        acase 11: thequeue[queuepos++] = (shift() ? '='  : '-');
+        acase 13: thequeue[queuepos++] = ESC;
+        acase 14: thequeue[queuepos++] = (ctrl()  ?   17 : 'Q');
+        acase 15: thequeue[queuepos++] = (ctrl()  ?   23 : 'W');
+        acase 16: thequeue[queuepos++] = (ctrl()  ?    5 : 'E');
+        acase 17: thequeue[queuepos++] = (ctrl()  ?   18 : 'R');
+        acase 18: thequeue[queuepos++] = (ctrl()  ?   20 : 'T');
+        acase 19: thequeue[queuepos++] = (ctrl()  ?   25 : 'Y');
+        acase 20: thequeue[queuepos++] = (ctrl()  ?   21 : 'U');
+        acase 21: thequeue[queuepos++] = (ctrl()  ?    9 : 'I');
+        acase 22: if (ctrl()) thequeue[queuepos++] = 15; else thequeue[queuepos++] = (shift() ? '_'  : 'O');
+        acase 23: if (ctrl()) thequeue[queuepos++] = 16; else thequeue[queuepos++] = (shift() ? '@'  : 'P');
+        acase 24: thequeue[queuepos++] = LF;
+        acase 25: thequeue[queuepos++] = CR;
+        acase 26: softctrl = TRUE;
+        acase 27: thequeue[queuepos++] = (ctrl()  ?    1 : 'A');
+        acase 28: thequeue[queuepos++] = (ctrl()  ?   19 : 'S');
+        acase 29: thequeue[queuepos++] = (ctrl()  ?    4 : 'D');
+        acase 30: thequeue[queuepos++] = (ctrl()  ?    6 : 'F');
+        acase 31: thequeue[queuepos++] = (ctrl()  ? BEL  : 'G');
+        acase 32: thequeue[queuepos++] = (ctrl()  ?    8 : 'H');
+        acase 33: thequeue[queuepos++] = (ctrl()  ?   10 : 'J');
+        acase 34: if (ctrl()) thequeue[queuepos++] = 11; else thequeue[queuepos++] = (shift() ? '['  : 'K');
+        acase 35: if (ctrl()) thequeue[queuepos++] = 12; else thequeue[queuepos++] = (shift() ? '\\' : 'L');
+        acase 36: thequeue[queuepos++] = (shift() ? '+'  : ';');
+        acase 37: thequeue[queuepos++] = BS;
+        acase 38: softrept = TRUE;
+        acase 39: thequeue[queuepos++] = NUL;
+        acase 40: softlshift = TRUE;
+        acase 41: thequeue[queuepos++] = (ctrl()  ?   26 : 'Z');
+        acase 42: thequeue[queuepos++] = (ctrl()  ?   24 : 'X');
+        acase 43: thequeue[queuepos++] = (ctrl()  ?    3 : 'C');
+        acase 44: thequeue[queuepos++] = (ctrl()  ?   22 : 'V');
+        acase 45: thequeue[queuepos++] = (ctrl()  ?    2 : 'B');
+        acase 46: if (ctrl()) thequeue[queuepos++] = 14; else thequeue[queuepos++] = (shift() ? '^'  : 'N');
+        acase 47: if (ctrl()) thequeue[queuepos++] = 13; else thequeue[queuepos++] = (shift() ? ']'  : 'M');
+        acase 48: thequeue[queuepos++] = (shift() ? '<'  : ',');
+        acase 49: thequeue[queuepos++] = (shift() ? '>'  : '.');
+        acase 50: thequeue[queuepos++] = (shift() ? '?'  : '/');
+        acase 51: softrshift = TRUE;
+        acase 52: thequeue[queuepos++] = ' ';
+        acase 53: wheremouse = -1; // so it doesn't invert
+                  if (!subwin[SUBWINDOW_PALETTE].hwnd)
+                  {   edit_palette();
+                  }
+        acase 54: wheremouse = -1; // so it doesn't invert
+                  project_reset(FALSE);
+        }
+    acase PIPBUG:
+        wheremouse = whichkey;
+        switch (pipbug_vdu)
+        {
+        case VDU_RADIOBULLETIN:
+            switch (whichkey)
             {
-            case ARCADIA:
-                if (i == 3 || i == 49) // RESET key or power switch
-                {   project_reset(TRUE);
-                } elif (i == 48) // cartridge slot
-                {   project_open();
-                } elif (a_keyemul[i].address != 0)
-                {   wheremouse = i;
-                    newkeys[i] |= memory[a_keyemul[i].mask];
-                } elif (i >= 28 && i <= 35) // directions
-                {   wheremouse = i;
-                }
-            acase INTERTON:
-                if (i == 3 || i == 41) // RESET key or power switch
-                {   project_reset(TRUE);
-                } elif (i == 40) // cartridge slot
-                {   project_open();
-                } elif (i_keyemul[i].address != 0)
-                {   wheremouse = i;
-                    newkeys[i] |= memory[i_keyemul[i].mask];
-                } elif (i >= 28 && i <= 35) // directions
-                {   wheremouse = i;
-                }
-            acase ELEKTOR:
-                if (e_keyemul[i].address != 0)
-                {   wheremouse = i;
-                    newkeys[i] |= memory[e_keyemul[i].mask];
-                } elif (i >= 28 && i <= 35) // directions
-                {   wheremouse = i;
-                }
-            acase INSTRUCTOR:
-                if (i == 28 || i == 29)
-                {   if (SubWindowPtr[SUBWINDOW_DIPS])
-                    {   close_subwindow(SUBWINDOW_DIPS);
-                    } else
-                    {   edit_dips();
-                }   }
-                elif (i == 30)
-                {   if (SubWindowPtr[SUBWINDOW_TAPEDECK])
-                    {   close_subwindow(SUBWINDOW_TAPEDECK);
-                    } else
-                    {   open_tapedeck();
-                }   }
-                elif (i == 31)
-                {   if (SubWindowPtr[SUBWINDOW_OPCODES])
-                    {   close_subwindow(SUBWINDOW_OPCODES);
-                    } else
-                    {   help_opcodes();
-                }   }
-                else
-                {   wheremouse = i;
-                    newkeys[i] |= keys_column[s_keyemul[i].mask];
-                }
-            acase TWIN:
-                wheremouse = i;
-                switch (i)
-                {
-                case   0: thequeue[queuepos++] = (shift() ? '!'  : '1');
-                acase  1: thequeue[queuepos++] = (shift() ? QUOTES : '2');
-                acase  2: thequeue[queuepos++] = (shift() ? '#'  : '3');
-                acase  3: thequeue[queuepos++] = (shift() ? '$'  : '4');
-                acase  4: thequeue[queuepos++] = (shift() ? '%'  : '5');
-                acase  5: thequeue[queuepos++] = (shift() ? '&'  : '6');
-                acase  6: thequeue[queuepos++] = (shift() ? QUOTE  : '7');
-                acase  7: thequeue[queuepos++] = (shift() ? '('  : '8');
-                acase  8: thequeue[queuepos++] = (shift() ? ')'  : '9');
-                acase  9: thequeue[queuepos++] = (shift() ? ' '  : '0');
-                acase 10: thequeue[queuepos++] = (shift() ? '*'  : ':');
-                acase 11: thequeue[queuepos++] = (shift() ? '='  : '-');
-                acase 13: thequeue[queuepos++] = ESC;
-                acase 14: thequeue[queuepos++] = (ctrl()  ?   17 : 'Q');
-                acase 15: thequeue[queuepos++] = (ctrl()  ?   23 : 'W');
-                acase 16: thequeue[queuepos++] = (ctrl()  ?    5 : 'E');
-                acase 17: thequeue[queuepos++] = (ctrl()  ?   18 : 'R');
-                acase 18: thequeue[queuepos++] = (ctrl()  ?   20 : 'T');
-                acase 19: thequeue[queuepos++] = (ctrl()  ?   25 : 'Y');
-                acase 20: thequeue[queuepos++] = (ctrl()  ?   21 : 'U');
-                acase 21: thequeue[queuepos++] = (ctrl()  ?    9 : 'I');
-                acase 22: if (ctrl()) thequeue[queuepos++] = 15; else thequeue[queuepos++] = (shift() ? '_'  : 'O');
-                acase 23: if (ctrl()) thequeue[queuepos++] = 16; else thequeue[queuepos++] = (shift() ? '@'  : 'P');
-                acase 24: thequeue[queuepos++] = LF;
-                acase 25: thequeue[queuepos++] = CR;
-                acase 26: softctrl = TRUE;
-                acase 27: thequeue[queuepos++] = (ctrl()  ?    1 : 'A');
-                acase 28: thequeue[queuepos++] = (ctrl()  ?   19 : 'S');
-                acase 29: thequeue[queuepos++] = (ctrl()  ?    4 : 'D');
-                acase 30: thequeue[queuepos++] = (ctrl()  ?    6 : 'F');
-                acase 31: thequeue[queuepos++] = (ctrl()  ? BEL  : 'G');
-                acase 32: thequeue[queuepos++] = (ctrl()  ?    8 : 'H');
-                acase 33: thequeue[queuepos++] = (ctrl()  ?   10 : 'J');
-                acase 34: if (ctrl()) thequeue[queuepos++] = 11; else thequeue[queuepos++] = (shift() ? '['  : 'K');
-                acase 35: if (ctrl()) thequeue[queuepos++] = 12; else thequeue[queuepos++] = (shift() ? '\\' : 'L');
-                acase 36: thequeue[queuepos++] = (shift() ? '+'  : ';');
-                acase 37: thequeue[queuepos++] = BS;
-                acase 38: softrept = TRUE;
-                acase 39: thequeue[queuepos++] = NUL;
-                acase 40: softlshift = TRUE;
-                acase 41: thequeue[queuepos++] = (ctrl()  ?   26 : 'Z');
-                acase 42: thequeue[queuepos++] = (ctrl()  ?   24 : 'X');
-                acase 43: thequeue[queuepos++] = (ctrl()  ?    3 : 'C');
-                acase 44: thequeue[queuepos++] = (ctrl()  ?   22 : 'V');
-                acase 45: thequeue[queuepos++] = (ctrl()  ?    2 : 'B');
-                acase 46: if (ctrl()) thequeue[queuepos++] = 14; else thequeue[queuepos++] = (shift() ? '^'  : 'N');
-                acase 47: if (ctrl()) thequeue[queuepos++] = 13; else thequeue[queuepos++] = (shift() ? ']'  : 'M');
-                acase 48: thequeue[queuepos++] = (shift() ? '<'  : ',');
-                acase 49: thequeue[queuepos++] = (shift() ? '>'  : '.');
-                acase 50: thequeue[queuepos++] = (shift() ? '?'  : '/');
-                acase 51: softrshift = TRUE;
-                acase 52: thequeue[queuepos++] = ' ';
-                acase 53: wheremouse = -1; // so it doesn't invert
-                          if (!SubWindowPtr[SUBWINDOW_PALETTE])
-                          {   edit_palette();
-                          }
-                acase 54: wheremouse = -1; // so it doesn't invert
-                          project_reset(FALSE);
-                }
-            acase PIPBUG:
-                wheremouse = i;
-                switch (pipbug_vdu)
-                {
-                case VDU_RADIOBULLETIN:
-                    switch (i)
-                    {
-                    // 1st row
-                    case   0: thequeue[queuepos++] = ' ';
-                    acase  1: thequeue[queuepos++] = '!';
-                    acase  2: thequeue[queuepos++] = QUOTES;
-                    acase  3: thequeue[queuepos++] = '#';
-                    acase  4: thequeue[queuepos++] = '$';
-                    acase  5: thequeue[queuepos++] = '%';
-                    acase  6: thequeue[queuepos++] = '&';
-                    acase  7: thequeue[queuepos++] = QUOTE;
-                    acase  8: thequeue[queuepos++] = '(';
-                    acase  9: thequeue[queuepos++] = ')';
-                    acase 10: thequeue[queuepos++] = '*';
-                    acase 11: thequeue[queuepos++] = '+';
-                    acase 12: thequeue[queuepos++] = ',';
-                    acase 13: thequeue[queuepos++] = '-';
-                    acase 14: thequeue[queuepos++] = '.';
-                    acase 15: thequeue[queuepos++] = '/';
-                    acase 16: thequeue[queuepos++] = LF;
-                    acase 17: thequeue[queuepos++] = 0x0B;
-                    acase 18: thequeue[queuepos++] = CR;
-                    acase 19: thequeue[queuepos++] = BEL;
-                    // 2nd row
-                    acase 20: thequeue[queuepos++] = '0';
-                    acase 21: thequeue[queuepos++] = '1';
-                    acase 22: thequeue[queuepos++] = '2';
-                    acase 23: thequeue[queuepos++] = '3';
-                    acase 24: thequeue[queuepos++] = '4';
-                    acase 25: thequeue[queuepos++] = '5';
-                    acase 26: thequeue[queuepos++] = '6';
-                    acase 27: thequeue[queuepos++] = '7';
-                    acase 28: thequeue[queuepos++] = '8';
-                    acase 29: thequeue[queuepos++] = '9';
-                    acase 30: thequeue[queuepos++] = ':';
-                    acase 31: thequeue[queuepos++] = ';';
-                    acase 32: thequeue[queuepos++] = '<';
-                    acase 33: thequeue[queuepos++] = '=';
-                    acase 34: thequeue[queuepos++] = '>';
-                    acase 35: thequeue[queuepos++] = '?';
-                    acase 36: thequeue[queuepos++] = 0x1A;
-                    acase 37: thequeue[queuepos++] = 0x1B;
-                    acase 38: thequeue[queuepos++] = 0x1D;
-                    acase 39: thequeue[queuepos++] = 0x1F;
-                    // 3rd row
-                    acase 40: thequeue[queuepos++] = '@';
-                    acase 41: thequeue[queuepos++] = 'A';
-                    acase 42: thequeue[queuepos++] = 'B';
-                    acase 43: thequeue[queuepos++] = 'C';
-                    acase 44: thequeue[queuepos++] = 'D';
-                    acase 45: thequeue[queuepos++] = 'E';
-                    acase 46: thequeue[queuepos++] = 'F';
-                    acase 47: thequeue[queuepos++] = 'G';
-                    acase 48: thequeue[queuepos++] = 'H';
-                    acase 49: thequeue[queuepos++] = 'I';
-                    acase 50: thequeue[queuepos++] = 'J';
-                    acase 51: thequeue[queuepos++] = 'K';
-                    acase 52: thequeue[queuepos++] = 'L';
-                    acase 53: thequeue[queuepos++] = 'M';
-                    acase 54: thequeue[queuepos++] = 'N';
-                    acase 55: thequeue[queuepos++] = 'O';
-                    acase 56: thequeue[queuepos++] = 0x6A;
-                    acase 57: thequeue[queuepos++] = 0x6B;
-                    acase 58: thequeue[queuepos++] = 0x6D;
-                    acase 59: thequeue[queuepos++] = 0x6F;
-                    // 4th row
-                    acase 60: thequeue[queuepos++] = 'P';
-                    acase 61: thequeue[queuepos++] = 'Q';
-                    acase 62: thequeue[queuepos++] = 'R';
-                    acase 63: thequeue[queuepos++] = 'S';
-                    acase 64: thequeue[queuepos++] = 'T';
-                    acase 65: thequeue[queuepos++] = 'U';
-                    acase 66: thequeue[queuepos++] = 'V';
-                    acase 67: thequeue[queuepos++] = 'W';
-                    acase 68: thequeue[queuepos++] = 'X';
-                    acase 69: thequeue[queuepos++] = 'Y';
-                    acase 70: thequeue[queuepos++] = 'Z';
-                    acase 71: thequeue[queuepos++] = '[';
-                    acase 72: thequeue[queuepos++] = '\\';
-                    acase 73: thequeue[queuepos++] = ']';
-                    acase 74: thequeue[queuepos++] = '^';
-                    acase 75: thequeue[queuepos++] = '_';
-                    acase 76: thequeue[queuepos++] = 0x7A;
-                    acase 77: thequeue[queuepos++] = 0x7B;
-                    acase 78: thequeue[queuepos++] = 0x7D;
-                    acase 79: thequeue[queuepos++] = DEL;
-                    }
-                acase VDU_VT100:
-                    switch (i)
-                    {
-                    // 1st row
-                    case   0: thequeue[queuepos++] = VT; // up
-                    acase  1: thequeue[queuepos++] = LF; // down
-                    acase  2: thequeue[queuepos++] = BS; // left
-                    acase  3: thequeue[queuepos++] = FF; // right
-                    // 2nd row
-                    acase  4: thequeue[queuepos++] = ESC;
-                    acase  5: thequeue[queuepos++] = (shift() ? '!'  : '1');
-                    acase  6: thequeue[queuepos++] = (shift() ? '@'  : '2');
-                    acase  7: thequeue[queuepos++] = (shift() ? '#'  : '3'); // or pound sterling symbol
-                    acase  8: thequeue[queuepos++] = (shift() ? '$'  : '4');
-                    acase  9: thequeue[queuepos++] = (shift() ? '%'  : '5');
-                    acase 10: thequeue[queuepos++] = (shift() ? '^'  : '6');
-                    acase 11: thequeue[queuepos++] = (shift() ? '&'  : '7');
-                    acase 12: thequeue[queuepos++] = (shift() ? '*'  : '8');
-                    acase 13: thequeue[queuepos++] = (shift() ? '('  : '9');
-                    acase 14: thequeue[queuepos++] = (shift() ? ')'  : '0');
-                    acase 15: thequeue[queuepos++] = (shift() ? '_'  : '-');
-                    acase 16: thequeue[queuepos++] = (shift() ? '+'  : '=');
-                    acase 17: thequeue[queuepos++] = (shift() ? '`'  : '~');
-                    acase 18: thequeue[queuepos++] = BS;
-                    acase 19: thequeue[queuepos++] = NUL;
-                    acase 20: thequeue[queuepos++] = '7';
-                    acase 21: thequeue[queuepos++] = '8';
-                    acase 22: thequeue[queuepos++] = '9';
-                    acase 23: thequeue[queuepos++] = '-';
-                    // 3rd row
-                    acase 24: thequeue[queuepos++] = ESC;
-                    acase 25: thequeue[queuepos++] = (ctrl()  ?   17 : 'Q');
-                    acase 26: thequeue[queuepos++] = (ctrl()  ?   23 : 'W');
-                    acase 27: thequeue[queuepos++] = (ctrl()  ?    5 : 'E');
-                    acase 28: thequeue[queuepos++] = (ctrl()  ?   18 : 'R');
-                    acase 29: thequeue[queuepos++] = (ctrl()  ?   20 : 'T');
-                    acase 30: thequeue[queuepos++] = (ctrl()  ?   25 : 'Y');
-                    acase 31: thequeue[queuepos++] = (ctrl()  ?   21 : 'U');
-                    acase 32: thequeue[queuepos++] = (ctrl()  ?    9 : 'I');
-                    acase 33: thequeue[queuepos++] = (ctrl()  ?   15 : 'O');
-                    acase 34: thequeue[queuepos++] = (ctrl()  ?   16 : 'P');
-                    acase 35: if (ctrl()) thequeue[queuepos++] = ESC;  else thequeue[queuepos++] = (shift() ? '{' : '[');
-                    acase 36: if (ctrl()) thequeue[queuepos++] = 0x1D; else thequeue[queuepos++] = (shift() ? '}' : ']'); // GS
-                    acase 37: thequeue[queuepos++] = CR;
-                    acase 38: thequeue[queuepos++] = DEL;
-                    acase 39: thequeue[queuepos++] = '4';
-                    acase 40: thequeue[queuepos++] = '5';
-                    acase 41: thequeue[queuepos++] = '6';
-                    acase 42: thequeue[queuepos++] = ',';
-                    // 4th row
-                    acase 43: softctrl = TRUE;
-                    acase 44: capslock = capslock ? FALSE : TRUE; update_capslock();
-                    acase 45: thequeue[queuepos++] = (ctrl()  ?    1 : 'A');
-                    acase 46: thequeue[queuepos++] = (ctrl()  ?   19 : 'S');
-                    acase 47: thequeue[queuepos++] = (ctrl()  ?    4 : 'D');
-                    acase 48: thequeue[queuepos++] = (ctrl()  ?    6 : 'F');
-                    acase 49: thequeue[queuepos++] = (ctrl()  ? BEL  : 'G');
-                    acase 50: thequeue[queuepos++] = (ctrl()  ?    8 : 'H');
-                    acase 51: thequeue[queuepos++] = (ctrl()  ?   10 : 'J');
-                    acase 52: thequeue[queuepos++] = (ctrl()  ?   11 : 'K');
-                    acase 53: thequeue[queuepos++] = (ctrl()  ?   12 : 'L');
-                    acase 54: thequeue[queuepos++] = (shift() ? ':'  : ';');
-                    acase 55: thequeue[queuepos++] = (shift() ? QUOTES : QUOTE);
-                    acase 56: thequeue[queuepos++] = (shift() ? '|'  : '\\');
-                    acase 57: thequeue[queuepos++] = '4';
-                    acase 58: thequeue[queuepos++] = '5';
-                    acase 59: thequeue[queuepos++] = '6';
-                    acase 60: thequeue[queuepos++] = CR;
-                    // 5th row
-                    //    61 is No Scroll
-                    acase 62: softlshift = TRUE;
-                    acase 63: thequeue[queuepos++] = (ctrl()  ?   26 : 'Z');
-                    acase 64: thequeue[queuepos++] = (ctrl()  ?   24 : 'X');
-                    acase 65: thequeue[queuepos++] = (ctrl()  ?    3 : 'C');
-                    acase 66: thequeue[queuepos++] = (ctrl()  ?   22 : 'V');
-                    acase 67: thequeue[queuepos++] = (ctrl()  ?    2 : 'B');
-                    acase 68: thequeue[queuepos++] = (ctrl()  ?   14 : 'N');
-                    acase 69: thequeue[queuepos++] = (ctrl()  ?   13 : 'M');
-                    acase 70: thequeue[queuepos++] = (shift() ? '<'  : ',');
-                    acase 71: thequeue[queuepos++] = (shift() ? '>'  : '.');
-                    acase 72: thequeue[queuepos++] = (shift() ? '?'  : '/');
-                    acase 73: softrshift = TRUE;
-                    acase 74: thequeue[queuepos++] = LF;
-                    acase 75: thequeue[queuepos++] = '0';
-                    acase 76: thequeue[queuepos++] = '.';
-                    // 6th row
-                    acase 77: thequeue[queuepos++] = ' ';
-                    // reset button
-                    acase 78: wheremouse = -1; // so it doesn't invert
-                              project_reset(FALSE);
-                    }
-                adefault:
-                    switch (i)
-                    {
-                    // 1st row
-                    case   0: thequeue[queuepos++] = (shift() ? '!'  : '1');
-                    acase  1: thequeue[queuepos++] = (shift() ? QUOTES : '2');
-                    acase  2: thequeue[queuepos++] = (shift() ? '#'  : '3');
-                    acase  3: thequeue[queuepos++] = (shift() ? '$'  : '4');
-                    acase  4: thequeue[queuepos++] = (shift() ? '%'  : '5');
-                    acase  5: thequeue[queuepos++] = (shift() ? '&'  : '6');
-                    acase  6: thequeue[queuepos++] = (shift() ? QUOTE  : '7');
-                    acase  7: thequeue[queuepos++] = (shift() ? '('  : '8');
-                    acase  8: thequeue[queuepos++] = (shift() ? ')'  : '9');
-                    acase  9: thequeue[queuepos++] = (shift() ? ' '  : '0'); // or NUL?
-                    acase 10: thequeue[queuepos++] = (shift() ? '*'  : ':');
-                    acase 11: thequeue[queuepos++] = (shift() ? '='  : '-');
-                    acase 12: thequeue[queuepos++] = (shift() ? '`'  : '@');
-                    acase 13: thequeue[queuepos++] = 0x0C; // FF
-                    acase 14: thequeue[queuepos++] = EM; // PgUp
-                    // 2nd row
-                    acase 15: thequeue[queuepos++] = ESC;
-                    acase 16: thequeue[queuepos++] = (ctrl()  ?   17 : 'Q');
-                    acase 17: thequeue[queuepos++] = (ctrl()  ?   23 : 'W');
-                    acase 18: thequeue[queuepos++] = (ctrl()  ?    5 : 'E');
-                    acase 19: thequeue[queuepos++] = (ctrl()  ?   18 : 'R');
-                    acase 20: thequeue[queuepos++] = (ctrl()  ?   20 : 'T');
-                    acase 21: thequeue[queuepos++] = (ctrl()  ?   25 : 'Y');
-                    acase 22: thequeue[queuepos++] = (ctrl()  ?   21 : 'U');
-                    acase 23: thequeue[queuepos++] = (ctrl()  ?    9 : 'I');
-                    acase 24: thequeue[queuepos++] = (ctrl()  ?   15 : 'O');
-                    acase 25: thequeue[queuepos++] = (ctrl()  ?   16 : 'P');
-                    acase 26: if (ctrl()) thequeue[queuepos++] = ESC;  else thequeue[queuepos++] = (shift() ? '{' : '[');
-                    acase 27: if (ctrl()) thequeue[queuepos++] = 0x1D; else thequeue[queuepos++] = (shift() ? '}' : ']'); // GS
-                    acase 28: thequeue[queuepos++] = (pipbug_vdu == VDU_ELEKTERMINAL ? EOT : LF);
-                    acase 29: thequeue[queuepos++] = CR;
-                    acase 30: thequeue[queuepos++] = SUB;
-                    // 3rd row
-                    acase 31: softctrl = TRUE;
-                    acase 32: thequeue[queuepos++] = (ctrl()  ?    1 : 'A');
-                    acase 33: thequeue[queuepos++] = (ctrl()  ?   19 : 'S');
-                    acase 34: thequeue[queuepos++] = (ctrl()  ?    4 : 'D');
-                    acase 35: thequeue[queuepos++] = (ctrl()  ?    6 : 'F');
-                    acase 36: thequeue[queuepos++] = (ctrl()  ? BEL  : 'G');
-                    acase 37: thequeue[queuepos++] = (ctrl()  ?    8 : 'H');
-                    acase 38: thequeue[queuepos++] = (ctrl()  ?   10 : 'J');
-                    acase 39: thequeue[queuepos++] = (ctrl()  ?   11 : 'K');
-                    acase 40: thequeue[queuepos++] = (ctrl()  ?   12 : 'L');
-                    acase 41: thequeue[queuepos++] = (shift() ? '+'  : ';');
-                    acase 42: thequeue[queuepos++] = 0x1C; // FS
-                    acase 43: if (ctrl()) thequeue[queuepos++] = 0x1F; else thequeue[queuepos++] = BS; // US
-                    acase 44: thequeue[queuepos++] = 0x09; // HT
-                    acase 45: thequeue[queuepos++] = CAN;
-                    // 4th row
-                    acase 46: softlshift = TRUE;
-                    acase 47: thequeue[queuepos++] = (ctrl()  ?   26 : 'Z');
-                    acase 48: thequeue[queuepos++] = (ctrl()  ?   24 : 'X');
-                    acase 49: thequeue[queuepos++] = (ctrl()  ?    3 : 'C');
-                    acase 50: thequeue[queuepos++] = (ctrl()  ?   22 : 'V');
-                    acase 51: thequeue[queuepos++] = (ctrl()  ?    2 : 'B');
-                    acase 52: thequeue[queuepos++] = (ctrl()  ?   14 : 'N');
-                    acase 53: thequeue[queuepos++] = (ctrl()  ?   13 : 'M');
-                    acase 54: thequeue[queuepos++] = (shift() ? '<'  : ',');
-                    acase 55: thequeue[queuepos++] = (shift() ? '>'  : '.');
-                    acase 56: thequeue[queuepos++] = (shift() ? '?'  : '/');
-                    acase 57: softrshift = TRUE;
-                    acase 58: thequeue[queuepos++] = (pipbug_vdu == VDU_ELEKTERMINAL ? NAK : VT);
-                    acase 59: thequeue[queuepos++] = NUL;
-                    // 5th row
-                    acase 60: thequeue[queuepos++] = ' ';
-                    // reset button
-                    acase 61: wheremouse = -1; // so it doesn't invert
-                              project_reset(FALSE);
-                }   }
-            acase ZACCARIA:
-                wheremouse = i;
-                switch (i)
-                {
-                case   0: newkeys[ 0] |=  coinop_button1;
-                acase  1: newkeys[ 1] |=  coinop_1p;
-                acase  2: newkeys[ 2] |=  coinop_2p;
-                acase  3: newkeys[ 3] |=  coinop_joy1left;
-                acase  4: newkeys[ 4] |=  coinop_joy1right;
-                acase  5:
+            // 1st row
+            case   0: thequeue[queuepos++] = ' ';
+            acase  1: thequeue[queuepos++] = '!';
+            acase  2: thequeue[queuepos++] = QUOTES;
+            acase  3: thequeue[queuepos++] = '#';
+            acase  4: thequeue[queuepos++] = '$';
+            acase  5: thequeue[queuepos++] = '%';
+            acase  6: thequeue[queuepos++] = '&';
+            acase  7: thequeue[queuepos++] = QUOTE;
+            acase  8: thequeue[queuepos++] = '(';
+            acase  9: thequeue[queuepos++] = ')';
+            acase 10: thequeue[queuepos++] = '*';
+            acase 11: thequeue[queuepos++] = '+';
+            acase 12: thequeue[queuepos++] = ',';
+            acase 13: thequeue[queuepos++] = '-';
+            acase 14: thequeue[queuepos++] = '.';
+            acase 15: thequeue[queuepos++] = '/';
+            acase 16: thequeue[queuepos++] = LF;
+            acase 17: thequeue[queuepos++] = 0x0B;
+            acase 18: thequeue[queuepos++] = CR;
+            acase 19: thequeue[queuepos++] = BEL;
+            // 2nd row
+            acase 20: thequeue[queuepos++] = '0';
+            acase 21: thequeue[queuepos++] = '1';
+            acase 22: thequeue[queuepos++] = '2';
+            acase 23: thequeue[queuepos++] = '3';
+            acase 24: thequeue[queuepos++] = '4';
+            acase 25: thequeue[queuepos++] = '5';
+            acase 26: thequeue[queuepos++] = '6';
+            acase 27: thequeue[queuepos++] = '7';
+            acase 28: thequeue[queuepos++] = '8';
+            acase 29: thequeue[queuepos++] = '9';
+            acase 30: thequeue[queuepos++] = ':';
+            acase 31: thequeue[queuepos++] = ';';
+            acase 32: thequeue[queuepos++] = '<';
+            acase 33: thequeue[queuepos++] = '=';
+            acase 34: thequeue[queuepos++] = '>';
+            acase 35: thequeue[queuepos++] = '?';
+            acase 36: thequeue[queuepos++] = 0x1A;
+            acase 37: thequeue[queuepos++] = 0x1B;
+            acase 38: thequeue[queuepos++] = 0x1D;
+            acase 39: thequeue[queuepos++] = 0x1F;
+            // 3rd row
+            acase 40: thequeue[queuepos++] = '@';
+            acase 41: thequeue[queuepos++] = 'A';
+            acase 42: thequeue[queuepos++] = 'B';
+            acase 43: thequeue[queuepos++] = 'C';
+            acase 44: thequeue[queuepos++] = 'D';
+            acase 45: thequeue[queuepos++] = 'E';
+            acase 46: thequeue[queuepos++] = 'F';
+            acase 47: thequeue[queuepos++] = 'G';
+            acase 48: thequeue[queuepos++] = 'H';
+            acase 49: thequeue[queuepos++] = 'I';
+            acase 50: thequeue[queuepos++] = 'J';
+            acase 51: thequeue[queuepos++] = 'K';
+            acase 52: thequeue[queuepos++] = 'L';
+            acase 53: thequeue[queuepos++] = 'M';
+            acase 54: thequeue[queuepos++] = 'N';
+            acase 55: thequeue[queuepos++] = 'O';
+            acase 56: thequeue[queuepos++] = 0x6A;
+            acase 57: thequeue[queuepos++] = 0x6B;
+            acase 58: thequeue[queuepos++] = 0x6D;
+            acase 59: thequeue[queuepos++] = 0x6F;
+            // 4th row
+            acase 60: thequeue[queuepos++] = 'P';
+            acase 61: thequeue[queuepos++] = 'Q';
+            acase 62: thequeue[queuepos++] = 'R';
+            acase 63: thequeue[queuepos++] = 'S';
+            acase 64: thequeue[queuepos++] = 'T';
+            acase 65: thequeue[queuepos++] = 'U';
+            acase 66: thequeue[queuepos++] = 'V';
+            acase 67: thequeue[queuepos++] = 'W';
+            acase 68: thequeue[queuepos++] = 'X';
+            acase 69: thequeue[queuepos++] = 'Y';
+            acase 70: thequeue[queuepos++] = 'Z';
+            acase 71: thequeue[queuepos++] = '[';
+            acase 72: thequeue[queuepos++] = '\\';
+            acase 73: thequeue[queuepos++] = ']';
+            acase 74: thequeue[queuepos++] = '^';
+            acase 75: thequeue[queuepos++] = '_';
+            acase 76: thequeue[queuepos++] = 0x7A;
+            acase 77: thequeue[queuepos++] = 0x7B;
+            acase 78: thequeue[queuepos++] = 0x7D;
+            acase 79: thequeue[queuepos++] = DEL;
+            }
+        acase VDU_VT100:
+            switch (whichkey)
+            {
+            // 1st row
+            case   0: thequeue[queuepos++] = VT; // up
+            acase  1: thequeue[queuepos++] = LF; // down
+            acase  2: thequeue[queuepos++] = BS; // left
+            acase  3: thequeue[queuepos++] = FF; // right
+            // 2nd row
+            acase  4: thequeue[queuepos++] = ESC;
+            acase  5: thequeue[queuepos++] = (shift() ? '!'  : '1');
+            acase  6: thequeue[queuepos++] = (shift() ? '@'  : '2');
+            acase  7: thequeue[queuepos++] = (shift() ? '#'  : '3'); // or pound sterling symbol
+            acase  8: thequeue[queuepos++] = (shift() ? '$'  : '4');
+            acase  9: thequeue[queuepos++] = (shift() ? '%'  : '5');
+            acase 10: thequeue[queuepos++] = (shift() ? '^'  : '6');
+            acase 11: thequeue[queuepos++] = (shift() ? '&'  : '7');
+            acase 12: thequeue[queuepos++] = (shift() ? '*'  : '8');
+            acase 13: thequeue[queuepos++] = (shift() ? '('  : '9');
+            acase 14: thequeue[queuepos++] = (shift() ? ')'  : '0');
+            acase 15: thequeue[queuepos++] = (shift() ? '_'  : '-');
+            acase 16: thequeue[queuepos++] = (shift() ? '+'  : '=');
+            acase 17: thequeue[queuepos++] = (shift() ? '`'  : '~');
+            acase 18: thequeue[queuepos++] = BS;
+            acase 19: thequeue[queuepos++] = NUL;
+            acase 20: thequeue[queuepos++] = '7';
+            acase 21: thequeue[queuepos++] = '8';
+            acase 22: thequeue[queuepos++] = '9';
+            acase 23: thequeue[queuepos++] = '-';
+            // 3rd row
+            acase 24: thequeue[queuepos++] = ESC;
+            acase 25: thequeue[queuepos++] = (ctrl()  ?   17 : 'Q');
+            acase 26: thequeue[queuepos++] = (ctrl()  ?   23 : 'W');
+            acase 27: thequeue[queuepos++] = (ctrl()  ?    5 : 'E');
+            acase 28: thequeue[queuepos++] = (ctrl()  ?   18 : 'R');
+            acase 29: thequeue[queuepos++] = (ctrl()  ?   20 : 'T');
+            acase 30: thequeue[queuepos++] = (ctrl()  ?   25 : 'Y');
+            acase 31: thequeue[queuepos++] = (ctrl()  ?   21 : 'U');
+            acase 32: thequeue[queuepos++] = (ctrl()  ?    9 : 'I');
+            acase 33: thequeue[queuepos++] = (ctrl()  ?   15 : 'O');
+            acase 34: thequeue[queuepos++] = (ctrl()  ?   16 : 'P');
+            acase 35: if (ctrl()) thequeue[queuepos++] = ESC;  else thequeue[queuepos++] = (shift() ? '{' : '[');
+            acase 36: if (ctrl()) thequeue[queuepos++] = 0x1D; else thequeue[queuepos++] = (shift() ? '}' : ']'); // GS
+            acase 37: thequeue[queuepos++] = CR;
+            acase 38: thequeue[queuepos++] = DEL;
+            acase 39: thequeue[queuepos++] = '4';
+            acase 40: thequeue[queuepos++] = '5';
+            acase 41: thequeue[queuepos++] = '6';
+            acase 42: thequeue[queuepos++] = ',';
+            // 4th row
+            acase 43: softctrl = TRUE;
+            acase 44: capslock = capslock ? FALSE : TRUE; update_capslock();
+            acase 45: thequeue[queuepos++] = (ctrl()  ?    1 : 'A');
+            acase 46: thequeue[queuepos++] = (ctrl()  ?   19 : 'S');
+            acase 47: thequeue[queuepos++] = (ctrl()  ?    4 : 'D');
+            acase 48: thequeue[queuepos++] = (ctrl()  ?    6 : 'F');
+            acase 49: thequeue[queuepos++] = (ctrl()  ? BEL  : 'G');
+            acase 50: thequeue[queuepos++] = (ctrl()  ?    8 : 'H');
+            acase 51: thequeue[queuepos++] = (ctrl()  ?   10 : 'J');
+            acase 52: thequeue[queuepos++] = (ctrl()  ?   11 : 'K');
+            acase 53: thequeue[queuepos++] = (ctrl()  ?   12 : 'L');
+            acase 54: thequeue[queuepos++] = (shift() ? ':'  : ';');
+            acase 55: thequeue[queuepos++] = (shift() ? QUOTES : QUOTE);
+            acase 56: thequeue[queuepos++] = (shift() ? '|'  : '\\');
+            acase 57: thequeue[queuepos++] = '4';
+            acase 58: thequeue[queuepos++] = '5';
+            acase 59: thequeue[queuepos++] = '6';
+            acase 60: thequeue[queuepos++] = CR;
+            // 5th row
+            //    61 is No Scroll
+            acase 62: softlshift = TRUE;
+            acase 63: thequeue[queuepos++] = (ctrl()  ?   26 : 'Z');
+            acase 64: thequeue[queuepos++] = (ctrl()  ?   24 : 'X');
+            acase 65: thequeue[queuepos++] = (ctrl()  ?    3 : 'C');
+            acase 66: thequeue[queuepos++] = (ctrl()  ?   22 : 'V');
+            acase 67: thequeue[queuepos++] = (ctrl()  ?    2 : 'B');
+            acase 68: thequeue[queuepos++] = (ctrl()  ?   14 : 'N');
+            acase 69: thequeue[queuepos++] = (ctrl()  ?   13 : 'M');
+            acase 70: thequeue[queuepos++] = (shift() ? '<'  : ',');
+            acase 71: thequeue[queuepos++] = (shift() ? '>'  : '.');
+            acase 72: thequeue[queuepos++] = (shift() ? '?'  : '/');
+            acase 73: softrshift = TRUE;
+            acase 74: thequeue[queuepos++] = LF;
+            acase 75: thequeue[queuepos++] = '0';
+            acase 76: thequeue[queuepos++] = '.';
+            // 6th row
+            acase 77: thequeue[queuepos++] = ' ';
+            // reset button
+            acase 78: wheremouse = -1; // so it doesn't invert
+                      project_reset(FALSE);
+            }
+        adefault:
+            switch (whichkey)
+            {
+            // 1st row
+            case   0: thequeue[queuepos++] = (shift() ? '!'  : '1');
+            acase  1: thequeue[queuepos++] = (shift() ? QUOTES : '2');
+            acase  2: thequeue[queuepos++] = (shift() ? '#'  : '3');
+            acase  3: thequeue[queuepos++] = (shift() ? '$'  : '4');
+            acase  4: thequeue[queuepos++] = (shift() ? '%'  : '5');
+            acase  5: thequeue[queuepos++] = (shift() ? '&'  : '6');
+            acase  6: thequeue[queuepos++] = (shift() ? QUOTE  : '7');
+            acase  7: thequeue[queuepos++] = (shift() ? '('  : '8');
+            acase  8: thequeue[queuepos++] = (shift() ? ')'  : '9');
+            acase  9: thequeue[queuepos++] = (shift() ? ' '  : '0'); // or NUL?
+            acase 10: thequeue[queuepos++] = (shift() ? '*'  : ':');
+            acase 11: thequeue[queuepos++] = (shift() ? '='  : '-');
+            acase 12: thequeue[queuepos++] = (shift() ? '`'  : '@');
+            acase 13: thequeue[queuepos++] = 0x0C; // FF
+            acase 14: thequeue[queuepos++] = EM; // PgUp
+            // 2nd row
+            acase 15: thequeue[queuepos++] = ESC;
+            acase 16: thequeue[queuepos++] = (ctrl()  ?   17 : 'Q');
+            acase 17: thequeue[queuepos++] = (ctrl()  ?   23 : 'W');
+            acase 18: thequeue[queuepos++] = (ctrl()  ?    5 : 'E');
+            acase 19: thequeue[queuepos++] = (ctrl()  ?   18 : 'R');
+            acase 20: thequeue[queuepos++] = (ctrl()  ?   20 : 'T');
+            acase 21: thequeue[queuepos++] = (ctrl()  ?   25 : 'Y');
+            acase 22: thequeue[queuepos++] = (ctrl()  ?   21 : 'U');
+            acase 23: thequeue[queuepos++] = (ctrl()  ?    9 : 'I');
+            acase 24: thequeue[queuepos++] = (ctrl()  ?   15 : 'O');
+            acase 25: thequeue[queuepos++] = (ctrl()  ?   16 : 'P');
+            acase 26: if (ctrl()) thequeue[queuepos++] = ESC;  else thequeue[queuepos++] = (shift() ? '{' : '[');
+            acase 27: if (ctrl()) thequeue[queuepos++] = 0x1D; else thequeue[queuepos++] = (shift() ? '}' : ']'); // GS
+            acase 28: thequeue[queuepos++] = (pipbug_vdu == VDU_ELEKTERMINAL ? EOT : LF);
+            acase 29: thequeue[queuepos++] = CR;
+            acase 30: thequeue[queuepos++] = SUB;
+            // 3rd row
+            acase 31: softctrl = TRUE;
+            acase 32: thequeue[queuepos++] = (ctrl()  ?    1 : 'A');
+            acase 33: thequeue[queuepos++] = (ctrl()  ?   19 : 'S');
+            acase 34: thequeue[queuepos++] = (ctrl()  ?    4 : 'D');
+            acase 35: thequeue[queuepos++] = (ctrl()  ?    6 : 'F');
+            acase 36: thequeue[queuepos++] = (ctrl()  ? BEL  : 'G');
+            acase 37: thequeue[queuepos++] = (ctrl()  ?    8 : 'H');
+            acase 38: thequeue[queuepos++] = (ctrl()  ?   10 : 'J');
+            acase 39: thequeue[queuepos++] = (ctrl()  ?   11 : 'K');
+            acase 40: thequeue[queuepos++] = (ctrl()  ?   12 : 'L');
+            acase 41: thequeue[queuepos++] = (shift() ? '+'  : ';');
+            acase 42: thequeue[queuepos++] = 0x1C; // FS
+            acase 43: if (ctrl()) thequeue[queuepos++] = 0x1F; else thequeue[queuepos++] = BS; // US
+            acase 44: thequeue[queuepos++] = 0x09; // HT
+            acase 45: thequeue[queuepos++] = CAN;
+            // 4th row
+            acase 46: softlshift = TRUE;
+            acase 47: thequeue[queuepos++] = (ctrl()  ?   26 : 'Z');
+            acase 48: thequeue[queuepos++] = (ctrl()  ?   24 : 'X');
+            acase 49: thequeue[queuepos++] = (ctrl()  ?    3 : 'C');
+            acase 50: thequeue[queuepos++] = (ctrl()  ?   22 : 'V');
+            acase 51: thequeue[queuepos++] = (ctrl()  ?    2 : 'B');
+            acase 52: thequeue[queuepos++] = (ctrl()  ?   14 : 'N');
+            acase 53: thequeue[queuepos++] = (ctrl()  ?   13 : 'M');
+            acase 54: thequeue[queuepos++] = (shift() ? '<'  : ',');
+            acase 55: thequeue[queuepos++] = (shift() ? '>'  : '.');
+            acase 56: thequeue[queuepos++] = (shift() ? '?'  : '/');
+            acase 57: softrshift = TRUE;
+            acase 58: thequeue[queuepos++] = (pipbug_vdu == VDU_ELEKTERMINAL ? NAK : VT);
+            acase 59: thequeue[queuepos++] = NUL;
+            // 5th row
+            acase 60: thequeue[queuepos++] = ' ';
+            // reset button
+            acase 61: wheremouse = -1; // so it doesn't invert
+                      project_reset(FALSE);
+        }   }
+    acase ZACCARIA:
+        wheremouse = whichkey;
+        switch (whichkey)
+        {
+        case   0: newkeys[ 0] |=  coinop_button1;
+        acase  1: newkeys[ 1] |=  coinop_1p;
+        acase  2: newkeys[ 2] |=  coinop_2p;
+        acase  3: newkeys[ 3] |=  coinop_joy1left;
+        acase  4: newkeys[ 4] |=  coinop_joy1right;
+        acase  5:
                     if (memmap == MEMMAP_ASTROWARS || memmap == MEMMAP_GALAXIA)
-                    {   if (SubWindowPtr[SUBWINDOW_GAMEINFO])
+                    {   if (subwin[SUBWINDOW_GAMEINFO].hwnd)
                         {   close_subwindow(SUBWINDOW_GAMEINFO);
                         } else
                         {   help_gameinfo();
@@ -2696,112 +2664,109 @@ EXPORT void controls_mousedown(int mousex, int mousey)
                     else
                     {   newkeys[ 5] |=  coinop_joy1up;
                     }
-                acase  6: newkeys[ 6] |=  coinop_joy1down;
-                acase  7: newkeys[ 7] |=  coinop_button2;
-                acase  8: newkeys[ 8] |=  coinop_button3;
-                acase  9: newkeys[ 9] |=  coinop_button4;
-                acase 10:
-                    if (SubWindowPtr[SUBWINDOW_GAMEINFO])
+        acase  6: newkeys[ 6] |=  coinop_joy1down;
+        acase  7: newkeys[ 7] |=  coinop_button2;
+        acase  8: newkeys[ 8] |=  coinop_button3;
+        acase  9: newkeys[ 9] |=  coinop_button4;
+        acase 10:
+                    if (subwin[SUBWINDOW_GAMEINFO].hwnd)
                     {   close_subwindow(SUBWINDOW_GAMEINFO);
                     } else
                     {   help_gameinfo();
                 }   }
-            acase MALZAK:
-                wheremouse = i;
-                switch (i)
-                {
-                case   0: newkeys[ 0] |=  coinop_button1;
-                acase  1: newkeys[ 1] |=  coinop_1p;
-                acase  2: newkeys[ 2] |=  coinop_2p;
-                acase  3: newkeys[ 3] |=  coinop_joy1up;
-                acase  4: newkeys[ 4] |= (coinop_joy1up & coinop_joy1right);
-                acase  5: newkeys[ 5] |=  coinop_joy1right;
-                acase  6: newkeys[ 6] |= (coinop_joy1right & coinop_joy1down);
-                acase  7: newkeys[ 7] |=  coinop_joy1down;
-                acase  8: newkeys[ 8] |= (coinop_joy1down & coinop_joy1left);
-                acase  9: newkeys[ 9] |=  coinop_joy1left;
-                acase 10: newkeys[10] |= (coinop_joy1left & coinop_joy1up);
-                }
-            acase PONG:
-                switch (i)
-                {
-                case 4: // angles
-                    if (angles == 2) angles = 0; else angles++;
-                    pong_updatedips();
-                acase 5: // speed
-                    if (memmap == MEMMAP_8550)
-                    {  if (pongspeed == 2) pongspeed = 0; else pongspeed++; // 0..2
+    acase MALZAK:
+        wheremouse = whichkey;
+        switch (whichkey)
+        {
+        case   0: newkeys[ 0] |=  coinop_button1;
+        acase  1: newkeys[ 1] |=  coinop_1p;
+        acase  2: newkeys[ 2] |=  coinop_2p;
+        acase  3: newkeys[ 3] |=  coinop_joy1up;
+        acase  4: newkeys[ 4] |= (coinop_joy1up & coinop_joy1right);
+        acase  5: newkeys[ 5] |=  coinop_joy1right;
+        acase  6: newkeys[ 6] |= (coinop_joy1right & coinop_joy1down);
+        acase  7: newkeys[ 7] |=  coinop_joy1down;
+        acase  8: newkeys[ 8] |= (coinop_joy1down & coinop_joy1left);
+        acase  9: newkeys[ 9] |=  coinop_joy1left;
+        acase 10: newkeys[10] |= (coinop_joy1left & coinop_joy1up);
+        }
+    acase PONG:
+        switch (whichkey)
+        {
+        case 4: // angles
+            if (angles == 2) angles = 0; else angles++;
+            pong_updatedips();
+        acase 5: // speed
+            if (memmap == MEMMAP_8550)
+            {   if (pongspeed == 2) pongspeed = 0; else pongspeed++; // 0..2
+            } else
+            {   if (pongspeed == 1) pongspeed = 0; else pongspeed++; // 0..1
+            }
+            pong_updatedips();
+        acase 6: // auto/manual serving
+            serving = (serving ? 0 : 1);
+            pong_updatedips();
+        acase 7: // reset
+            project_reset(TRUE);
+        acase 8: // lock horizontal axis
+            if (lockhoriz) lockhoriz = FALSE; else lockhoriz = TRUE;
+            pong_updatedips();
+        acase 9: // sound
+            sound = sound ? FALSE : TRUE;
+            docommand(MENUITEM_SOUND);
+        acase 10: // swap controllers
+            swapped = swapped ? FALSE : TRUE;
+            docommand(MENUITEM_SWAPPED);
+        adefault:
+            wheremouse = whichkey;
+            newkeys[whichkey] |= 1;
+        }
+    acase BINBUG:
+        switch (whichkey)
+        {
+        case   0: enqueue(SCAN_C , 'C');
+        acase  1: enqueue(SCAN_A8, '8');
+        acase  2: enqueue(SCAN_A4, '4');
+        acase  3: enqueue(SCAN_A0, '0');
+        acase  4: enqueue(SCAN_D , 'D');
+        acase  5: enqueue(SCAN_A9, '9');
+        acase  6: enqueue(SCAN_A5, '5');
+        acase  7: enqueue(SCAN_A1, '1');
+        acase  8: enqueue(SCAN_E , 'E');
+        acase  9: enqueue(SCAN_A , 'A');
+        acase 10: enqueue(SCAN_A6, '6');
+        acase 11: enqueue(SCAN_A2, '2');
+        acase 12: enqueue(SCAN_F , 'F');
+        acase 13: enqueue(SCAN_B , 'B');
+        acase 14: enqueue(SCAN_A7, '7');
+        acase 15: enqueue(SCAN_A3, '3');
+        }
+    //lint -fallthrough
+    case SELBST:
+    case MIKIT:
+    case PHUNSY:
+        wheremouse = whichkey;
+        newkeys[whichkey] |= keys_column[selbst_keyemul[whichkey].mask];
+    acase TYPERIGHT:
+        wheremouse = whichkey;
+        switch (whichkey)
+        {
+        case  0: console_start = 2;
+        acase 1: console_a     = 2;
+        acase 2: console_b     = 2;
+        acase 3: console_reset = 2;
+        adefault:
+            wheremouse = whichkey;
+            for (i = 0; i < SCANCODES; i++)
+            {   if (keyname[i].tr_index == whichkey)
+                {   newkeys[keyname[i].tr_index] = TRUE;
+                    if (capslock || shift())
+                    {   enqueue((UWORD) i, (TEXT) keyname[i].tr_shifted);
                     } else
-                    {  if (pongspeed == 1) pongspeed = 0; else pongspeed++; // 0..1
+                    {   enqueue((UWORD) i, (TEXT) keyname[i].tr_unshifted);
                     }
-                    pong_updatedips();
-                acase 6: // auto/manual serving
-                    serving = (serving ? 0 : 1);
-                    pong_updatedips();
-                acase 7: // reset
-                    project_reset(TRUE);
-                acase 8: // lock horizontal axis
-                    if (lockhoriz) lockhoriz = FALSE; else lockhoriz = TRUE;
-                    pong_updatedips();
-                acase 9: // sound
-                    sound = sound ? FALSE : TRUE;
-                    docommand(MENUITEM_SOUND);
-                acase 10: // swap controllers
-                    swapped = swapped ? FALSE : TRUE;
-                    docommand(MENUITEM_SWAPPED);
-                adefault:
-                    wheremouse = i;
-                    newkeys[i] |= 1;
-                }
-            acase BINBUG:
-                switch (i)
-                {
-                case   0: enqueue(SCAN_C , 'C');
-                acase  1: enqueue(SCAN_A8, '8');
-                acase  2: enqueue(SCAN_A4, '4');
-                acase  3: enqueue(SCAN_A0, '0');
-                acase  4: enqueue(SCAN_D , 'D');
-                acase  5: enqueue(SCAN_A9, '9');
-                acase  6: enqueue(SCAN_A5, '5');
-                acase  7: enqueue(SCAN_A1, '1');
-                acase  8: enqueue(SCAN_E , 'E');
-                acase  9: enqueue(SCAN_A , 'A');
-                acase 10: enqueue(SCAN_A6, '6');
-                acase 11: enqueue(SCAN_A2, '2');
-                acase 12: enqueue(SCAN_F , 'F');
-                acase 13: enqueue(SCAN_B , 'B');
-                acase 14: enqueue(SCAN_A7, '7');
-                acase 15: enqueue(SCAN_A3, '3');
-                }
-            //lint -fallthrough
-            case SELBST:
-            case MIKIT:
-            case PHUNSY:
-                wheremouse = i;
-                newkeys[i] |= keys_column[selbst_keyemul[i].mask];
-            acase TYPERIGHT:
-                wheremouse = i;
-                switch (i)
-                {
-                case  0: console_start = 2;
-                acase 1: console_a     = 2;
-                acase 2: console_b     = 2;
-                acase 3: console_reset = 2;
-                adefault:
-                    wheremouse = i;
-                    for (j = 0; j < SCANCODES; j++)
-                    {   if (keyname[j].tr_index == i)
-                        {   newkeys[keyname[j].tr_index] = TRUE;
-                            if (capslock || shift())
-                            {   enqueue((UWORD) j, (TEXT) keyname[j].tr_shifted);
-                            } else
-                            {   enqueue((UWORD) j, (TEXT) keyname[j].tr_unshifted);
-                            }
-                            break;
-            }   }   }   }
-
-            return; // for speed
-}   }   }
+                    break;
+}   }   }   }   }
 
 EXPORT void controls_mouseup(void)
 {   wheremouse = -1;
@@ -2819,13 +2784,13 @@ EXPORT void music_mousedown(int whichbutton, int mousex, int mousey)
     {   return;
     }
 
-    // assert(SubWindowPtr[SUBWINDOW_MUSIC]);
+    // assert(subwin[SUBWINDOW_MUSIC].hwnd);
 
 #ifdef WIN32
     thepoint.x = mousex;
     thepoint.y = mousey;
-    ClientToScreen(SubWindowPtr[SUBWINDOW_MUSIC], &thepoint);
-    DISCARD GetWindowRect(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_MUSIC), &therect);
+    ClientToScreen(subwin[SUBWINDOW_MUSIC].hwnd, &thepoint);
+    DISCARD GetWindowRect(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_MUSIC), &therect);
     mousex = thepoint.x - therect.left;
     mousey = thepoint.y - therect.top;
 #endif
@@ -2914,7 +2879,7 @@ EXPORT void domouse(void)
 {   FAST UBYTE t;
 
     if (wheremouse != -1)
-    {   // assert(SubWindowPtr[SUBWINDOW_CONTROLS]);
+    {   // assert(subwin[SUBWINDOW_CONTROLS].hwnd);
 
         switch (machine)
         {
@@ -3581,7 +3546,7 @@ EXPORT void playsound(FLAG force)
     {   if (guestpitch[i] && guestvolume[i])
         {   if
             (   force
-             || !guestplaying[i]
+             || !channel[i].playing
              || guestpitch[i]  != oldguestpitch[i]
              || guestvolume[i] != oldguestvolume[i]
             )
@@ -3701,7 +3666,7 @@ EXPORT void playsound(FLAG force)
     {   if (guestpitch[i] && guestvolume[i])
         {   if
             (   force
-             || !guestplaying[i]
+             || !channel[i].playing
              || guestvolume[i] != oldguestvolume[i]
              || guestpitch[i] != oldguestpitch[i]
             )
@@ -4194,15 +4159,15 @@ EXPORT void loadhiscores(void)
     if (thesize == (ULONG) HISCORESLENGTH)
     {   if ((TheLocalHandle = fopen(FN_HISCORES, "rb")))
         {   if (fread(HiScoresBuffer, (size_t) thesize, 1, TheLocalHandle) == 1)
-            {   if   (HiScoresBuffer[0] == 15) // 15 means V35.5+
-                {   for (i = 0; i <= 85; i++)
+            {   if   (HiScoresBuffer[0] == 16) // 16 means V36.31 beta+
+                {   for (i = 0; i <= 86; i++)
                     {   readhiscore(i, i);
                 }   }
-                elif (HiScoresBuffer[0] == 14) // 14 means V35.22-35.5 beta
-                {   for (i = 0; i <= 1; i++)
+                elif (HiScoresBuffer[0] == 15) // 15 means V35.5-36.3
+                {   for (i = 0; i <= 25; i++)
                     {   readhiscore(i, i);
                     }
-                    for (i = 2; i <= 84; i++)
+                    for (i = 26; i <= 85; i++)
                     {   readhiscore(i, i + 1);
                 }   }
                 else
@@ -4244,7 +4209,7 @@ EXPORT void savehiscores(void)
     int   i, j;
 
     if ((TheLocalHandle = fopen(FN_HISCORES, "wb")))
-    {   HiScoresBuffer[0] = 15; // 15 means V35.5+
+    {   HiScoresBuffer[0] = 16; // 16 means V36.31 beta+
         for (i = 0; i < HISCORES; i++)
         {   HiScoresBuffer[     0 +     (i * HSENTRYSIZE) + 1] = (UBYTE)  (hiscore[i].score / 65536);
             HiScoresBuffer[     1 +     (i * HSENTRYSIZE) + 1] = (UBYTE) ((hiscore[i].score % 65536) / 256);
@@ -4649,8 +4614,7 @@ MODULE void serializeconfig(void)
           green,
           blue;
     int   configversion = NEWER,
-          i, j,
-          temp;
+          i, j;
 
     offset = 0;
 
@@ -4660,11 +4624,26 @@ MODULE void serializeconfig(void)
     aserialize_str( "version"             , (STRPTR) tempstring);
     if (serializemode == SERIALIZE_READ)
     {   if     (!strcmp((char*) tempstring, NEWCONFIGVERSION))
-        {   configversion = NEWER;
+        {
+#ifdef WIN32
+            configversion = NEWER;
+#else
+            ;
+#endif
         } elif (!strcmp((char*) tempstring, OLDCONFIGVERSION))
-        {   configversion = OLDER;
+        {
+#ifdef WIN32
+            configversion = OLDER;
+#else
+            ;
+#endif
         } elif (!strcmp((char*) tempstring, VERYOLDCONFIGVERSION))
-        {   configversion = OLDEST;
+        {
+#ifdef WIN32
+            configversion = OLDEST;
+#else
+            ;
+#endif
         } else
         {   zprintf(TEXTPEN_ERROR, "Wrong INI file version (obsolete/future)!\n");
             return;
@@ -4711,7 +4690,10 @@ MODULE void serializeconfig(void)
     aserialize_bool("candy_tapedeck_phunsy",&candy[1 - 1]      );
     aserialize_bool("candy_hostkybd"      , &candy[2 - 1]      );
     aserialize_bool("candy_printer"       , &candy[3 - 1]      );
-    aserialize_bool("candy_controls"      , &candy[4 - 1]      );
+    if (configversion != NEWER)
+    {   aserialize_bool("candy_controls"  , &candy[4 - 1]      );
+    }
+    aserialize_bool("candy_hostpads"      , &candy[5 - 1]      );
 #endif
     aserialize_bool("collisions"          , (int*) &collisions );
 #ifdef WIN32
@@ -4725,11 +4707,6 @@ MODULE void serializeconfig(void)
     aserialize_bool("darkenbg"            , &darkenbg          );
     aserialize_bool("declinate"           , (int*) &declinate  );
     aserialize_bool("dejitter"            , &dejitter          );
-    if (configversion == OLDEST)
-    {   aserialize_bool("demultiplex"     , (int*) &demultiplex);
-        if (demultiplex)
-        {   demultiplex = 2; // opaque
-    }   }
     aserialize_bool("drawcorners"         , &drawcorners       );
     aserialize_bool("drawunlit"           , &drawunlit         );
     aserialize_bool("eachpage"            , (int*) &eachpage   );
@@ -4750,22 +4727,17 @@ MODULE void serializeconfig(void)
     aserialize_bool("forcefeedback_left"  , &useff[0]          );
     aserialize_bool("forcefeedback_right" , &useff[1]          );
     aserialize_bool("fullscreen"          , &fullscreen       );
-#ifdef AMIGA
-    if (configversion == OLDEST)
+#ifdef WIN32
+    aserialize_bool("fullscreen_debugger" , &showdebugger[  1]);
+    aserialize_bool("fullscreen_menubar"  , &showmenubars[  1]);
+    aserialize_bool("fullscreen_pointer"  , &showpointers[  1]);
+    aserialize_bool("fullscreen_sidebar"  , &showsidebars[  1]);
+    aserialize_bool("fullscreen_statusbar", &showstatusbars[1]);
+    aserialize_bool("fullscreen_titlebar" , &showtitlebars[ 1]);
+    aserialize_bool("fullscreen_toolbar"  , &showtoolbars[  1]);
 #endif
-    {   aserialize_bool("fullscreen_debugger" , &showdebugger[  1]);
-        aserialize_bool("fullscreen_menubar"  , &showmenubars[  1]);
-        aserialize_bool("fullscreen_pointer"  , &showpointers[  1]);
-        aserialize_bool("fullscreen_sidebar"  , &showsidebars[  1]);
-        aserialize_bool("fullscreen_statusbar", &showstatusbars[1]);
-        aserialize_bool("fullscreen_titlebar" , &showtitlebars[ 1]);
-        aserialize_bool("fullscreen_toolbar"  , &showtoolbars[  1]);
-    }
     aserialize_bool("generate"            , &generate          );
     aserialize_bool("generateanim"        , &iffanims          );
-    if (configversion == OLDEST)
-    {   aserialize_bool("generateavi"     , &temp              );
-    }
     aserialize_bool("generategif"         , &gifanims          );
     aserialize_bool("generatemng"         , &mnganims          );
     aserialize_bool("generatepng"         , &apnganims         );
@@ -4835,9 +4807,7 @@ MODULE void serializeconfig(void)
     aserialize_bool("verbosedisk"         , (int*) &verbosedisk);
     aserialize_bool("verbosetape"         , (int*) &verbosetape);
     aserialize_bool("viewbuiltin"         , &showbuiltin       );
-    if (configversion != OLDEST)
-    {   aserialize_bool("warn"            , (int*) &warn       );
-    }
+    aserialize_bool("warn"                , (int*) &warn       );
     aserialize_bool("watchreads"          , &watchreads        );
     aserialize_int( "watchwrites"         , &watchwrites, 0, 2 );
     aserialize_bool("windowed_debugger"   , &showdebugger[  0] );
@@ -4849,10 +4819,20 @@ MODULE void serializeconfig(void)
     aserialize_bool("windowed_toolbar"    , &showtoolbars[  0] );
     aserialize_bool("windowed_sidebar"    , &showsidebars[  0] );
     aserialize_bool("windowed_statusbar"  , &showstatusbars[0] );
-    aserialize_bool("writeprotect"        , (int*) &drive[0].writeprotect);
-    aserialize_bool("writeprotect2"       , (int*) &drive[1].writeprotect);
-    aserialize_bool("writeprotect3"       , (int*) &tapewriteprotect);
-    aserialize_bool("writeprotect4"       , (int*) &papertapeprotect[0]);
+    if (configversion == NEWER)
+    {   aserialize_bool("writeprotect_floppy0"   , (int*) &drive[0].writeprotect);
+        aserialize_bool("writeprotect_floppy1"   , (int*) &drive[1].writeprotect);
+        aserialize_bool("writeprotect_floppy2"   , (int*) &drive[2].writeprotect);
+        aserialize_bool("writeprotect_floppy3"   , (int*) &drive[3].writeprotect);
+        aserialize_bool("writeprotect_papertape0", (int*) &papertapeprotect[0]);
+        aserialize_bool("writeprotect_papertape1", (int*) &papertapeprotect[1]);
+        aserialize_bool("writeprotect_tape"      , (int*) &tapewriteprotect);
+    } else
+    {   aserialize_bool("writeprotect"           , (int*) &drive[0].writeprotect);
+        aserialize_bool("writeprotect2"          , (int*) &drive[1].writeprotect);
+        aserialize_bool("writeprotect3"          , (int*) &tapewriteprotect);
+        aserialize_bool("writeprotect4"          , (int*) &papertapeprotect[0]);
+    }
 
     for (i = 0; i < 24; i++)
     {   for (j = 0; j < COLOURSETS; j++)
@@ -4922,15 +4902,13 @@ MODULE void serializeconfig(void)
 #endif
     aserialize_int(  "controller_left"    , &hostcontroller[0]      ,             0, 8); // host-specific
     aserialize_int(  "controller_right"   , &hostcontroller[1]      ,             0, 8); // host-specific
-    aserialize_int(  "debugger_drive"     , &debugdrive             ,             0, 1);
-    if (configversion != OLDEST)
-    {   aserialize_int("demultiplex"      , &demultiplex            ,             0, 2); // off, transparent, opaque
+    aserialize_int(  "debugger_drive"     , &debugdrive             ,             0, 3);
+    aserialize_int(  "demultiplex"        , &demultiplex            ,             0, 2); // off, transparent, opaque
 #ifdef AMIGA
-        if (demultiplex == 1)
-        {   demultiplex = 2;
-        }
-#endif
+    if (demultiplex == 1)
+    {   demultiplex = 2;
     }
+#endif
     aserialize_ubyte("dips_astrowars"     , &aw_dips1);
     aserialize_ubyte("dips_astrowars_2"   , &aw_dips2);
     aserialize_ubyte("dips_galaxia"       , &ga_dips);
@@ -4962,24 +4940,12 @@ MODULE void serializeconfig(void)
     }
     aserialize_uword("netport"            , &netport                ,             0, 65535);
     aserialize_int("nexttip"              , &nexttod                ,             0, TIPSOFDAYS - 1);
-    if (configversion == NEWER)
-    {   aserialize_int("notation"         , &style                  ,             0, 4); // non-extended, extended, old calm, new calm, ieee
-    } else
-    {   aserialize_int("notation"         , &style                  ,             0, 3); // non-extended, extended, old calm, ieee
-        if (style == 3)
-        {   style = 4; // IEEE-694
-    }   }
+    aserialize_int("notation"             , &style                  ,             0, 4); // non-extended, extended, old calm, new calm, ieee
     aserialize_int("phunsy_biosversion"   , &phunsy_biosver         ,             0, 1); // mini-monitor, phunsy
     aserialize_int("pipbug_baudrate"      , &pipbug_baudrate        ,             0, 2); // 110, 300, 4800
     aserialize_int("pipbug_biosversion"   , &pipbug_biosver         ,             0, 3); // Artemis, HYBUG, PIPBUG 1, PIPBUG 2
     aserialize_int("pipbug_peripheral"    , &pipbug_periph          ,             0, 3); // EA printer, Linearization, VM, WFC
-    if (configversion != OLDEST)
-    {   aserialize_int("pipbug_vdu"       , &pipbug_vdu             ,             0, 5); // elekterminal, narrow lcvdu, wide lcvdu, rb, svt-100, vt100
-    } else
-    {   aserialize_int("pipbug_vdu"       , &pipbug_vdu             ,             0, 4); // elekterminal, narrow lcvdu, wide lcvdu, svt-100, vt100
-        if (pipbug_vdu >= 3)
-        {   pipbug_vdu++; // 3..4 -> 4..5
-    }   }
+    aserialize_int("pipbug_vdu"           , &pipbug_vdu             ,             0, 5); // elekterminal, narrow lcvdu, wide lcvdu, rb, svt-100, vt100
     aserialize_int("pong_angles"          , &angles                 ,             0, 2); // 2, 4, random
     aserialize_int("pong_batsizes"        , &batvalue               ,             0, 3); // short+short, tall+tall, short+tall, tall+short
     aserialize_int("pong_machine"         , (int*) &pong_machine    ,             0, 2); // AY-3-8500 (1976), AY-3-8500 (1977), AY-3-8550
@@ -5078,7 +5044,7 @@ MODULE void serializeconfig(void)
         sprintf((char*) tempstring, "twin_condensed_%d", i);
         aserialize_int((STRPTR) tempstring, &(printer[i].condensed) ,             0, 1); // normal, condensed
     }
-    aserialize_int("verbosity"            , &verbosity              ,             0, 2); // minimum, table, maximum
+    aserialize_int("verbosity"            , &verbosity              ,             0, 2); // VERBOSITY_MINIMUM/TABLE/MAXIMUM
     aserialize_int("viewctrlsas_arcadia"  , (int*) &arcadia_viewcontrolsas ,      0, 2); // Emerson, MPT-03, Palladium
     aserialize_int("viewctrlsas_8550"     , (int*) &pong8550_viewcontrolsas,      0, 1); // Interton 3000, Sheen
     aserialize_int("viewctrlsas_8600"     , (int*) &pong8600_viewcontrolsas,      0, 1); // Telstar, Telejogo
@@ -5087,6 +5053,12 @@ MODULE void serializeconfig(void)
     aserialize_int("viewmemoryas"         , (int*) &viewmemas       ,             0, 1); // hex, characters
     aserialize_int("viewmemorymapas"      , (int*) &viewmemas2             ,      0, 2); // contents, memory map, coverage report
     aserialize_int("viewpadsas"           , (int*) &viewpadsas      ,             0, 2); // guest, host, overlays
+#ifdef WIN32
+    if (configversion != OLDEST)
+    {   aserialize_int("viewpadsas2_1st"  , (int*) &viewpadsas2[0]  ,             0, 1); // Gameware, Logitech
+        aserialize_int("viewpadsas2_2nd"  , (int*) &viewpadsas2[1]  ,             0, 1); // Gameware, Logitech
+    }
+#endif
 #ifdef AMIGA
     aserialize_int("viewpadsas2"          , (int*) &viewpadsas2     ,             0, 1); // CD32, Megadrive
 #endif
@@ -5175,14 +5147,14 @@ EXPORT void update_speed(void)
     {   return;
     }
 
-    if (SubWindowPtr[SUBWINDOW_SPEED])
+    if (subwin[SUBWINDOW_SPEED].hwnd)
     {   sl_set(SUBWINDOW_SPEED, IDC_ADJUSTSPEED, speedup);
 #ifdef WIN32
         sprintf(gtempstring, "%d", speedupnum[speedup]);
         st_set(SUBWINDOW_SPEED, IDC_EMUSPEED_NUM);
 #endif
 #ifdef AMIGA
-        SetGadgetAttrs(gadgets[GID_SD_IN1], SubWindowPtr[SUBWINDOW_SPEED], NULL, INTEGER_Number, (ULONG) speedupnum[speedup], TAG_DONE); // this autorefreshes
+        SetGadgetAttrs(gadgets[GID_SD_IN1], subwin[SUBWINDOW_SPEED].hwnd, NULL, INTEGER_Number, (ULONG) speedupnum[speedup], TAG_DONE); // this autorefreshes
 #endif
     }
 
@@ -5281,14 +5253,11 @@ EXPORT void setmonused(void)
         {   monitor[i].used = TRUE;
         }
     acase INTERTON:
-        for (i = I_FIRSTMONGAD; i <= IE_LASTMONGAD; i++)
-        {   monitor[i].used = TRUE;
-        }
         for (i = INTERTON_FIRSTMONGAD; i <= INTERTON_LASTMONGAD; i++)
         {   monitor[i].used = TRUE;
         }
     acase ELEKTOR:
-        for (i = E_FIRSTMONGAD; i <= IE_LASTMONGAD; i++)
+        for (i = ELEKTOR_FIRSTMONGAD; i <= ELEKTOR_LASTMONGAD; i++)
         {   monitor[i].used = TRUE;
 }   }   }
 
@@ -5311,9 +5280,9 @@ EXPORT void close_subwindows(FLAG all)
 {   int i;
 
     for (i = 0; i < SUBWINDOWS; i++)
-    {   if (SubWindowPtr[i] && (all || i != SUBWINDOW_OUTPUT))
+    {   if (subwin[i].hwnd && (all || i != SUBWINDOW_OUTPUT))
         {   close_subwindow(i);
-            need[i] = TRUE;
+            subwin[i].need = TRUE;
 }   }   }
 
 EXPORT void reopen_subwindows(void)
@@ -5324,31 +5293,31 @@ EXPORT void reopen_subwindows(void)
     }
 
 #ifdef WIN32
-    if (need[SUBWINDOW_OUTPUT      ]) open_output(FALSE);
+    if (subwin[SUBWINDOW_OUTPUT      ].need) open_output(FALSE);
 #endif
 
-    if (need[SUBWINDOW_CONTROLS    ]) view_controls();
-    if (need[SUBWINDOW_DIPS        ]) edit_dips();
-    if (need[SUBWINDOW_FLOPPYDRIVE ]) open_floppydrive(FALSE); // or TRUE if there were substantial differences between DOSes
-    if (need[SUBWINDOW_GAMEINFO    ]) help_gameinfo();
-    if (need[SUBWINDOW_MEMORY      ]) edit_memory();
-    if (need[SUBWINDOW_MONITOR_CPU ]) view_monitor(SUBWINDOW_MONITOR_CPU);
-    if (need[SUBWINDOW_OPCODES     ]) help_opcodes();
-    if (need[SUBWINDOW_PALETTE     ]) edit_palette();
-    if (need[SUBWINDOW_PRINTER     ]) tools_printer();
-    if (need[SUBWINDOW_SPRITES     ]) open_spriteeditor();
-    if (need[SUBWINDOW_SPEED       ]) open_speed();
-    if (need[SUBWINDOW_TAPEDECK    ]) open_tapedeck();
-    if (need[SUBWINDOW_HOSTKYBD    ]) help_hostkybd();
-    if (need[SUBWINDOW_HOSTPADS    ]) help_hostpads();
-    if (need[SUBWINDOW_MONITOR_PSGS]) view_monitor(SUBWINDOW_MONITOR_PSGS);
-    if (need[SUBWINDOW_MONITOR_XVI ]) view_monitor(SUBWINDOW_MONITOR_XVI);
-    if (need[SUBWINDOW_MUSIC       ]) tools_music();
-    if (need[SUBWINDOW_PAPERTAPE   ]) open_papertape();
-    if (need[SUBWINDOW_INDUSTRIAL  ]) open_industrial();
+    if (subwin[SUBWINDOW_CONTROLS    ].need) view_controls();
+    if (subwin[SUBWINDOW_DIPS        ].need) edit_dips();
+    if (subwin[SUBWINDOW_FLOPPYDRIVE ].need) open_floppydrive(FALSE); // or TRUE if there were substantial differences between DOSes
+    if (subwin[SUBWINDOW_GAMEINFO    ].need) help_gameinfo();
+    if (subwin[SUBWINDOW_MEMORY      ].need) edit_memory();
+    if (subwin[SUBWINDOW_MONITOR_CPU ].need) view_monitor(SUBWINDOW_MONITOR_CPU);
+    if (subwin[SUBWINDOW_OPCODES     ].need) help_opcodes();
+    if (subwin[SUBWINDOW_PALETTE     ].need) edit_palette();
+    if (subwin[SUBWINDOW_PRINTER     ].need) tools_printer();
+    if (subwin[SUBWINDOW_SPRITES     ].need) open_spriteeditor();
+    if (subwin[SUBWINDOW_SPEED       ].need) open_speed();
+    if (subwin[SUBWINDOW_TAPEDECK    ].need) open_tapedeck();
+    if (subwin[SUBWINDOW_HOSTKYBD    ].need) help_hostkybd();
+    if (subwin[SUBWINDOW_HOSTPADS    ].need) help_hostpads();
+    if (subwin[SUBWINDOW_MONITOR_PSGS].need) view_monitor(SUBWINDOW_MONITOR_PSGS);
+    if (subwin[SUBWINDOW_MONITOR_XVI ].need) view_monitor(SUBWINDOW_MONITOR_XVI);
+    if (subwin[SUBWINDOW_MUSIC       ].need) tools_music();
+    if (subwin[SUBWINDOW_PAPERTAPE   ].need) open_papertape();
+    if (subwin[SUBWINDOW_INDUSTRIAL  ].need) open_industrial();
 
     for (i = 0; i < SUBWINDOWS; i++)
-    {   need[i] = FALSE;
+    {   subwin[i].need = FALSE;
     }
 
 #ifdef AMIGA
@@ -5360,9 +5329,9 @@ EXPORT void reopen_subwindows(void)
 }
 
 EXPORT void reopen_subwindow(int which)
-{   if (SubWindowPtr[which])
+{   if (subwin[which].hwnd)
     {   close_subwindow(which);
-        need[which] = TRUE;
+        subwin[which].need = TRUE;
         reopen_subwindows();
 }   }
 
@@ -5372,7 +5341,7 @@ EXPORT void command_changemachine(int whichmachine, int whichmemmap)
     }
 
     if (memmap != whichmemmap)
-    {   changemachine(whichmachine, whichmemmap, TRUE, FALSE, FALSE);
+    {   changemachine(whichmachine, whichmemmap, TRUE, 0, FALSE);
         update_opcodes(); // because our INTERTON emulation has a different length for the $10 opcode
         updatemenus();
         updatebiggads();
@@ -5382,21 +5351,20 @@ EXPORT void command_changemachine(int whichmachine, int whichmemmap)
         free_display();
         make_display();
 #endif
-        redrawscreen();
+        redrawscreen(); // needed for eg. AmiPIPBUG dividers
         reopen_subwindows();
 }   }
 
 EXPORT void updatekeynames(HWND hwnd)
 {   int   i, j, k,
-          matches,
-          val;
+          matches;
     ULONG maybeswapped;
     TEXT  tempstring[128 + 5 + 1];
 
     if (machines[machine].joystick)
-    {   maybeswapped = swapped;
+    {   maybeswapped = swapped ? 1 : 0;
     } else
-    {   maybeswapped = FALSE;
+    {   maybeswapped = 0;
     }
 
     switch (viewkybdas)
@@ -5448,7 +5416,7 @@ EXPORT void updatekeynames(HWND hwnd)
                                 ),
                                 asciiname_long[keyname[i].unshifted[keymap]],
                                 asciiname_long[keyname[i].capslock[keymap]],
-                                asciiname_long[keyname[i].shifted[keymap]],
+                                asciiname_long[specialshift(keyname[i].shifted[keymap])],
                                 asciiname_long[keyname[i].ctrl],
                                 asciiname_long[keyname[i].ctrlshift]
                             );
@@ -5490,44 +5458,82 @@ EXPORT void updatekeynames(HWND hwnd)
                         {   if ((keypads[0][j] == i || keypads[1][j] == i) && keyexists(j))
                             {   switch (j)
                                 {
-                                case 0:
-                                case 21:
-                                case 22:
-                                case 23:
-                                    val = ((j == 0) ? key1 : ((j == 21) ? key2 : ((j == 22) ? key3 : key4)));
+                                case GUESTKEY_1ST:
                                     if (viewkybdas == 0)
                                     {   if (keypads[0][j] == i)
-                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][num_to_num[val]]);
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][key1]);
                                         } else
-                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 0 : 1][num_to_num[val]]);
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 0 : 1][key1]);
                                     }   }
                                     else
                                     {   // assert(viewkybdas == 2);
                                         if (keypads[0][j] == i)
-                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][maybeswapped ? keytable[val].p2overlay : keytable[val].p1overlay]);
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key1].overlay[maybeswapped]]);
                                         } else
-                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][maybeswapped ? keytable[val].p1overlay : keytable[val].p2overlay]);
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key1].overlay[maybeswapped]]);
+                                    }   }
+                                acase GUESTKEY_2ND:
+                                    if (viewkybdas == 0)
+                                    {   if (keypads[0][j] == i)
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][key2]);
+                                        } else
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 0 : 1][key2]);
+                                    }   }
+                                    else
+                                    {   // assert(viewkybdas == 2);
+                                        if (keypads[0][j] == i)
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key2].overlay[maybeswapped]]);
+                                        } else
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key2].overlay[maybeswapped]]);
+                                    }   }
+                                acase GUESTKEY_3RD:
+                                    if (viewkybdas == 0)
+                                    {   if (keypads[0][j] == i)
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][key3]);
+                                        } else
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 0 : 1][key3]);
+                                    }   }
+                                    else
+                                    {   // assert(viewkybdas == 2);
+                                        if (keypads[0][j] == i)
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key3].overlay[maybeswapped]]);
+                                        } else
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key3].overlay[maybeswapped]]);
+                                    }   }
+                                acase GUESTKEY_4TH:
+                                    if (viewkybdas == 0)
+                                    {   if (keypads[0][j] == i)
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][key4]);
+                                        } else
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 0 : 1][key4]);
+                                    }   }
+                                    else
+                                    {   // assert(viewkybdas == 2);
+                                        if (keypads[0][j] == i)
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key4].overlay[maybeswapped]]);
+                                        } else
+                                        {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[key4].overlay[maybeswapped]]);
                                     }   }
                                 adefault:
-                                    if     (j == 17 && paddleup    != -1 && viewkybdas == 0)
-                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][num_to_num[paddleup   ]]);
-                                    } elif (j == 18 && paddledown  != -1 && viewkybdas == 0)
-                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][num_to_num[paddledown ]]);
-                                    } elif (j == 19 && paddleleft  != -1 && viewkybdas == 0)
-                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][num_to_num[paddleleft ]]);
-                                    } elif (j == 20 && paddleright != -1 && viewkybdas == 0)
-                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][num_to_num[paddleright]]);
+                                    if     (j == GUESTKEY_UP && whichgame != -1 && known[whichgame].paddleup    != -1 && viewkybdas == 0)
+                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][known[whichgame].paddleup   ]);
+                                    } elif (j == GUESTKEY_DN && whichgame != -1 && known[whichgame].paddledown  != -1 && viewkybdas == 0)
+                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][known[whichgame].paddledown ]);
+                                    } elif (j == GUESTKEY_LT && whichgame != -1 && known[whichgame].paddleleft  != -1 && viewkybdas == 0)
+                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][known[whichgame].paddleleft ]);
+                                    } elif (j == GUESTKEY_RT && whichgame != -1 && known[whichgame].paddleright != -1 && viewkybdas == 0)
+                                    {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][known[whichgame].paddleright]);
                                     }
-                                    /* elif (j == 24 && paddleup != -1 && paddleleft != -1)
+                                    /* elif (j == GUESTKEY_UPLT && paddleup != -1 && paddleleft != -1)
                                     {   setkybdtext(i, hwnd, keyname[i].gadget, "#");
-                                    } elif (j == 25 && paddleup != -1 && paddleright != -1)
+                                    } elif (j == GUESTKEY_UPRT && paddleup != -1 && paddleright != -1)
                                     {   setkybdtext(i, hwnd, keyname[i].gadget, "#");
-                                    } elif (j == 26 && paddledown != -1 && paddleleft != -1)
+                                    } elif (j == GUESTKEY_DNLT && paddledown != -1 && paddleleft != -1)
                                     {   setkybdtext(i, hwnd, keyname[i].gadget, "#");
-                                    } elif (j == 27 && paddledown != -1 && paddleright != -1)
+                                    } elif (j == GUESTKEY_DNRT && paddledown != -1 && paddleright != -1)
                                     {   setkybdtext(i, hwnd, keyname[i].gadget, "#");
                                     } */ else
-                                    {   if (viewkybdas == 0 || guestkeys[j].p1 == -1)
+                                    {   if (viewkybdas == 0 || keytable[j].overlay[maybeswapped] == -1)
                                         {   if (keypads[0][j] == i)
                                             {   setkybdtext(i, hwnd, keyname[i].gadget, machines[machine].keynames[maybeswapped ? 1 : 0][j]);
                                             } else
@@ -5535,10 +5541,10 @@ EXPORT void updatekeynames(HWND hwnd)
                                         }   }
                                         else
                                         {   if (keypads[0][j] == i)
-                                            {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][maybeswapped ? guestkeys[j].p2 : guestkeys[j].p1]);
+                                            {   setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[j].overlay[maybeswapped]]);
                                             } else
                                             {   // assert(keypads[1][j] == i);
-                                                setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][maybeswapped ? guestkeys[j].p1 : guestkeys[j].p2]);
+                                                setkybdtext(i, hwnd, keyname[i].gadget, overlays[whichoverlay][keytable[j].overlay[maybeswapped]]);
                                     }   }   }
                                     break; // for speed
                         }   }   }
@@ -5644,7 +5650,11 @@ EXPORT void settitle_engine(void)
 
     if (paused)
     {   strcat((char*) titlebartext, " (");
-        strcat((char*) titlebartext, LLL(MSG_PAUSED   , "paused"  ));
+        if (crippled)
+        {   strcat((char*) titlebartext, LLL(MSG_PAUSEDDURINGFRAME, "paused during frame"));
+        } else
+        {   strcat((char*) titlebartext, LLL(MSG_PAUSED           , "paused"             ));
+        }
         strcat((char*) titlebartext, ")");
     } elif (turbo)
     {   strcat((char*) titlebartext, " (");
@@ -6063,3 +6073,18 @@ EXPORT int scan_to_scan(int code)
         return (char*) s;
     }
 #endif
+
+EXPORT UWORD specialshift(UWORD code)
+{   if (!lowercase && shift() && !ctrl())
+    {   switch (code)
+        {
+        case 'K': return '[';
+        case 'L': return '\\';
+        case 'M': return ']';
+        case 'N': return '^';
+        case 'O': return '_';
+        case 'P': return '`';
+    }   }
+
+    return code;
+}

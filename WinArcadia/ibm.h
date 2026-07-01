@@ -30,6 +30,9 @@ typedef void*               APTR;
 #define PATH_TAPES          "Tapes"
 #define PATH_BKGRNDS        "Backgrounds"
 
+// #define DEBUGCANVAS
+// whether to check coordinates before drawing to canvases
+
 // #define LOGCHEEVOS
 // whether to log cheevos calls (RA_#?()) that are not made every frame
 // #define LOGALLCHEEVOS
@@ -158,16 +161,16 @@ typedef void*               APTR;
 #define UNASSIGNED      511 // unused scan code
 #define SCANCODES       512
 
-#define TIPSOFDAYS       25 // 20 shared + 5 WinArcadia-only
+#define TIPSOFDAYS       26 // 21 shared + 5 WinArcadia-only
 #define CODEPAGE_ENG    1252 // for Western European languages (English/Dutch/French/German/Italian/Spanish). 28605 is another possibility.
 #define PRINTERDEVICE   "LPT1" // NB. no colon!
 #define STRING_ROOT     "\\"
 #define CHAR_ROOT       '\\'
 #define STRING_PARENT   "\\"
 #define CHAR_PARENT     '\\'
-#define PATTERN_OPEN    "All Signetics files (2650,8SV,8SVX,AIF,AIFF,AOF,ASM,BIN,BMP,BNPF,BPNF,CMD,COR,COS,EOF,HEX,IMAG,IMG,MDCR,MOD,OBJ,PAP,RAW,SMS,SYM,TVC,TWIN,WAV,ZIP)\0" \
-                        "*.2650;*.8SV;*.8SVX;*.AIF;*.AIFF;*.AOF;*.ASM;*.BIN;*.BMP;*.BNPF;*.BPNF;*.CMD;*.COR;*.COS;*.EOF;*.HEX;*.IMAG;*.IMG;*.MDCR;*.MOD;*.OBJ;*.PAP;*.RAW;*.SMS;*.SYM;*.TVC;*.TWIN;*.WAV;*.ZIP\0" \
-                        "Programs (AOF,BIN,BPNF,CMD,EOF,IMAG,MOD,SMS,TVC,ZIP)\0*.AOF;*.BIN;*.BNPF;*.BPNF;*.CMD;*.EOF;*.IMAG;*.MOD;*.SMS;*.TVC;*.ZIP\0" \
+#define PATTERN_OPEN    "All Signetics files (2650,8SV,8SVX,AIF,AIFF,AOF,ASM,BIN,BMP,BNPF,BPNF,CMD,COR,COS,EOF,HEX,IMAG,IMG,MDCR,MOD,OBJ,PAP,RAW,ROM,SMS,SYM,TVC,TWIN,WAV,ZIP)\0" \
+                        "*.2650;*.8SV;*.8SVX;*.AIF;*.AIFF;*.AOF;*.ASM;*.BIN;*.BMP;*.BNPF;*.BPNF;*.CMD;*.COR;*.COS;*.EOF;*.HEX;*.IMAG;*.IMG;*.MDCR;*.MOD;*.OBJ;*.PAP;*.RAW;*.ROM;*.SMS;*.SYM;*.TVC;*.TWIN;*.WAV;*.ZIP\0" \
+                        "Programs (AOF,BIN,BPNF,CMD,EOF,IMAG,MOD,ROM,SMS,TVC,ZIP)\0*.AOF;*.BIN;*.BNPF;*.BPNF;*.CMD;*.EOF;*.IMAG;*.MOD;*.ROM;*.SMS;*.TVC;*.ZIP\0" \
                         "Recordings (COR,ZIP)\0*.COR;*.ZIP\0" \
                         "Saved States (COS,ZIP)\0*.COS;*.ZIP\0" \
                         "Absolute/Elektor Object Format (AOF,EOF,OBJ,ZIP)\0*.AOF;*.EOF;*.OBJ;*.ZIP\0" \
@@ -332,8 +335,7 @@ struct LangStruct
 #define IMAGE_ROOT       (MEMMAPS + 1)
 #define IMAGE_PARENT     (MEMMAPS + 2)
 #define IMAGE_FIRSTGAME  (MEMMAPS + 3)
-#define ARCADIAGLYPHS    59
-#define IMAGE_LASTGAME   (IMAGE_FIRSTGAME + ARCADIAGLYPHS - 1)
+#define IMAGE_LASTGAME   (IMAGE_FIRSTGAME + GAMEGLYPHS - 1)
 #define ICONS            (IMAGE_LASTGAME  + 1) // sidebar icons
 
 #define PRI_HIGH            0
@@ -414,7 +416,7 @@ struct LangStruct
 #define IMAGE_START2  41
 #define IMAGE_SERVE   42
 
-#define CANDIES        4
+#define CANDIES        5
 
 #define COPYSTAR(     a  ) display[a] = stars[a]
 #define COPYWIDESTAR( a  ) display[a] = stars[a]; display[(a) + 1] = stars[(a) + 1]
@@ -456,14 +458,28 @@ struct LangStruct
 #define Inet_NtoA   inet_ntoa
 #define IoctlSocket ioctlsocket
 
-#define DRAWMAGNIFIERPIXEL(x, y, z)  canvasdisplay[    CANVAS_MAGNIFIER           ][((                      y ) *  MAGNIFIERWIDTH) + (x)] = pencolours[colourset][z]
-#define DRAWAXESPIXEL(x, y, z)       canvasdisplay[    CANVAS_AXES                ][((                      y ) *       AXESWIDTH) + (x)] = z
-#define DRAWMEMMAPPIXEL(x, y, z)     canvasdisplay[    CANVAS_MEMMAP              ][((                      y ) *     MEMMAPWIDTH) + (x)] = z
-#define DRAWINDUSTRIALPIXEL(x, y, z) if (x >= 0 && x < INDUSTRIALWIDTH && y >= 0 && y < INDUSTRIALHEIGHT) \
-                                         canvasdisplay[CANVAS_INDUSTRIAL          ][((                      y ) * INDUSTRIALWIDTH) + (x)] = z
-// needed because Linearisatie dots and Vector Magnetometer Earth subdiagram can protrude over edges
-#define DRAWROLLPIXEL(a, x, y, z)    canvasdisplay[a ? CANVAS_ROLL2 : CANVAS_ROLL1][((                      y ) *       ROLLWIDTH) + (x)] = z
-#define DRAWWAVEFORMPIXEL(x, y, z)   canvasdisplay[    CANVAS_WAVE                ][((WAVEFORMHEIGHT - 1 - (y)) *   WAVEFORMWIDTH) + (x)] = z
+#define DRAWAXES(      x, y, z)      DRAWCANVAS(CANVAS_AXES      , x, y, z)
+#define DRAWINDUSTRIAL(x, y, z)      DRAWCANVAS(CANVAS_INDUSTRIAL, x, y, z)
+#define DRAWMAGNIFIER( x, y, z)      DRAWCANVAS(CANVAS_MAGNIFIER , x, y, pencolours[colourset][z])
+#define DRAWMEMMAP(    x, y, z)      DRAWCANVAS(CANVAS_MEMMAP    , x, y, z)
+#define DRAWMINI(      x, y, z)      DRAWCANVAS(CANVAS_MINI      , x, y, pencolours[PURECOLOURS][z]);
+#define DRAWPREVIEW(   x, y, z)      DRAWCANVAS(CANVAS_PREVIEW   ,  (x) * 2     ,  (y) * 2     , pencolours[colourset][z]); \
+                                     DRAWCANVAS(CANVAS_PREVIEW   , ((x) * 2) + 1,  (y) * 2     , pencolours[colourset][z]); \
+                                     DRAWCANVAS(CANVAS_PREVIEW   ,  (x) * 2     , ((y) * 2) + 1, pencolours[colourset][z]); \
+                                     DRAWCANVAS(CANVAS_PREVIEW   , ((x) * 2) + 1, ((y) * 2) + 1, pencolours[colourset][z])
+#define DRAWPRINTER(   x, y, z)      DRAWCANVAS(CANVAS_PRINTER   , x, y, pencolours[colourset][z])
+#define DRAWROLL(   a, x, y, z)      DRAWCANVAS(CANVAS_ROLL1  + (a),x,y, z)
+#define DRAWSPLIT(  a, x, y, z)      DRAWCANVAS(CANVAS_SPLIT1 + (a),x,y, pencolours[PURECOLOURS][z])
+#define DRAWWAVE(      x, y, z)      DRAWCANVAS(CANVAS_WAVE      , x, y, z)
+
+#ifdef DEBUGCANVAS
+#define DRAWCANVAS( a, x, y, z)      if ((a) >= 0 && (a) < CANVASES && (x) >= 0 && (x) < canvas[a].nowwidth && (y) >= 0 && (y) < canvas[a].nowheight) \
+                                         canvas[a].display[((y) * canvas[a].maxwidth) + (x)] = z; \
+                                     else \
+                                         zprintf(TEXTPEN_ERROR, "Tried to draw to canvas %d at %d,%d!\n", a, x, y)
+#else
+#define DRAWCANVAS( a, x, y, z)      canvas[a].display[((y) * canvas[a].maxwidth) + (x)] = z
+#endif
 
 #define ASSOCIATIONS    24 // 0..23
 

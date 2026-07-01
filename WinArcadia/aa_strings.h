@@ -1221,7 +1221,7 @@
 #define MSG_MENUHELP_DELETE 1186
 #define MSG_TSBC 1187
 #define MSG_TCSBC 1188
-#define MSG_SWAPDISKS 1189
+#define MSG_MENUHELP_SWAPDISKS 1189
 #define MSG_INVALIDDRIVENUMBER 1190
 #define MSG_EMPTYREAD 1191
 #define MSG_ILLEGALTRACKREAD 1192
@@ -1413,6 +1413,19 @@
 #define MSG_MENUHELP_WARN 1378
 #define MSG_EMULATOR_PIXELBASED 1379
 #define MSG_TOD13 1380
+#define MSG_VIEWAS2 1381
+#define MSG_LEFTPLAYER 1382
+#define MSG_RIGHTPLAYER 1383
+#define MSG_BOTHPLAYERS 1384
+#define MSG_UNASSIGNED 1385
+#define MSG_PAUSEDDURINGFRAME 1386
+#define MSG_UNASSIGNEDPADTIP 1387
+#define MSG_USAGE_SWAPDISKS 1388
+#define MSG_CONTROLS_HOVER 1389
+#define MSG_TOD21 1390
+#define MSG_REDEFINE_LEFT 1391
+#define MSG_REDEFINE_RIGHT 1392
+#define MSG_REDEFINE_CONSOLE 1393
 
 #endif /* CATCOMP_NUMBERS */
 
@@ -1588,9 +1601,9 @@
 #define MSG_ENGINE_DIGITAL_STR "Digital"
 #define MSG_ENGINE_GOING_STR "Unpausing...\n\n"
 #define MSG_ENGINE_HIGH_STR "high"
-#define MSG_ENGINE_HITWP_STR "Instruction at $%X (raster %d) is reading $%X%s from %s! Previous IAR/PC was %s.\n"
-#define MSG_ENGINE_IGNORING_STR "Ignoring %s instruction at $%X.\n"
-#define MSG_ENGINE_ILLEGALREAD_STR "Instruction at $%X (raster %d) is reading $%02X from unreadable address %s!\n\n"
+#define MSG_ENGINE_HITWP_STR "Instruction at %s (raster %d) is reading $%X%s from %s! Previous IAR/PC was %s.\n"
+#define MSG_ENGINE_IGNORING_STR "Ignoring %s instruction at %s.\n"
+#define MSG_ENGINE_ILLEGALREAD_STR "Instruction at %s (raster %d) is reading $%02X from unreadable address %s!\n\n"
 #define MSG_ENGINE_KILOBYTES_STR "K"
 #define MSG_ENGINE_LOGINSTRUCTIONS_STR "Log illegal instructions"
 #define MSG_ENGINE_LOGREADWRITES_STR "Log illegal reads/writes"
@@ -1605,7 +1618,7 @@
 #define MSG_ENGINE_ON2_STR "On"
 #define MSG_ENGINE_OPEN_STR "Open Game/State/Recording/Tape/Disk"
 #define MSG_ENGINE_OUTOFBOUNDS_STR "Value is out of bounds (limit is %d)!\n\n"
-#define MSG_ENGINE_READMIRROR_STR "Instruction at $%X (raster %d) read from mirrored address $%X (resolves to %s)!\n\n"
+#define MSG_ENGINE_READMIRROR_STR "Instruction at %s (raster %d) read from mirrored address %s (resolves to %s)!\n\n"
 #define MSG_ENGINE_READONCE_STR "Read-once register %s has been reset to $%X!\n"
 #define MSG_ENGINE_SENSITIVITY_STR "sensitivity"
 #define MSG_ENGINE_SWAPPED_STR "swapped"
@@ -1617,11 +1630,11 @@
 #define MSG_ENGINE_YES_STR "Yes"
 #define MSG_CPU_HITBP_STR "Hit code breakpoint at %s! Previous IAR/PC was %s.\n\n"
 #define MSG_CPU_HITWP_STR "Instruction at $%X (raster %d) is writing $%X%s to %s! Previous IAR/PC was %s.\n\n"
-#define MSG_CPU_ILLEGALWRITE_STR "Instruction at $%X (raster %d) is attempting to write $%X to unwritable address %s!\n\n"
+#define MSG_CPU_ILLEGALWRITE_STR "Instruction at %s (raster %d) is attempting to write $%02X to unwritable address %s!\n\n"
 #define MSG_CPU_INDETERMINATE_STR "Instruction at %s executed indeterminate opcode $00 (LODZ r0)!\n\n"
-#define MSG_CPU_STRANGE_STR "Instruction at $%X executed strange opcode"
-#define MSG_CPU_UNDEFINED_STR "Instruction at $%X executed undefined opcode $%X!\n\n"
-#define MSG_CPU_WRITEMIRROR_STR "Instruction at $%X (raster %d) is writing $%X to mirrored address $%X (resolves to %s)!\n\n"
+#define MSG_CPU_STRANGE_STR "Instruction at %s executed strange opcode %s!\n\n"
+#define MSG_CPU_UNDEFINED_STR "Instruction at %s executed undefined opcode $%02X!\n\n"
+#define MSG_CPU_WRITEMIRROR_STR "Instruction at %s (raster %d) is writing $%02X to mirrored address %s (resolves to %s)!\n\n"
 #define MSG_XVI_REACHEDFRAME_STR "Reached next frame (%d).\n\n"
 #define MSG_XVI_REACHEDRASTLINEN_STR "Reached raster line %d.\n\n"
 #define MSG_PVI_HITWP_STR "PVI is writing $%X%s to %s at raster %d!\n\n"
@@ -1662,7 +1675,7 @@
 #define MSG_ADDWP_STR "Added data watchpoint at %s.\n\n"
 #define MSG_ENGINE_LOGMONITOR_STR "Log BIOS calls"
 #define MSG_CPU_INTERRUPT_STR "Handling interrupt at rastline %d (%u %s). Interrupts are now inhibited (disabled).\n\n"
-#define MSG_CPU_LOGMONITOR_STR "BIOS code at %s was called by game code at %X.\n"
+#define MSG_CPU_LOGMONITOR_STR "BIOS code at %s was called by game code at %s.\n"
 #define MSG_SERVER_STR "server"
 #define MSG_CLIENT_STR "client"
 #define MSG_TOOLTIP_QUICKLOAD_STR "Quickload state (Amiga-(, Alt-L)"
@@ -1670,10 +1683,10 @@
 #define MSG_VIEW_BRAM_STR "BIOS RAM"
 #define MSG_ENGINE_LOGSUBROUTINES_STR "Log subroutine calls/returns"
 #define MSG_CPU_CALLING_STR "Calling subroutine %s from $%X...\n\n"
-#define MSG_CPU_RETURNING_STR "Returning to $%X from subroutine or interrupt at $%X.\n\n"
+#define MSG_CPU_RETURNING_STR "Returning to %s from subroutine or interrupt at %s.\n\n"
 #define MSG_CPU_INTERRUPTOVERFLOW_STR "Interrupt has caused a stack overflow!\n\n"
-#define MSG_CPU_SUBROUTINEOVERFLOW_STR "Stack overflow at $%X!\n\n"
-#define MSG_CPU_UNDERFLOW_STR "Stack underflow at $%X!\n\n"
+#define MSG_CPU_SUBROUTINEOVERFLOW_STR "Stack overflow at %s!\n\n"
+#define MSG_CPU_UNDERFLOW_STR "Stack underflow at %s!\n\n"
 #define MSG_HELP_GAMINGGUIDE_STR "Gaming Guide..."
 #define MSG_SOUND_ENABLED_STR "Enabled?"
 #define MSG_SOUND_VOLUME_STR "Volume"
@@ -2388,13 +2401,13 @@
 #define MSG_INPUT_REARRANGE_STR "Rearrange gamepad buttons..."
 #define MSG_INPUT_EA_STR "EA 78ut4 keyboard layout"
 #define MSG_INPUT_TT_STR "Teletype keyboard layout"
-#define MSG_READDURINGREDRAW_STR "Instruction at $%X (raster %d) read from UVI address %s during redraw!\n\n"
-#define MSG_WROTEDURINGREDRAW_STR "Instruction at $%X (raster %d) wrote to UVI address %s during redraw!\n\n"
+#define MSG_READDURINGREDRAW_STR "Instruction at %s (raster %d) read from UVI address %s during redraw!\n\n"
+#define MSG_WROTEDURINGREDRAW_STR "Instruction at %s (raster %d) wrote $%02X to UVI address %s during redraw!\n\n"
 #define MSG_TOD19_STR "Ctrl+' will make the emulator run at 1 FPS while held down."
 #define MSG_TOD20_STR ""Help|Host keyboard..." (for keyboard users) and "Help|Host gamepads/mouse..." (for gamepad/mouse users) are the easiest ways to see what keys to use for your game. "Help|Game information..." may also be useful."
 #define MSG_INPUT_GUESTRMB_STR "Pass right mouse button to guest?"
 #define MSG_CANTOPENLOG_STR "Can't open %s for writing!\n\n"
-#define MSG_READDURINGREDRAW2_STR "Instruction at $%X (raster %d) read from PVI address %s during redraw!\n\n"
+#define MSG_READDURINGREDRAW2_STR "Instruction at %s (raster %d) read from PVI address %s during redraw!\n\n"
 #define MSG_INVALIDRANGEWP_STR "Valid range is $0000..$7FFF and %s..%s!\n\n"
 #define MSG_CREATEDISK_STR "Create disk"
 #define MSG_INSERTDISK_STR "Insert disk..."
@@ -2443,8 +2456,8 @@
 #define MSG_USAGE_FC_STR "Usage: FC <start-address> [<end-address>]\n\n"
 #define MSG_USAGE_FP_STR "Usage: FP <start-address> [<end-address>]\n\n"
 #define MSG_GRAPHICS_SHOWLEDS_STR "Show LEDs?"
-#define MSG_READFLOPPY_STR "Instruction at $%X (raster %d) read $%02X [%s] from floppy byte $%X. Previous IAR/PC was $%X.\n\n"
-#define MSG_WROTEFLOPPY_STR "Instruction at $%X (raster %d) wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was $%X.\n\n"
+#define MSG_READFLOPPY_STR "Instruction at %s (raster %d) read $%02X [%s] from floppy byte $%X. Previous IAR/PC was %s.\n\n"
+#define MSG_WROTEFLOPPY_STR "Instruction at %s (raster %d) wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was %s.\n\n"
 #define MSG_OUTOFRANGE_STR "Label %s is out of range!\n"
 #define MSG_CARTRIDGESLOT_STR "Cartridge slot"
 #define MSG_CONTROLS_OVERLAY_STR "Overlay:"
@@ -2458,8 +2471,8 @@
 #define MSG_DIPSWITCHES_STR "DIP switches"
 #define MSG_TAPEDECK_STR "Tape deck"
 #define MSG_OPCODESHELP_STR "Opcodes help"
-#define MSG_READFLOPPY2_STR "Instruction at $%X read $%02X [%s] from floppy byte $%X. Previous IAR/PC was $%X.\n\n"
-#define MSG_WROTEFLOPPY2_STR "Instruction at $%X wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was $%X.\n\n"
+#define MSG_READFLOPPY2_STR "Instruction at %s read $%02X [%s] from floppy byte $%X. Previous IAR/PC was %s.\n\n"
+#define MSG_WROTEFLOPPY2_STR "Instruction at %s wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was %s.\n\n"
 #define MSG_CLUSTER_STR "Cluster:"
 #define MSG_MASTERCPU_GAD_STR "Master CPU Status"
 #define MSG_SLAVECPU_GAD_STR "Slave CPU Status"
@@ -2478,9 +2491,9 @@
 #define MSG_DEMO_STR "Demonstrate"
 #define MSG_UNIT_STR "Unit"
 #define MSG_USAGE_SAVEMOD_STR "Usage: SAVEMOD <endaddress> <filename> [<game-start>]\n\n"
-#define MSG_ENGINE_DEBUGHELP_STR "General:\n\"<message>                      send message to other player\nCLEARCOV                        clear coverage report\nCLS                             clear screen (of console window)\nH|HELP|? [0|G]                  view general help\nH|HELP|? 1|F                    view file help\nH|HELP|? 2|D                    view disk help\nH|HELP|? 3|E                    view edit help\nH|HELP|? 4|V                    view view help\nH|HELP|? 5|L                    view edit help\nH|HELP|? 6|R                    view run help\nH|HELP|? 7|B                    view breakpoints help\nH|HELP|? 8|S                    view symbols help\nH|HELP|? 9|T                    view tools help\nH|HELP|? 10|O                   view options help\nH|HELP|? 11|A                   view graphics help\nSAY|SPEAK|SPK <message>         speak message\nSYS|SYSTEM                      quit emulator\n\n"
+#define MSG_ENGINE_DEBUGHELP_STR "General:\n\"<message>                      send message to other player\nCLEARCOV                        clear coverage report\nCLS                             clear screen (of console window)\nH|HELP|? [0|G]                  view general help\nH|HELP|? 1|F                    view file help\nH|HELP|? 2|D                    view disk help\nH|HELP|? 3|E                    view edit help\nH|HELP|? 4|V                    view view help\nH|HELP|? 5|L                    view log help\nH|HELP|? 6|R                    view run help\nH|HELP|? 7|B                    view breakpoints help\nH|HELP|? 8|S                    view symbols help\nH|HELP|? 9|T                    view tools help\nH|HELP|? 10|O                   view options help\nH|HELP|? 11|A                   view graphics help\nSAY|SPEAK|SPK <message>         speak message\nSYS|SYSTEM                      quit emulator\n\n"
 #define MSG_DEBUGHELP1_STR "File:\n*<command>                      execute host OS command\nASM <filename>                  assemble source code\nDISGAME [<start-addr> <end-addr>] [<filename>]\n                                disassemble and show address range\nED|EDIT <filename>              edit source code\nLOADBIN <start-addr> <filename> load binary to start-addr from filename\nSAVEAOF|SAVEEOF\n <start-addr> <end-addr> [<filename> [<game-start> [<block-size>]]]\nSAVECMD|SAVEIMAG|SAVEMOD|SAVETVC\n <start-addr> <end-addr> [<filename> [<game-start>]]\nSAVEBIN|SAVEBPNF|SAVEHEX <start-addr> <end-addr> <filename>\n                                save address range as filename\nSAVESMS <end-addr> <filename>   save address $0 to end-addr as filename\n\n"
-#define MSG_DEBUGHELP2_STR "Disk:\nDEL|DELETE <filename>           delete file from floppy disk\nDIR|LD|LDIR                     list files on floppy disk\nDRIVE [<drive>]                 change debugger drive\nEXTRACT [<filename>]            extract files from floppy disk\nINJECT <filename>               inject file onto floppy disk\nREN|RENAME <oldname> <newname>  rename file on floppy disk\n\n"
+#define MSG_DEBUGHELP2_STR "Disk:\nDEL|DELETE <filename>           delete file from floppy disk\nDIR|LD|LDIR                     list files on floppy disk\nDRIVE [<drive>]                 change debugger drive\nEXTRACT [<filename>]            extract files from floppy disk\nINJECT <filename>               inject file onto floppy disk\nREN|RENAME <oldname> <newname>  rename file on floppy disk\nSWAP <1st-drive> <2nd-drive>    swap disks\n\n"
 #define MSG_DEBUGHELP3_STR "Edit:\nDOKE <address> [<value>]        change word at address to value\nE|POKE [<address> [<value>]]    change byte at address to value\nFPOKE <address> <value>         change byte on disk to value\nWRITEPORT <port>|CTRL|DATA <value>\n                                write to I/O port\n\n"
 #define MSG_DEBUGHELP4_STR "View:\n=                               list all known labels\n= <addr>                        view addr as label and hexadecimal\nCOVER [<reporttype>]            view coverage report\nD|PEEK <start-addr> [<end-addr>]\n                                display address range as data\nDIS [<start-addr> [<end-addr>]] disassemble address range as code\nERROR <number>                  show error message\nFPEEK <start-addr> [<end-addr>] display address range from disk\nHISTORY                         view command history\nIM [<start-addr> <end-addr>] [<filename>]\n                                view address range as imagery\nREADPORT <port>|CTRL|DATA       read from I/O port\nV|VIEW BASIC                    view BASIC variables\nV|VIEW BIOS                     view BIOS RAM\nV|VIEW CPU                      view CPU status\nV|VIEW PSG                      view PSGs/TMSes status\nV|VIEW RAM                      view RAM\nV|VIEW SCRN                     view screen contents\nV|VIEW UDG                      view user-defined graphics\nV|VIEW XVI                      view UVI/PVI status\n\n"
 #define MSG_DEBUGHELP5_STR "Log:\nL A                             log illegal memory accesses on/off\nL B                             log BIOS calls on/off\nL C                             log inefficient code on/off\nL I                             log illegal instructions on/off\nL N                             log interrupts on/off\nL S                             log subroutine calls on/off\nPL                              pause after logging on/off\nT                               trace CPU on/off\n\n"
@@ -2611,7 +2624,7 @@
 #define MSG_MENUHELP_DELETE_STR "Delete file from floppy disk"
 #define MSG_TSBC_STR "Track: %d\nSector: %d\nByte: $%X\nContents: $%02X (%s)"
 #define MSG_TCSBC_STR "Track: %d\nCluster: %s\nSector: %d\nByte: $%X\nContents: $%02X (%s)"
-#define MSG_SWAPDISKS_STR "Swap disks"
+#define MSG_MENUHELP_SWAPDISKS_STR "Swap disks"
 #define MSG_INVALIDDRIVENUMBER_STR "Invalid drive number!\n\n"
 #define MSG_EMPTYREAD_STR "Attempted to read from empty drive %d!\n"
 #define MSG_ILLEGALTRACKREAD_STR "Attempted to read from track %d on drive %d!\n"
@@ -2673,8 +2686,8 @@
 #define MSG_FILENAME_STR "Filename:"
 #define MSG_ANINTERRUPTPENDING_STR "An interrupt is pending!\n\n"
 #define MSG_NOINTERRUPTPENDING_STR "No interrupt is pending.\n\n"
-#define MSG_INTERRUPTSENABLED_STR "%s at $%04X (rastline %d): interrupts are now disinhibited (enabled)."
-#define MSG_INTERRUPTSDISABLED_STR "%s at $%04X (rastline %d): interrupts are now inhibited (disabled).\n\n"
+#define MSG_INTERRUPTSENABLED_STR "%s at %s (rastline %d): interrupts are now disinhibited (enabled)."
+#define MSG_INTERRUPTSDISABLED_STR "%s at %s (rastline %d): interrupts are now inhibited (disabled).\n\n"
 #define MSG_TABTOACTIVATE_STR "Tab to activate main window"
 #define MSG_MENUHELP_DRAW_0_STR "Draw normally"
 #define MSG_MENUHELP_DRAW_1_STR "Show grid (most machines) or Teletext grid (Malzak)"
@@ -2796,13 +2809,26 @@
 #define MSG_CLEARWINDOW_STR "Clear window"
 #define MSG_NORTH_STR "N"
 #define MSG_SOUTH_STR "S"
-#define MSG_VECTORCALLED_STR "%s vector at %s was called by game code at $%X.\n"
+#define MSG_VECTORCALLED_STR "%s vector at %s was called by game code at %s.\n"
 #define MSG_MULTIPLEX_STR "Multiplex"
 #define MSG_OPAQUE_STR "Opaque"
 #define MSG_DEBUG_ASMWARNINGS_STR "Assembler warnings"
 #define MSG_MENUHELP_WARN_STR "Assembler warnings on/off"
 #define MSG_EMULATOR_PIXELBASED_STR "Pixel-based emulation"
 #define MSG_TOD13_STR "In the \"Help|Opcodes...\" subwindow, you can click on an opcode to open the corresponding page of the CPU manual from the website."
+#define MSG_VIEWAS2_STR "View as:"
+#define MSG_LEFTPLAYER_STR "left player"
+#define MSG_RIGHTPLAYER_STR "right player"
+#define MSG_BOTHPLAYERS_STR "both players"
+#define MSG_UNASSIGNED_STR "unassigned"
+#define MSG_PAUSEDDURINGFRAME_STR "paused during frame"
+#define MSG_UNASSIGNEDPADTIP_STR "Use the \"Peripherals|Left/right controller »\" submenu(s)\nto assign this host gamepad to a guest player."
+#define MSG_USAGE_SWAPDISKS_STR "Usage: SWAPDISKS <1st-drive> <2nd-drive>\n\n"
+#define MSG_CONTROLS_HOVER_STR "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button."
+#define MSG_TOD21_STR "If the mouse is not assigned to any guest player, you can click on the guest screen while holding the Shift key to run to the raster line under the pointer."
+#define MSG_REDEFINE_LEFT_STR "Redefine guest left '%s' button from host key '%s' to..."
+#define MSG_REDEFINE_RIGHT_STR "Redefine guest right '%s' button from host key '%s' to..."
+#define MSG_REDEFINE_CONSOLE_STR "Redefine guest console '%s' button from host key '%s' to..."
 
 #endif /* CATCOMP_STRINGS */
 
@@ -4009,7 +4035,7 @@ static const struct CatCompArrayType CatCompArray[] =
     {MSG_MENUHELP_DELETE,(STRPTR)MSG_MENUHELP_DELETE_STR},
     {MSG_TSBC,(STRPTR)MSG_TSBC_STR},
     {MSG_TCSBC,(STRPTR)MSG_TCSBC_STR},
-    {MSG_SWAPDISKS,(STRPTR)MSG_SWAPDISKS_STR},
+    {MSG_MENUHELP_SWAPDISKS,(STRPTR)MSG_MENUHELP_SWAPDISKS_STR},
     {MSG_INVALIDDRIVENUMBER,(STRPTR)MSG_INVALIDDRIVENUMBER_STR},
     {MSG_EMPTYREAD,(STRPTR)MSG_EMPTYREAD_STR},
     {MSG_ILLEGALTRACKREAD,(STRPTR)MSG_ILLEGALTRACKREAD_STR},
@@ -4201,6 +4227,19 @@ static const struct CatCompArrayType CatCompArray[] =
     {MSG_MENUHELP_WARN,(STRPTR)MSG_MENUHELP_WARN_STR},
     {MSG_EMULATOR_PIXELBASED,(STRPTR)MSG_EMULATOR_PIXELBASED_STR},
     {MSG_TOD13,(STRPTR)MSG_TOD13_STR},
+    {MSG_VIEWAS2,(STRPTR)MSG_VIEWAS2_STR},
+    {MSG_LEFTPLAYER,(STRPTR)MSG_LEFTPLAYER_STR},
+    {MSG_RIGHTPLAYER,(STRPTR)MSG_RIGHTPLAYER_STR},
+    {MSG_BOTHPLAYERS,(STRPTR)MSG_BOTHPLAYERS_STR},
+    {MSG_UNASSIGNED,(STRPTR)MSG_UNASSIGNED_STR},
+    {MSG_PAUSEDDURINGFRAME,(STRPTR)MSG_PAUSEDDURINGFRAME_STR},
+    {MSG_UNASSIGNEDPADTIP,(STRPTR)MSG_UNASSIGNEDPADTIP_STR},
+    {MSG_USAGE_SWAPDISKS,(STRPTR)MSG_USAGE_SWAPDISKS_STR},
+    {MSG_CONTROLS_HOVER,(STRPTR)MSG_CONTROLS_HOVER_STR},
+    {MSG_TOD21,(STRPTR)MSG_TOD21_STR},
+    {MSG_REDEFINE_LEFT,(STRPTR)MSG_REDEFINE_LEFT_STR},
+    {MSG_REDEFINE_RIGHT,(STRPTR)MSG_REDEFINE_RIGHT_STR},
+    {MSG_REDEFINE_CONSOLE,(STRPTR)MSG_REDEFINE_CONSOLE_STR},
 };
 
 #endif /* CATCOMP_ARRAY */

@@ -42,15 +42,13 @@ EXPORT UBYTE  malzak_field[16][16];
 IMPORT UBYTE                bgcoll,
                             coinops_colltable[3][PVI_RASTLINES][PVI_XSIZE],
                             memory[32768],
-                            OutputBuffer[18],
-                            sx[2],
-                            sy[2];
+                            OutputBuffer[18];
 IMPORT UWORD                console[4],
                             mirror_r[32768],
                             mirror_w[32768];
 IMPORT ULONG                analog,
                             frames,
-                            jff[2],
+                            jf[2],
                             region,
                             swapped;
 IMPORT int                  ambient,
@@ -96,28 +94,23 @@ IMPORT int                  ambient,
                             pvibase,
                             recmode,
                             whichkeyrect;
-IMPORT struct MachineStruct machines[MACHINES];
-IMPORT UBYTE*               IOBuffer;
-IMPORT FILE*                MacroHandle;
-IMPORT ASCREEN              screen[BOXWIDTH][BOXHEIGHT];
-IMPORT MEMFLAG              memflags[ALLTOKENS];
-#ifdef WIN32
-    IMPORT HWND             SubWindowPtr[SUBWINDOWS];
-#endif
-#ifdef AMIGA
-    IMPORT struct Window*   SubWindowPtr[SUBWINDOWS];
-#endif
+IMPORT struct MachineStruct   machines[MACHINES];
+IMPORT struct SubWindowStruct subwin[SUBWINDOWS];
+IMPORT UBYTE*                 IOBuffer;
+IMPORT FILE*                  MacroHandle;
+IMPORT ASCREEN                screen[BOXWIDTH][BOXHEIGHT];
+IMPORT MEMFLAG                memflags[ALLTOKENS];
 
 // MODULE VARIABLES-------------------------------------------------------
 
-MODULE UBYTE                held_char,
-                            lastchar;
-MODULE FLAG                 conceal,
-                            m_double_height,
-                            m_flash,
-                            m_graphics,
-                            skipnextrow;
-MODULE int                  m_bg, m_fg;
+MODULE UBYTE                  held_char,
+                              lastchar;
+MODULE FLAG                   conceal,
+                              m_double_height,
+                              m_flash,
+                              m_graphics,
+                              skipnextrow;
+MODULE int                    m_bg, m_fg;
 
 // MODULE FUNCTIONS-------------------------------------------------------
 
@@ -732,18 +725,15 @@ EXPORT void malzak_emuinput(void)
         }
 
         if (coinop_joy1left == coinop_joy1right)
-        {   ax[0] = sx[0] = 128;
+        {   ax[0] = 128;
         } elif (coinop_joy1right)
-        {   ax[0] = sx[0] = 255;
+        {   ax[0] = 255;
         } elif (coinop_joy1left)
-        {   ax[0] = sx[0] =   0;
+        {   ax[0] =   0;
         }
         ay[0] =
         ax[1] =
         ay[1] = 128;
-        sy[0] =
-        sx[1] =
-        sy[1] = 128;
     } else
     {   old_coina        = coinop_coina;
 
@@ -770,19 +760,19 @@ EXPORT void malzak_emuinput(void)
         p1rumble =
         p2rumble = 0;
 
-        if (  KeyDown(console[0]) || (jff[0] & JOYSTART) || (jff[1] & JOYSTART) || console_start)
+        if (  KeyDown(console[0]) || (jf[0] & JOYSTART) || (jf[1] & JOYSTART) || console_start)
         {   coinop_1p |= 1;
         }
-        if (  KeyDown(console[1]) || (jff[0] & JOYA    ) || (jff[1] & JOYA    ) || console_a    )
+        if (  KeyDown(console[1]) || (jf[0] & JOYA    ) || (jf[1] & JOYA    ) || console_a    )
         {   coinop_2p |= 1;
         }
-        if (!(KeyDown(console[2]) || (jff[0] & JOYB    ) || (jff[1] & JOYB    ) || console_b   )) // active low
+        if (!(KeyDown(console[2]) || (jf[0] & JOYB    ) || (jf[1] & JOYB    ) || console_b   )) // active low
         {   coinop_coina |= 1;
         } elif (ambient && (old_coina & 1))
         {   play_sample(SAMPLE_COIN);
         }
 
-        if (  KeyDown(console[3])                                               || console_reset)
+        if (  KeyDown(console[3])                                             || console_reset)
         {   holding = TRUE;
         } elif (holding)
         {   holding = FALSE;
@@ -1023,7 +1013,7 @@ EXPORT void malzak_drawhelpgrid(void)
 EXPORT void malzak2_updatedips(void)
 {   ULONG temp;
 
-    if (!SubWindowPtr[SUBWINDOW_DIPS] || memmap != MEMMAP_MALZAK2)
+    if (!subwin[SUBWINDOW_DIPS].hwnd || memmap != MEMMAP_MALZAK2)
     {   return;
     }
 

@@ -80,7 +80,6 @@ EXPORT UBYTE   guestkey                 = NC,
                startaddr_h,
                startaddr_l;
 EXPORT FLAG    halted                   = FALSE,
-               outofrange,
                paperreaderenabled,
                paperpunchenabled,
                reghost                  = FALSE,
@@ -93,6 +92,7 @@ EXPORT TEXT    Clock2650Str[COMMASTRLEN],
                groupsep                 = ',',
                gtempstring[256 + 1],
                imgbits[8 + 1],
+               interpretstr[1024 + 1],
                papertapetitlestring[40 + MAX_PATH + 1],
                sprad[16][5 + 1],
                spritename[SPRITENAMELENGTH],
@@ -107,7 +107,6 @@ EXPORT UWORD   hostkey                  = (UWORD) -1,
 EXPORT ULONG   oldcycles,
                regionlevel;
 EXPORT int     belling[2],
-               diskbyte,
                drive_mode,
                lastcodecomment          = -1,
                master_x, master_y,
@@ -121,6 +120,9 @@ EXPORT int     belling[2],
                runtointerrupt           = FALSE,
                runtoloopend             = FALSE,
                tt_kybdstate,
+               whichkeyrect,
+               whose[2]                 = { 3, 3 }, // probably don't need...
+               whosemouse               =   3     , // ...to initialize these
                ZIPBufferSize;
 EXPORT STRPTR  ZIPBufferPtr;
 EXPORT struct DriveStruct drive[DRIVES_MAX];
@@ -157,6 +159,7 @@ IMPORT       int                      absxmin, absxmax,
                                       frac[4],
                                       fullscreen,
                                       game,
+                                      guestrmb,
                                       interrupt_2650,
                                       inverse,
                                       key1,
@@ -212,13 +215,14 @@ IMPORT       int                      absxmin, absxmax,
                                       usemargins,
                                       userlabels,
                                       usestubs,
-                                      verbosity,
+                                      viewingdrive,
                                       viewingsprite,
                                       wheremusicmouse[2],
                                       whichcpu,
                                       whichgame,
-                                      whichkeyrect,
                                       whichoverlay,
+                                      whose[2],
+                                      whosemouse,
                                       wide,
                                       wsm;
 IMPORT       FLAG                     bangercharging,
@@ -269,7 +273,9 @@ IMPORT       UWORD                    console[4],
                                       oldiar,
                                       pc,
                                       ras[8], other_ras[8],
-                                      sp;
+                                      sp,
+                                      temp_console[4],
+                                      temp_keypads[2][NUMKEYS];
 IMPORT       ULONG                    arcadia_bigctrls,
                                       arcadia_viewcontrolsas,
                                       asicreads[32768],
@@ -301,11 +307,13 @@ IMPORT       ULONG                    arcadia_bigctrls,
                                       tt_scrntill,
                                       turbo,
                                       viewmemas,
-                                      viewmemas2;
-IMPORT       char                     mn[80 + 1];
+                                      viewmemas2,
+                                      viewpadsas;
+IMPORT       char                     mn[1024 + 1];
 IMPORT       double                   samplewhere_f;
 IMPORT       TEXT                     asciiname_short[259][3 + 1],
                                       asciiname_long[259][9 + 1],
+                                      datatip[1024 + 1],
                                       file_game[MAX_PATH + 1],
                                       fn_asm[MAX_PATH + 1],
                                       fn_game[MAX_PATH + 1],
@@ -323,6 +331,7 @@ IMPORT       UBYTE                   *IOBuffer,
                                      *TapeCopy;
 IMPORT       FILE                    *MacroHandle,
                                      *TapeHandle;
+IMPORT       struct CanvasStruct      canvas[CANVASES];
 IMPORT       struct ConditionalStruct wp[ALLTOKENS];
 IMPORT       struct HiScoreStruct     hiscore[HISCORES];
 IMPORT       struct HostMachineStruct hostmachines[MACHINES];
@@ -334,13 +343,14 @@ IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct MemMapInfoStruct  memmapinfo[MEMMAPS];
 IMPORT       struct OpcodeStruct      opcodes_2650[2][256];
 IMPORT       struct RTCStruct         rtc;
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 IMPORT       struct VariantStruct     variantinfo[VARIANTS];
 IMPORT const TEXT                     arcadia_chars[64 + 1],
                                       elektor_chars1[256 + 1],
                                       pswbit[STYLES][9 + 1];
 IMPORT const UBYTE                    arcadia_pdg[2][64][8],
                                       dg640_chars[128][DG640_CHARHEIGHT],
-                                      from_a[16],
+                                      from_a[2][24],
                                       phunsy_chars[128][8],
                                       phunsy_gfx[16][8],
                                       table_opcolours_2650[2][256],
@@ -365,35 +375,34 @@ IMPORT const STRPTR                   ccstring[4][4],
     IMPORT       UBYTE                 bytepens[PENS];
     IMPORT       LONG                  emupens[EMUBRUSHES];
     IMPORT       ULONG                 longpens[PENS],
-                                       pending;
+                                       pending,
+                                       viewpadsas2;
     IMPORT       int                   crippled,
                                        foundgames,
                                        morphos,
                                        pipbug_vdu,
                                        showsidebars[2],
                                        throb;
-    IMPORT       UBYTE                *canvasbyteptr[CANVASES][CANVASHEIGHT],
-                                      *canvasdisplay[CANVASES];
     IMPORT       struct Catalog*       CatalogPtr;
     IMPORT       struct ClassLibrary*  ClockBase;
     IMPORT       struct IntuitionBase* IntuitionBase;
     IMPORT       struct Window        *MagnifierWindowPtr,
-                                      *MainWindowPtr,
-                                      *SubWindowPtr[SUBWINDOWS];
+                                      *MainWindowPtr;
     IMPORT       struct PaletteStruct  pencolours[COLOURSETS][PENS];
-    IMPORT       struct Gadget        *gadgets[GIDS + 1],
-                                      *kybdgad[KYBDGADS];
+    IMPORT       struct Gadget*        gadgets[GIDS + 1];
     IMPORT       struct Image*         images[IMAGES];
-    IMPORT       struct RastPort       wpa8canvasrastport[CANVASES];
     IMPORT const int                   guest_to_emupen[8];
 #endif
 #ifdef WIN32
     IMPORT       FLAG                  capslock,
                                        incli,
                                        repaintmemmap;
+    IMPORT       UBYTE                 fgtable[BOXHEIGHT][BOXWIDTH];
     IMPORT       int                   bezel,
                                        CatalogPtr, // APTR doesn't work
-                                       cheevos;
+                                       cheevos,
+                                       joys;
+    IMPORT       float                 dividend;
     IMPORT       HBRUSH                hBrush[EMUBRUSHES],
                                        hSpriteBrush[9];
     IMPORT       HDC                   MusicRastPtr,
@@ -404,17 +413,13 @@ IMPORT const STRPTR                   ccstring[4][4],
     IMPORT       HMENU                 MenuPtr;
     IMPORT       HWND                  hStatusBar,
                                        MagnifierWindowPtr,
-                                       MainWindowPtr,
-                                       SubWindowPtr[SUBWINDOWS];
+                                       MainWindowPtr;
     IMPORT       UINT                  storedcode;
     IMPORT       ULONG                 pencolours[COLOURSETS][PENS];
+    IMPORT       STRPTR                colourname[8];
     IMPORT       HINSTANCE             InstancePtr;
+    IMPORT const STRPTR                waveshape[16];
     IMPORT const struct MemMapToStruct memmap_to[MEMMAPS];
-    IMPORT       ULONG*                canvasdisplay[CANVASES];
-IMPORT       struct
-{   BITMAPINFOHEADER Header;
-    DWORD            Colours[3];
-} CanvasBitMapInfo[CANVASES];
 #endif
 
 IMPORT void (* drawpixel) (int x, int y, int colour);
@@ -445,6 +450,7 @@ MODULE       int    monitorx, monitory;
 
 MODULE FUNCTIONS------------------------------------------------------- */
 
+MODULE int buttontranslate(int player, int which);
 MODULE void calcrunningtime(void);
 MODULE void tape_foundcolon(UBYTE value);
 MODULE void tape_loaded(void);
@@ -454,6 +460,12 @@ MODULE void tape_rawstart(void);
 MODULE void tape_rawreadbit(void);
 MODULE void tape_wrotecolon(TEXT colon);
 MODULE void tape_wrotebyte(UBYTE value);
+#ifdef WIN32
+    MODULE void getextrauviinfo(int gid);
+    MODULE void getextrapviinfo(int gid);
+    MODULE void getextraintertonelektorinfo(int gid);
+    MODULE void getextrapsginfo(int gid);
+#endif
 
 // music subwindow support
 MODULE void ghost_notes(void);
@@ -464,7 +476,7 @@ MODULE void ghost_notes(void);
 
 // CODE-------------------------------------------------------------------
 
-EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG force, FLAG same)
+EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, int force, FLAG same)
 {   int  i,
          oldwide,
          oldwidth, oldheight,
@@ -511,10 +523,9 @@ EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG for
         if (machine != ARCADIA && machine != PONG)
         {   region = (ULONG) machines[machine].region;
         }
-        if (user)
+        if (force >= 2 || user)
         {   wide = machines[machine].wide;
         }
-
         calc_margins(); // this sets machines[machine].width and machines[machine].height
 
         if
@@ -555,6 +566,9 @@ EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG for
     for (x = 0; x < BOXWIDTH; x++)
     {   for (y = 0; y < BOXHEIGHT; y++)
         {   screen[x][y] = GREY1;
+#ifdef WIN32
+            fgtable[y][x] = 0;
+#endif
     }   }
 
     for (i = 0; i < 258; i++)
@@ -566,11 +580,17 @@ EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG for
     }
     clearcoverage();
 
-    if (machine != BINBUG && machine != CD2650 && machine != TWIN)
+    if (machines[machine].drives < 1)
     {   drive[0].inserted = FALSE;
     }
-    if (machine != TWIN)
+    if (machines[machine].drives < 2)
     {   drive[1].inserted = FALSE;
+    }
+    if (machines[machine].drives < 3)
+    {   drive[2].inserted = FALSE;
+    }
+    if (machines[machine].drives < 4)
+    {   drive[3].inserted = FALSE;
     }
 
     edit_screen_sanitize();
@@ -610,12 +630,6 @@ EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG for
 
     if (MainWindowPtr && !same)
     {   close_subwindows(FALSE); // must be done before foo_setmemmap()!
-        if (resizeit)
-        {   resize(size, FALSE);
-        }
-        // Don't call redrawscreen() here because we have changed
-        // machines[machine].width/height, etc. but not yet closed/
-        // reopened the window with the new dimensions.
     }
 
     switch (machine)
@@ -641,6 +655,10 @@ EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, FLAG for
         acase MEMMAP_GALAXIA:                           galaxia_setmemmap();
         acase MEMMAP_LASERBATTLE: case MEMMAP_LAZARIAN: lb_setmemmap();
     }   }
+
+    if (MainWindowPtr && !same && resizeit)
+    {   resize(size, FALSE);
+    }
 
     fix_keyrects();
 
@@ -872,7 +890,7 @@ EXPORT int engine_load(FLAG silent)
     // updatemenus(); is already done by parse_bytes()
     // updatesmlgads(); is already done by parse_bytes()
     updatebiggads();
-    if (SubWindowPtr[SUBWINDOW_DIPS])
+    if (subwin[SUBWINDOW_DIPS].hwnd)
     {   switch (machine)
         {
         case INSTRUCTOR:
@@ -924,7 +942,7 @@ EXPORT void update_monitor_cpu(FLAG force)
                   monitor_accuracy[13 + 1],
                   monitor_expecting[13 + 1];
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_CPU])
+    if (!subwin[SUBWINDOW_MONITOR_CPU].hwnd)
     {   return;
     }
 
@@ -944,7 +962,7 @@ EXPORT void update_monitor_cpu(FLAG force)
 
             if (secs != (int) monitorsecs || force)
             {   monitorsecs = secs;
-                SetGadgetAttrs(gadgets[GID_CP_CL1], SubWindowPtr[SUBWINDOW_MONITOR_CPU], NULL, CLOCKGA_Time, secs, TAG_DONE); // this autorefreshes
+                SetGadgetAttrs(gadgets[GID_CP_CL1], subwin[SUBWINDOW_MONITOR_CPU].hwnd, NULL, CLOCKGA_Time, secs, TAG_DONE); // this autorefreshes
         }   }
 #endif
         monitorframes = frames;
@@ -1169,12 +1187,11 @@ EXPORT void update_monitor_cpu(FLAG force)
         if (whichcpu == 0) // because it won't work correctly otherwise
         {   tracecpu_2650(FALSE, TRUE);
         }
-        tracecpu_2650(FALSE, TRUE);
-        setmonitorbutton(SUBWINDOW_MONITOR_CPU, &mn[8],                      MONGAD_OPCODE);
+        setmonitorbutton(SUBWINDOW_MONITOR_CPU, mn, MONGAD_OPCODE);
 #ifdef AMIGA
     #ifdef MONOPCODECOLOURS
         SetGadgetAttrs
-        (   monitor[MONGAD_OPCODE].gadget, SubWindowPtr[SUBWINDOW_MONITOR_CPU], NULL,
+        (   monitor[MONGAD_OPCODE].gadget, subwin[SUBWINDOW_MONITOR_CPU].hwnd, NULL,
             BUTTON_BackgroundPen, (ULONG) emupens[guest_to_emupen[table_opcolours_2650[supercpu][memory[tt]]]],
         TAG_DONE); // button gadgets autorefresh themselves
     #endif
@@ -1206,11 +1223,11 @@ EXPORT void update_monitor_cpu(FLAG force)
     {
 #ifdef WIN32
         if (whichcpu == 0)
-        {   SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDC_MASTERGLYPH), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[1]);
-            SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDC_SLAVEGLYPH ), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[0]);
+        {   SendMessage(GetDlgItem(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDC_MASTERGLYPH), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[1]);
+            SendMessage(GetDlgItem(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDC_SLAVEGLYPH ), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[0]);
         } else
-        {   SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDC_MASTERGLYPH), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[0]);
-            SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDC_SLAVEGLYPH ), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[1]);
+        {   SendMessage(GetDlgItem(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDC_MASTERGLYPH), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[0]);
+            SendMessage(GetDlgItem(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDC_SLAVEGLYPH ), STM_SETIMAGE, IMAGE_ICON, (LPARAM) cpuicon[1]);
         }
 #endif
 #ifdef AMIGA
@@ -1225,8 +1242,8 @@ EXPORT void update_monitor_cpu(FLAG force)
             images[IMAGE_GLYPH_TWIN_GLOW]->LeftEdge = slave_x;
             images[IMAGE_GLYPH_TWIN_GLOW]->TopEdge  = slave_y;
         }
-        DrawImage(SubWindowPtr[SUBWINDOW_MONITOR_CPU]->RPort, images[IMAGE_GLYPH_TWIN_DIM ], 0, 0);
-        DrawImage(SubWindowPtr[SUBWINDOW_MONITOR_CPU]->RPort, images[IMAGE_GLYPH_TWIN_GLOW], 0, 0);
+        DrawImage(subwin[SUBWINDOW_MONITOR_CPU].hwnd->RPort, images[IMAGE_GLYPH_TWIN_DIM ], 0, 0);
+        DrawImage(subwin[SUBWINDOW_MONITOR_CPU].hwnd->RPort, images[IMAGE_GLYPH_TWIN_GLOW], 0, 0);
 #endif
         monitor_cpu = whichcpu;
     }
@@ -1351,11 +1368,11 @@ EXPORT void update_monitor_cpu(FLAG force)
         if (whichcpu == 1) // because it won't work correctly otherwise
         {   tracecpu_2650(FALSE, TRUE);
         }
-        setmonitorbutton(SUBWINDOW_MONITOR_CPU,          &mn[8],                      MONGAD_SLAVE_OPCODE);
+        setmonitorbutton(SUBWINDOW_MONITOR_CPU, mn, MONGAD_SLAVE_OPCODE);
 #ifdef AMIGA
     #ifdef MONOPCODECOLOURS
         SetGadgetAttrs
-        (   monitor[MONGAD_SLAVE_OPCODE].gadget, SubWindowPtr[SUBWINDOW_MONITOR_CPU], NULL,
+        (   monitor[MONGAD_SLAVE_OPCODE].gadget, subwin[SUBWINDOW_MONITOR_CPU].hwnd, NULL,
             BUTTON_BackgroundPen, (ULONG) emupens[guest_to_emupen[table_opcolours_2650[supercpu][memory[tt]]]],
         TAG_DONE); // button gadgets autorefresh themselves
     #endif
@@ -1366,7 +1383,7 @@ EXPORT void update_monitor_psgs(FLAG force)
 {   FAST int   i;
     FAST UWORD newval;
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_PSGS])
+    if (!subwin[SUBWINDOW_MONITOR_PSGS].hwnd)
     {   return;
     }
 
@@ -1381,6 +1398,9 @@ EXPORT void update_monitor_psgs(FLAG force)
                 hex2((STRPTR) monitor[i].string, monitor[i].contents);
                 monitor[i].string[4] = EOS;
                 setmonitorbutton(SUBWINDOW_MONITOR_PSGS, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                getextrapsginfo(i);
+#endif
         }   }
         else
         {   if (memory[monitor[i].addr] != monitor[i].contents || force)
@@ -1388,12 +1408,20 @@ EXPORT void update_monitor_psgs(FLAG force)
                 hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                 monitor[i].string[2] = EOS;
                 setmonitorbutton(SUBWINDOW_MONITOR_PSGS, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                getextrapsginfo(i);
+#endif
 }   }   }   }
 
 EXPORT void update_monitor_xvi(FLAG force)
-{   FAST int i;
+{   FAST int      i;
+#ifdef WIN32
+    FAST FLAG     flagging,
+                  ok;
+    FAST TOOLINFO ti;
+#endif
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_XVI])
+    if (!subwin[SUBWINDOW_MONITOR_XVI].hwnd)
     {   return;
     }
 
@@ -1406,6 +1434,9 @@ EXPORT void update_monitor_xvi(FLAG force)
             {   monitor[i].contents = memory[pvibase + monitor[i].addr];
                 hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                 setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                getextrapviinfo(i);
+#endif
         }   }
         if (machines[machine].pvis >= 2)
         {   for (i = PVI2ND_FIRSTMONGAD; i <= PVI2ND_LASTMONGAD; i++) // 2nd PVI
@@ -1413,6 +1444,9 @@ EXPORT void update_monitor_xvi(FLAG force)
                 {   monitor[i].contents = memory[pvibase + monitor[i].addr];
                     hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                     setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                    getextrapviinfo(i);
+#endif
             }   }
             if (machines[machine].pvis >= 3)
             {   for (i = PVI3RD_FIRSTMONGAD; i <= PVI3RD_LASTMONGAD; i++) // 3rd PVI
@@ -1420,6 +1454,9 @@ EXPORT void update_monitor_xvi(FLAG force)
                     {   monitor[i].contents = memory[pvibase + monitor[i].addr];
                         hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                         setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                        getextrapviinfo(i);
+#endif
     }   }   }   }   }
 
     switch (machine)
@@ -1433,30 +1470,125 @@ EXPORT void update_monitor_xvi(FLAG force)
             {   monitor[i].contents = memory[monitor[i].addr];
                 hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                 setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                getextrauviinfo(i);
+#endif
         }   }
     acase INTERTON:
-        for (i = I_FIRSTMONGAD; i <= IE_LASTMONGAD; i++)
-        {   if (memory[monitor[i].addr] != monitor[i].contents || force)
-            {   monitor[i].contents = memory[monitor[i].addr];
-                hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
-                setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
-        }   }
         for (i = INTERTON_FIRSTMONGAD; i <= INTERTON_LASTMONGAD; i++)
         {   if (memory[monitor[i].addr] != monitor[i].contents || force)
             {   monitor[i].contents = memory[monitor[i].addr];
                 hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                 setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                getextraintertonelektorinfo(i);
+#endif
         }   }
     acase ELEKTOR:
-        for (i = E_FIRSTMONGAD; i <= IE_LASTMONGAD; i++)
+        for (i = ELEKTOR_FIRSTMONGAD; i <= ELEKTOR_LASTMONGAD; i++)
         {   if (memory[monitor[i].addr] != monitor[i].contents || force)
             {   monitor[i].contents = memory[monitor[i].addr];
                 hex1((STRPTR) monitor[i].string, (UBYTE) monitor[i].contents);
                 setmonitorbutton(SUBWINDOW_MONITOR_XVI, (STRPTR) monitor[i].string, i);
+#ifdef WIN32
+                getextraintertonelektorinfo(i);
+#endif
     }   }   }
 
     do_axes();
 }
+
+#ifdef WIN32
+MODULE void getextrauviinfo(int gid)
+{   FAST TOOLINFO ti;
+
+    // assert(machine == ARCADIA);
+
+    if (interpret_uvi(monitor[gid].addr))
+    {   make_monitortip(monitor[gid].addr, datatip);
+        strcat(datatip, "\n");
+        strcat(datatip, interpretstr);
+
+        ti.cbSize   = sizeof(TOOLINFO);
+        ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+        ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+        ti.uId      = gid - ARCADIA_FIRSTMONGAD;
+        ti.hinst    = InstancePtr;
+        ti.lpszText = datatip; // this gets copied
+        SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+}   }
+
+MODULE void getextrapviinfo(int gid)
+{   FAST TOOLINFO ti;
+
+    // assert(machines[machine].pvis);
+
+    if (interpret_pvis(pvibase + monitor[gid].addr))
+    {   make_monitortip(pvibase + monitor[gid].addr, datatip);
+        strcat(datatip, "\n");
+        strcat(datatip, interpretstr);
+
+        ti.cbSize   = sizeof(TOOLINFO);
+        ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+        ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+        switch (machine)
+        {
+        case  INTERTON: ti.uId = INTERTON_MONGADS - PVI1ST_FIRSTMONGAD + gid;
+        acase ELEKTOR:  ti.uId = ELEKTOR_MONGADS - PVI1ST_FIRSTMONGAD + gid;
+        acase MALZAK:
+        case  ZACCARIA: if (gid >= PVI2ND_FIRSTMONGAD)
+                        {   ti.uId = PVI1ST_MONGADS - PVI2ND_FIRSTMONGAD + gid;
+                        } else
+                        {   ti.uId = gid - PVI1ST_FIRSTMONGAD;
+        }               }
+        ti.hinst    = InstancePtr;
+        ti.lpszText = datatip; // this gets copied
+        SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+}   }
+
+MODULE void getextraintertonelektorinfo(int gid)
+{   FAST TOOLINFO ti;
+
+    // assert(machine == INTERTON || machine == ELEKTOR);
+
+    if (interpret_intertonelektor(monitor[gid].addr))
+    {   make_monitortip(monitor[gid].addr, datatip);
+        strcat(datatip, "\n");
+        strcat(datatip, interpretstr);
+
+        ti.cbSize   = sizeof(TOOLINFO);
+        ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+        ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+        if (machine == INTERTON)
+        {   ti.uId  = gid - INTERTON_FIRSTMONGAD;
+        } else
+        {   // assert(machine == ELEKTOR);
+            ti.uId  = gid - ELEKTOR_FIRSTMONGAD;
+        }
+        ti.hinst    = InstancePtr;
+        ti.lpszText = datatip; // this gets copied
+        SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+}   }
+
+MODULE void getextrapsginfo(int gid)
+{   FAST TOOLINFO ti;
+
+    // assert(memmap == MEMMAP_F);
+
+    if (interpret_psgs(monitor[gid].addr))
+    {   make_monitortip(monitor[gid].addr, datatip);
+        strcat(datatip, "\n");
+        strcat(datatip, interpretstr);
+
+        ti.cbSize   = sizeof(TOOLINFO);
+        ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+        ti.hwnd     = subwin[SUBWINDOW_MONITOR_PSGS].hwnd;
+        ti.uId      = gid - PSGS_FIRSTMONGAD;
+        ti.hinst    = InstancePtr;
+        ti.lpszText = datatip; // this gets copied
+        SendMessage(subwin[SUBWINDOW_MONITOR_PSGS].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+}   }
+#endif
 
 MODULE void calcrunningtime(void)
 {   FAST int    hours,
@@ -1556,7 +1688,7 @@ EXPORT void update_spriteeditor(FLAG force)
     FAST      ULONG reversed;
 #endif
 
-    if (!SubWindowPtr[SUBWINDOW_SPRITES])
+    if (!subwin[SUBWINDOW_SPRITES].hwnd)
     {   return;
     }
 
@@ -1574,9 +1706,9 @@ EXPORT void update_spriteeditor(FLAG force)
                                        colourable = FALSE;
         }
         if (flagline && (psu & PSU_F))
-        {   sprviewcolour = from_a[7 - sprviewcolour];
+        {   sprviewcolour = from_a[1][sprviewcolour];
         } else
-        {   sprviewcolour = from_a[    sprviewcolour];
+        {   sprviewcolour = from_a[0][sprviewcolour];
         }
     acase INTERTON:
     case ELEKTOR:
@@ -1613,7 +1745,7 @@ EXPORT void update_spriteeditor(FLAG force)
         st_set2(SUBWINDOW_SPRITES, IDC_WHICHSPRITEDESC, spritename);
 #ifdef AMIGA
         if (machine == ARCADIA || machines[machine].pvis)
-        {   SetGadgetAttrs(gadgets[GID_SR_PL1], SubWindowPtr[SUBWINDOW_SPRITES], NULL, PALETTE_Colour, sprviewcolour, GA_Disabled, colourable ? FALSE : TRUE, TAG_DONE); // this refreshes automatically
+        {   SetGadgetAttrs(gadgets[GID_SR_PL1], subwin[SUBWINDOW_SPRITES].hwnd, NULL, PALETTE_Colour, sprviewcolour, GA_Disabled, colourable ? FALSE : TRUE, TAG_DONE); // this refreshes automatically
         }
 #endif
     }
@@ -1645,10 +1777,10 @@ EXPORT void update_spriteeditor(FLAG force)
     }
     if (machine == ARCADIA || machines[machine].pvis)
     {   for (i = 0; i < 8; i++)
-        {   DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_COLOUR0 + i), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        {   DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_COLOUR0 + i), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
     }   }
 
-    // clear_preview(SubWindowPtr[SUBWINDOW_SPRITES]);
+    // clear_preview(subwin[SUBWINDOW_SPRITES].hwnd);
     do_preview(force);
 #endif
 
@@ -1815,9 +1947,9 @@ EXPORT void dosprcolour(int newcolour)
     {   // assert(machine == ARCADIA);
 
         if (flagline && (psu & PSU_F))
-        {   sprviewcolour = from_a[7 - newcolour];
+        {   sprviewcolour = from_a[1][newcolour];
         } else
-        {   sprviewcolour = from_a[    newcolour];
+        {   sprviewcolour = from_a[0][newcolour];
         }
         switch (viewingsprite)
         {
@@ -1925,7 +2057,7 @@ EXPORT void update_music(void)
                newvol;
     FAST ULONG temp;
 
-    if (!SubWindowPtr[SUBWINDOW_MUSIC])
+    if (!subwin[SUBWINDOW_MUSIC].hwnd)
     {   return;
     }
 
@@ -1934,8 +2066,8 @@ EXPORT void update_music(void)
     }
 
 #ifdef WIN32
-    MusicRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_MUSIC));
-    StaveRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_STAVE));
+    MusicRastPtr = GetDC(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_MUSIC));
+    StaveRastPtr = GetDC(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_STAVE));
 #endif
 
     if (reghost)
@@ -2122,8 +2254,8 @@ EXPORT void update_music(void)
     }
 
 #ifdef WIN32
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_MUSIC), MusicRastPtr);
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_STAVE), StaveRastPtr);
+    ReleaseDC(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_MUSIC), MusicRastPtr);
+    ReleaseDC(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_STAVE), StaveRastPtr);
 #endif
 }
 
@@ -2601,7 +2733,7 @@ EXPORT void do_axes(void)
                 ny[4] = { 0, 0, 0, 0 };
 
     if
-    (   !SubWindowPtr[SUBWINDOW_MONITOR_XVI]
+    (   !subwin[SUBWINDOW_MONITOR_XVI].hwnd
      || (   machine != ARCADIA
          && machine != INTERTON
          && machine != ELEKTOR
@@ -2663,7 +2795,7 @@ EXPORT void do_axes(void)
         {   drawaxesline(48, 48, nx[1], ny[3], EMURGBPEN_BLUE);
     }   }
 
-    redraw_axes();
+    wpa8(CANVAS_AXES, 0, 0);
 }
 
 #ifdef AMIGA
@@ -2714,7 +2846,7 @@ EXPORT void drawaxesline(int x1, int y1, int x2, int y2, COLORREF colour)
     {   // initialize the error term
         err = dy2 - dx;
         for (i = 0; i <= dx; i++)
-        {   DRAWAXESPIXEL(nowx, nowy, colour);
+        {   DRAWAXES(nowx, nowy, colour);
             if (err >= 0)
             {   err -= dx2;
                 nowy += iy;
@@ -2726,7 +2858,7 @@ EXPORT void drawaxesline(int x1, int y1, int x2, int y2, COLORREF colour)
     {   // initialize the error term
         err = dx2 - dy;
         for (i = 0; i <= dy; i++)
-        {   DRAWAXESPIXEL(nowx, nowy, colour);
+        {   DRAWAXES(nowx, nowy, colour);
             if (err >= 0)
             {   err -= dy2;
                 nowx += ix;
@@ -2736,89 +2868,34 @@ EXPORT void drawaxesline(int x1, int y1, int x2, int y2, COLORREF colour)
     }   }
 
     // draw knob
-    //                           DRAWAXESPIXEL(x2    , y2    , colour); // centre
+    //                           DRAWAXES(x2    , y2    , colour); // centre
     if (x2 > 0)
-    {                            DRAWAXESPIXEL(x2 - 1, y2    , colour); // west
-        if (y2 > 0)              DRAWAXESPIXEL(x2 - 1, y2 - 1, colour); // northwest
-        if (y2 < AXESHEIGHT - 1) DRAWAXESPIXEL(x2 - 1, y2 + 1, colour); // southwest
+    {                            DRAWAXES(x2 - 1, y2    , colour); // west
+        if (y2 > 0)              DRAWAXES(x2 - 1, y2 - 1, colour); // northwest
+        if (y2 < AXESHEIGHT - 1) DRAWAXES(x2 - 1, y2 + 1, colour); // southwest
     }
     if (x2 < AXESWIDTH - 1)
-    {                            DRAWAXESPIXEL(x2 + 1, y2    , colour); // east
-        if (y2 > 0)              DRAWAXESPIXEL(x2 + 1, y2 - 1, colour); // northeast
-        if (y2 < AXESHEIGHT - 1) DRAWAXESPIXEL(x2 + 1, y2 + 1, colour); // southeast
+    {                            DRAWAXES(x2 + 1, y2    , colour); // east
+        if (y2 > 0)              DRAWAXES(x2 + 1, y2 - 1, colour); // northeast
+        if (y2 < AXESHEIGHT - 1) DRAWAXES(x2 + 1, y2 + 1, colour); // southeast
     }
-    if (y2 > 0)                  DRAWAXESPIXEL(x2    , y2 - 1, colour); // north
-    if (y2 < AXESHEIGHT - 1)     DRAWAXESPIXEL(x2    , y2 + 1, colour); // south
+    if (y2 > 0)                  DRAWAXES(x2    , y2 - 1, colour); // north
+    if (y2 < AXESHEIGHT - 1)     DRAWAXES(x2    , y2 + 1, colour); // south
 }
 
 EXPORT int getsmallimage2(int thegame, int thememmap)
-{   switch (thegame)
-    {
-    case  _3DATTACKPOS:                              return IMAGE_FIRSTGAME +  0;
-    acase _3DSOCCERAPOS:     case _3DSOCCERBPOS:     return IMAGE_FIRSTGAME +  1;
-    acase HOMERUNPOS:                                return IMAGE_FIRSTGAME +  2;
-    acase ALIENINVPOS:       case ALIENINV1POS:      case ALIENINV2POS: case ALIENINV3POS: case ALIENINV4POS:
-                                                     return IMAGE_FIRSTGAME +  3;
-    acase ASTROINVPOS:       case ASTROINVODPOS:     return IMAGE_FIRSTGAME +  4;
-    acase AUTORACEPOS:       case AUTORACEODPOS:     return IMAGE_FIRSTGAME +  5;
-    acase BASEBALLPOS:                               return IMAGE_FIRSTGAME +  6;
-    acase A_BASKETBALLPOS:                           return IMAGE_FIRSTGAME +  7;
-    acase BATTLEPOS:                                 return IMAGE_FIRSTGAME +  8;
-    acase A_BLACKJACKPOS:                            return IMAGE_FIRSTGAME +  9;
-    acase A_BOWLINGPOS:                              return IMAGE_FIRSTGAME + 10;
-    acase A_BOXINGPOS:                               return IMAGE_FIRSTGAME + 11;
-    acase BRAINQUIZPOS:                              return IMAGE_FIRSTGAME + 12;
-    acase BREAKAWAYPOS:                              return IMAGE_FIRSTGAME + 13;
-    acase A_CAPTUREPOS:                              return IMAGE_FIRSTGAME + 14;
-    acase CATTRAXPOS:                                return IMAGE_FIRSTGAME + 15;
-    acase A_CIRCUSPOS:                               return IMAGE_FIRSTGAME + 16;
-    acase A_COMBATPOS:       case A_COMBATODPOS:     return IMAGE_FIRSTGAME + 17;
-    acase CRAZYCLIMBERPOS:                           return IMAGE_FIRSTGAME + 18;
-    acase CRAZYGOBBLERPOS:                           return IMAGE_FIRSTGAME + 19;
-    acase VIDLEXEGPOS:       case VIDLEXGEPOS:       return IMAGE_FIRSTGAME + 20;
-    acase DORAEMONPOS:                               return IMAGE_FIRSTGAME + 21;
-    acase DRSLUMPPOS:                                return IMAGE_FIRSTGAME + 22;
-    acase ESCAPEPOS:                                 return IMAGE_FIRSTGAME + 23;
-    acase GRIDIRON1POS:      case GRIDIRON2POS:      return IMAGE_FIRSTGAME + 24;
-    acase FROGGER1POS:       case FROGGER2POS:       case FROGGER3POS:
-                                                     return IMAGE_FIRSTGAME + 25;
-    acase FUNKYFISHPOS:                              return IMAGE_FIRSTGAME + 26;
-    acase A_GOLFPOS1:        case A_GOLFPOS2:        case A_GOLFODPOS:
-                                                     return IMAGE_FIRSTGAME + 27;
-    acase GUNDAMPOS:                                 return IMAGE_FIRSTGAME + 28;
-    acase HOBOPOS1:          case HOBOPOS2:          return IMAGE_FIRSTGAME + 29;
-    acase A_HORSERACINGPOS:                          return IMAGE_FIRSTGAME + 30;
-    acase JOURNEYPOS:                                return IMAGE_FIRSTGAME + 31;
-    acase JUMPBUG1POS:       case JUMPBUG2POS:       return IMAGE_FIRSTGAME + 32;
-    acase JUNGLERPOS:                                return IMAGE_FIRSTGAME + 33;
-    acase MACROSSPOS:                                return IMAGE_FIRSTGAME + 34;
-    acase MISSILEWARPOS:                             return IMAGE_FIRSTGAME + 35;
-    acase MONACOPOS:                                 return IMAGE_FIRSTGAME + 36;
-    acase NIBBLEMENPOS:      case SUPERGOBBLERPOS:   return IMAGE_FIRSTGAME + 37;
-    acase OCEANBATTLEPOS:                            return IMAGE_FIRSTGAME + 38;
-    acase PARASHOOTERPOS:                            return IMAGE_FIRSTGAME + 39;
-    acase PLEIADESPOS:                               return IMAGE_FIRSTGAME + 40;
-    acase R2DTANKPOS:                                return IMAGE_FIRSTGAME + 41;
-    acase REDCLASHPOS:       case REDCLASHODPOS:     return IMAGE_FIRSTGAME + 42;
-    acase ROBOTKILLERPOS:                            return IMAGE_FIRSTGAME + 43;
-    acase ROUTE16POS:                                return IMAGE_FIRSTGAME + 44;
-    acase _2DSOCCERPOS:      case _2DSOCCERODPOS:    return IMAGE_FIRSTGAME + 45;
-    acase SPACEATTACKAPOS:   case SPACEATTACKBPOS:   case SPACEATTACKCPOS:
-                                                     return IMAGE_FIRSTGAME + 46;
-    acase SPACEBUSTERPOS:                            return IMAGE_FIRSTGAME + 47;
-    acase SPACEMISSIONPOS:                           return IMAGE_FIRSTGAME + 48;
-    acase SPACERAIDERSPOS:                           return IMAGE_FIRSTGAME + 49;
-    acase SPACESQUADRON1POS: case SPACESQUADRON2POS: return IMAGE_FIRSTGAME + 50;
-    acase SPACEVULTURESPOS:  case MOTHERSHIPPOS:     return IMAGE_FIRSTGAME + 51;
-    acase SPIDERSPOS:        case SPIDERSODPOS:      return IMAGE_FIRSTGAME + 52;
-    acase STARCHESSPOS:      case STARCHESSENHPOS:   return IMAGE_FIRSTGAME + 53;
-    acase SUPERBUG1POS:      case SUPERBUG2POS:      return IMAGE_FIRSTGAME + 54;
-    acase TANKSALOTPOS:                              return IMAGE_FIRSTGAME + 55;
-    acase TENNISPOS:                                 return IMAGE_FIRSTGAME + 56;
-    acase THEENDPOS1:        case THEENDPOS2:        return IMAGE_FIRSTGAME + 57;
-    acase TURTLESPOS:                                return IMAGE_FIRSTGAME + 58; // ARCADIAGLYPHS-1
-    adefault:                                        return memmap_to_smlimage[thememmap];
-}   }
+{   if
+    (   thegame              == -1
+     || known[thegame].glyph == -1
+#ifdef AMIGA
+     || known[thegame].glyph >= ARCADIAGLYPHS
+#endif
+    )
+    {   return memmap_to_smlimage[thememmap];
+    } // implied else
+
+    return IMAGE_FIRSTGAME + known[thegame].glyph;
+}
 
 EXPORT FLAG getmoncolour(int whichmongad, ULONG* whichemupen, int* whichemubrush)
 {   int addr;
@@ -2951,7 +3028,7 @@ EXPORT FLAG getmoncolour(int whichmongad, ULONG* whichemupen, int* whichemubrush
         }   }
         elif (memflags[addr] & NOREAD)
         {   *whichemupen   = EMUPEN_YELLOW;
-            *whichemubrush = EMUBRUSH_YELLOW;
+            *whichemubrush = EMUBRUSH_YELLOW;\
         } else
         {   *whichemupen   = EMUPEN_GREEN;
             *whichemubrush = EMUBRUSH_GREEN;
@@ -2962,14 +3039,16 @@ EXPORT FLAG getmoncolour(int whichmongad, ULONG* whichemupen, int* whichemubrush
 
 EXPORT void generate_controlstip(int localkey)
 {   FAST FLAG done;
-    FAST int  whichplayer;
+    FAST int  thekeypad,
+              whichplayer;
 
     whichplayer = keyinfo[whichkeyrect][localkey].player;
     if (whichplayer != -1 && swapped && (machine == ARCADIA || machines[machine].pvis || machine == PONG)) // INSTRUCTOR, etc. don't allow swapping
     {   whichplayer = whichplayer ? 0 : 1;
     }
+    thekeypad = keyinfo[whichkeyrect][localkey].to_keypad;
 
-    if (keyinfo[whichkeyrect][localkey].to_overlay == -1)
+    if (whichplayer == -1) // console keys, etc.
     {   strcpy((char*) controltip[4], "-");
 
         if ((machine == ARCADIA && localkey == 48) || (machine == INTERTON && localkey == 40))
@@ -3038,7 +3117,7 @@ EXPORT void generate_controlstip(int localkey)
             }
 #endif
 #ifdef AMIGA
-            strcpy((char*) controltip[3], LLL(MSG_REVERSE, "Forward"));
+            strcpy((char*) controltip[3], LLL(MSG_FORWARD, "Forward"));
 #endif
         } elif
         (   (localkey ==  3 && (machine == ARCADIA || machine == INTERTON || machine == ELEKTOR || machine == INSTRUCTOR || machine == PONG))
@@ -3066,7 +3145,7 @@ EXPORT void generate_controlstip(int localkey)
         )
         {   strcpy((char*) controltip[0], LLL(MSG_KEY_UP, "Up"));
             strcpy((char*) controltip[3], LLL(MSG_KEY_UP, "Up"));
-            strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+            strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
         } elif
         (   ((machine == ARCADIA || machine == INTERTON || machine == ELEKTOR) && (localkey == 29 || localkey == 33))
          || (machine == ZACCARIA && localkey == 3)
@@ -3074,7 +3153,7 @@ EXPORT void generate_controlstip(int localkey)
         )
         {   strcpy((char*) controltip[0], LLL(MSG_KEY_LT, "Lt"));
             strcpy((char*) controltip[3], LLL(MSG_KEY_LT, "Lt"));
-            strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+            strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
         } elif
         (   ((machine == ARCADIA || machine == INTERTON || machine == ELEKTOR) && (localkey == 30 || localkey == 34))
          || ((memmap == MEMMAP_LASERBATTLE || memmap == MEMMAP_LAZARIAN) && localkey == 6)
@@ -3082,7 +3161,7 @@ EXPORT void generate_controlstip(int localkey)
         )
         {   strcpy((char*) controltip[0], LLL(MSG_KEY_DN, "Dn"));
             strcpy((char*) controltip[3], LLL(MSG_KEY_DN, "Dn"));
-            strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+            strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
         } elif
         (   ((machine == ARCADIA || machine == INTERTON || machine == ELEKTOR) && (localkey == 31 || localkey == 35))
          || (machine == ZACCARIA && localkey == 4)
@@ -3090,26 +3169,26 @@ EXPORT void generate_controlstip(int localkey)
         )
         {   strcpy((char*) controltip[0], LLL(MSG_KEY_RT, "Rt"));
             strcpy((char*) controltip[3], LLL(MSG_KEY_RT, "Rt"));
-            strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+            strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
         } elif (machine == MALZAK)
         {   switch (localkey)
             {
             case  4:
                 strcpy((char*) controltip[0], LLL(MSG_UPRIGHT, "UpRt"));
                 strcpy((char*) controltip[3], LLL(MSG_UPRIGHT, "UpRt"));
-                strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+                strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
             acase 6:
                 strcpy((char*) controltip[0], LLL(MSG_DOWNRIGHT, "DnRt"));
                 strcpy((char*) controltip[3], LLL(MSG_DOWNRIGHT, "DnRt"));
-                strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+                strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
             acase 8:
                 strcpy((char*) controltip[0], LLL(MSG_DOWNLEFT, "DnLt"));
                 strcpy((char*) controltip[3], LLL(MSG_DOWNLEFT, "DnLt"));
-                strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+                strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
             acase 10:
                 strcpy((char*) controltip[0], LLL(MSG_UPLEFT, "UpLt"));
                 strcpy((char*) controltip[3], LLL(MSG_UPLEFT, "UpLt"));
-                strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+                strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
         }   }
         elif (machine == INSTRUCTOR)
         {   switch (localkey)
@@ -3210,46 +3289,82 @@ EXPORT void generate_controlstip(int localkey)
             strcpy((char*) controltip[3], "-");
         }
         strcpy((char*) controltip[1], (const char*) controltip[0]);
-    } else
-    {   strcpy((char*) controltip[0], overlays[              whichoverlay][keyinfo[whichkeyrect][localkey].to_overlay]);
-        strcpy((char*) controltip[1], overlays[memmapinfo[memmap].overlay][keyinfo[whichkeyrect][localkey].to_overlay]);
+    } else // non-console keys/dirs
+    {   if (keytable[thekeypad].overlay[whichplayer] == -1)
+        {   strcpy((char*) controltip[0], machines[machine].keynames[whichplayer][thekeypad]);
+            strcpy((char*) controltip[1], machines[machine].keynames[whichplayer][thekeypad]);
+        } else
+        {   strcpy((char*) controltip[0], overlays[whichoverlay][keytable[thekeypad].overlay[whichplayer]]);
+            strcpy((char*) controltip[1], overlays[memmapinfo[memmap].overlay][keytable[thekeypad].overlay[whichplayer]]);
+        }
+        
         if (machine == BINBUG)
         {   strcpy((char*) controltip[2], (const char*) controltip[0]);
         } else
-        {   strcpy((char*) controltip[2], keyname[keypads[whichplayer][keyinfo[whichkeyrect][localkey].to_keypad]].name);
+        {   strcpy((char*) controltip[2], keyname[keypads[whichplayer][thekeypad]].name);
         }
 
         if
-        (   key1 != keyinfo[whichkeyrect][localkey].to_keypad
-         && key2 != keyinfo[whichkeyrect][localkey].to_keypad
-         && key3 != keyinfo[whichkeyrect][localkey].to_keypad
-         && key4 != keyinfo[whichkeyrect][localkey].to_keypad
+        (   thekeypad == GUESTKEY_UP
+         || thekeypad == GUESTKEY_DN
+         || thekeypad == GUESTKEY_LT
+         || thekeypad == GUESTKEY_RT
+        )
+        {   strcpy((char*) controltip[3], machines[machine].keynames[whichplayer][thekeypad]);
+            strcpy((char*) controltip[4], "-");
+            return;
+        } // implied else
+        if (thekeypad == GUESTKEY_UPLT)
+        {   strcpy((char*) controltip[3], "Up+Lt");
+            strcpy((char*) controltip[4], "-");
+            return;
+        } // implied else
+        if (thekeypad == GUESTKEY_UPRT)
+        {   strcpy((char*) controltip[3], "Up+Rt");
+            strcpy((char*) controltip[4], "-");
+            return;
+        } // implied else
+        if (thekeypad == GUESTKEY_DNLT)
+        {   strcpy((char*) controltip[3], "Dn+Lt");
+            strcpy((char*) controltip[4], "-");
+            return;
+        } // implied else
+        if (thekeypad == GUESTKEY_DNRT)
+        {   strcpy((char*) controltip[3], "Dn+Rt");
+            strcpy((char*) controltip[4], "-");
+            return;
+        } // implied else
+        if
+        (   key1 != thekeypad
+         && key2 != thekeypad
+         && key3 != thekeypad
+         && key4 != thekeypad
         )
         {   strcpy((char*) controltip[3], "-");
             strcpy((char*) controltip[4], "-");
             return;
         }
 
-        if (key1 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key1 == thekeypad)
         {   strcat((char*) controltip[2], ", ");
             strcat((char*) controltip[2], keyname[keypads[whichplayer][ 0]].name);
         }
-        if (key2 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key2 == thekeypad)
         {   strcat((char*) controltip[2], ", ");
             strcat((char*) controltip[2], keyname[keypads[whichplayer][21]].name);
         }
-        if (key3 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key3 == thekeypad)
         {   strcat((char*) controltip[2], ", ");
             strcat((char*) controltip[2], keyname[keypads[whichplayer][22]].name);
         }
-        if (key4 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key4 == thekeypad)
         {   strcat((char*) controltip[2], ", ");
             strcat((char*) controltip[2], keyname[keypads[whichplayer][23]].name);
         }
 
         controltip[3][0] = EOS;
         done = FALSE;
-        if (key1 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key1 == thekeypad)
         {   done = TRUE;
 #ifdef WIN32
             sprintf(controltip[3], "%d", button[whichplayer][0]);
@@ -3258,7 +3373,7 @@ EXPORT void generate_controlstip(int localkey)
             strcpy((char*) controltip[3], LLL(MSG_LABEL_RED, "Red"));
 #endif
         }
-        if (key2 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key2 == thekeypad)
         {   if (done)
             {   strcat((char*) controltip[3], ", ");
             }
@@ -3270,7 +3385,7 @@ EXPORT void generate_controlstip(int localkey)
             strcat((char*) controltip[3], LLL(MSG_LABEL_BLUE, "Blue"));
 #endif
         }
-        if (key3 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key3 == thekeypad)
         {   if (done)
             {   strcat((char*) controltip[3], ", ");
             }
@@ -3282,7 +3397,7 @@ EXPORT void generate_controlstip(int localkey)
             strcat((char*) controltip[3], LLL(MSG_LABEL_GREEN, "Green"));
 #endif
         }
-        if (key4 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key4 == thekeypad)
         {   if (done)
             {   strcat((char*) controltip[3], ", ");
             }
@@ -3296,9 +3411,9 @@ EXPORT void generate_controlstip(int localkey)
         }
 
         if
-        (   key1 != keyinfo[whichkeyrect][localkey].to_keypad
-         && key2 != keyinfo[whichkeyrect][localkey].to_keypad
-         && key3 != keyinfo[whichkeyrect][localkey].to_keypad
+        (   key1 != thekeypad
+         && key2 != thekeypad
+         && key3 != thekeypad
         )
         {   strcpy((char*) controltip[4], "-");
             return;
@@ -3306,18 +3421,18 @@ EXPORT void generate_controlstip(int localkey)
 
         controltip[4][0] = EOS;
         done = FALSE;
-        if (key1 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key1 == thekeypad)
         {   done = TRUE;
             strcpy((char*) controltip[4], LLL(MSG_LEFT, "Left"));
         }
-        if (key2 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key2 == thekeypad)
         {   if (done)
             {   strcat((char*) controltip[4], ", ");
             }
             done = TRUE;
             sprintf((char*) ENDOF(controltip[4]), LLL(MSG_MIDDLE, "Middle"));
         }
-        if (key3 == keyinfo[whichkeyrect][localkey].to_keypad)
+        if (key3 == thekeypad)
         {   if (done)
             {   strcat((char*) controltip[4], ", ");
             }
@@ -3416,7 +3531,7 @@ EXPORT void update_disk(int whichdrive)
     DISCARD fclose(DiskHandle);
     // DiskHandle = NULL;
 
-    update_floppydrive(3, whichdrive);
+    update_floppydrive(TRUE, whichdrive);
 }
 
 EXPORT FLAG enableclearhs(void)
@@ -3635,7 +3750,7 @@ EXPORT void update_waveform(void)
 
     for (y = 0; y < WAVEFORMHEIGHT; y++)
     {   for (x = 0; x < WAVEFORMWIDTH; x++)
-        {   DRAWWAVEFORMPIXEL(x, y, colour);
+        {   DRAWWAVE(x, WAVEFORMHEIGHT - 1 - y, colour);
     }   }
 
     if (tapemode != TAPEMODE_NONE && otl)
@@ -3653,11 +3768,11 @@ EXPORT void update_waveform(void)
             }
             if (t < ts)
             {   for (y = t; y < ts; y += 2)
-                {   DRAWWAVEFORMPIXEL(x, y / 2, EMURGBPEN_GREY);
+                {   DRAWWAVE(x, WAVEFORMHEIGHT - 1 - (y / 2), EMURGBPEN_GREY);
             }   }
             elif (t > ts)
             {   for (y = ts + 1; y <= t; y += 2)
-                {   DRAWWAVEFORMPIXEL(x, y / 2, EMURGBPEN_GREY);
+                {   DRAWWAVE(x, WAVEFORMHEIGHT - 1 - (y / 2), EMURGBPEN_GREY);
         }   }   }
 
         xf = samplewhere_f / scaleby;
@@ -3666,14 +3781,14 @@ EXPORT void update_waveform(void)
         {   x = WAVEFORMWIDTH - 1;
         }
         for (y = 0; y < WAVEFORMHEIGHT; y++)
-        {   DRAWWAVEFORMPIXEL(x, y, EMURGBPEN_BLACK);
+        {   DRAWWAVE(x, y, EMURGBPEN_BLACK);
     }   }
 
     for (x = 0; x < WAVEFORMWIDTH; x++)
-    {   DRAWWAVEFORMPIXEL(x, ts / 2, EMURGBPEN_BLACK);
+    {   DRAWWAVE(x, WAVEFORMHEIGHT - 1 - (ts / 2), EMURGBPEN_BLACK);
     }
 
-    redraw_waveform();
+    wpa8(CANVAS_WAVE, 0, 0);
 }
 
 EXPORT void update_roll(int whichunit)
@@ -3721,7 +3836,7 @@ FAST const TEXT arrow[10][10 + 1] = {
 
     for (y = 0; y < ROLLHEIGHT; y++)
     {   for (x = 0; x < ROLLWIDTH; x++)
-        {   DRAWROLLPIXEL(whichunit, x, y, colour);
+        {   DRAWROLL(whichunit, x, y, colour);
     }   }
     for (y = 0; y < 9; y++)
     {   if ((int) papertapewhere[whichunit] - 4 + y < 0 || (int) papertapewhere[whichunit] - 4 + y >= (int) papertapelength[whichunit])
@@ -3729,7 +3844,7 @@ FAST const TEXT arrow[10][10 + 1] = {
 #ifdef SHOWEDGES
             for (yy = 0; yy < 20; yy++)
             {   for (xx = 0; xx < ROLLWIDTH; xx++)
-                {   DRAWROLLPIXEL(whichunit, xx, (y * 20) + yy, EMURGBPEN_BLACK);
+                {   DRAWROLL(whichunit, xx, (y * 20) + yy, EMURGBPEN_BLACK);
             }   }
 #else
             ;
@@ -3743,9 +3858,9 @@ FAST const TEXT arrow[10][10 + 1] = {
                         {   if (chad[yy][xx] == '#' || chad[yy][xx] == '-')
                             {
 #ifdef PAPERTAPESPROCKETS
-                                DRAWROLLPIXEL(whichunit, (x * 20) + ((x >= 5) ? 46 : 26) + xx, (y * 20) + 6 + yy, EMURGBPEN_BLACK);
+                                DRAWROLL(whichunit, (x * 20) + ((x >= 5) ? 46 : 26) + xx, (y * 20) + 6 + yy, EMURGBPEN_BLACK);
 #else
-                                DRAWROLLPIXEL(whichunit, (x * 20) +                  26  + xx, (y * 20) + 6 + yy, EMURGBPEN_BLACK);
+                                DRAWROLL(whichunit, (x * 20) +                  26  + xx, (y * 20) + 6 + yy, EMURGBPEN_BLACK);
 #endif
                 }   }   }   }
                 else // hollow circle
@@ -3754,9 +3869,9 @@ FAST const TEXT arrow[10][10 + 1] = {
                         {   if (chad[yy][xx] == '#')
                             {
 #ifdef PAPERTAPESPROCKETS
-                                DRAWROLLPIXEL(whichunit, (x * 20) + ((x >= 5) ? 46 : 26) + xx, (y * 20) + 6 + yy, EMURGBPEN_GREY);
+                                DRAWROLL(whichunit, (x * 20) + ((x >= 5) ? 46 : 26) + xx, (y * 20) + 6 + yy, EMURGBPEN_GREY);
 #else
-                                DRAWROLLPIXEL(whichunit, (x * 20) +                  26  + xx, (y * 20) + 6 + yy, EMURGBPEN_GREY);
+                                DRAWROLL(whichunit, (x * 20) +                  26  + xx, (y * 20) + 6 + yy, EMURGBPEN_GREY);
 #endif
             }   }   }   }   }
 
@@ -3771,15 +3886,15 @@ FAST const TEXT arrow[10][10 + 1] = {
                 {   if (tr_chars[thechar][yy] & (0x80 >> xx))
                     {
 #ifdef PAPERTAPESPROCKETS
-                        DRAWROLLPIXEL(whichunit, 208 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
-                        DRAWROLLPIXEL(whichunit, 209 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
-                        DRAWROLLPIXEL(whichunit, 208 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
-                        DRAWROLLPIXEL(whichunit, 209 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 208 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 209 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 208 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 209 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
 #else
-                        DRAWROLLPIXEL(whichunit, 188 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
-                        DRAWROLLPIXEL(whichunit, 189 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
-                        DRAWROLLPIXEL(whichunit, 188 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
-                        DRAWROLLPIXEL(whichunit, 189 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 188 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 189 + (xx * 2), (y * 20) + 4 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 188 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
+                        DRAWROLL(whichunit, 189 + (xx * 2), (y * 20) + 5 + (yy * 2), EMURGBPEN_BLACK);
 #endif
             }   }   }
 
@@ -3787,7 +3902,7 @@ FAST const TEXT arrow[10][10 + 1] = {
             for (yy = 0; yy < 6; yy++)
             {   for (xx = 0; xx < 6; xx++)
                 {   if (sprockethole[yy][xx] == '#')
-                    {   DRAWROLLPIXEL(whichunit, 128 + xx, (y * 20) + 8 + yy, EMURGBPEN_BLACK);
+                    {   DRAWROLL(whichunit, 128 + xx, (y * 20) + 8 + yy, EMURGBPEN_BLACK);
             }   }   }
 #endif
         }
@@ -3800,79 +3915,22 @@ FAST const TEXT arrow[10][10 + 1] = {
         for (yy = 0; yy < 10; yy++)
         {   for (xx = 0; xx < 10; xx++)
             {   if (arrow[yy][xx] == '#')
-                {   DRAWROLLPIXEL(whichunit, 8 + xx, 86 + yy, colour);
+                {   DRAWROLL(whichunit, 8 + xx, 86 + yy, colour);
     }   }   }   }
 
 #ifndef SHOWEDGES
     if (papertapewhere[whichunit] < 4)
     {   for (x = 0; x < ROLLWIDTH; x += 2)
-        {   DRAWROLLPIXEL(whichunit, x, ((                         4 - papertapewhere[whichunit]    ) * 20) + 1, EMURGBPEN_BLACK);
+        {   DRAWROLL(whichunit, x, ((                               4 - (int) papertapewhere[whichunit]    ) * 20) + 1, EMURGBPEN_BLACK);
     }   }
     if (papertapewhere[whichunit] + 4 >= papertapelength[whichunit])
     {   for (x = 0; x < ROLLWIDTH; x += 2)
-        {   DRAWROLLPIXEL(whichunit, x, ((papertapelength[whichunit] - papertapewhere[whichunit] + 4) * 20) + 1, EMURGBPEN_BLACK);
+        {   DRAWROLL(whichunit, x, (((int) papertapelength[whichunit] - (int) papertapewhere[whichunit] + 4) * 20) + 1, EMURGBPEN_BLACK);
     }   }
 #endif
 
     redraw_roll(whichunit);
 }
-
-EXPORT int get_viewing_cluster(int whichdrive)
-{   int viewingtrack, viewingsector;
-
-    switch (machine)
-    {
-    case BINBUG:
-    return drive[whichdrive].viewstart / BINBUG_BLOCKSIZE; // zero-based
-    case TWIN:
-        viewingtrack  =  drive[whichdrive].viewstart / TWIN_TRACKSIZE;
-        viewingsector = (drive[whichdrive].viewstart % TWIN_TRACKSIZE) / TWIN_BLOCKSIZE;
-    return (viewingtrack == 0) ? (-1) : (((viewingtrack - 1) * 4) + (viewingsector / 8));
-    case CD2650:
-    return drive[whichdrive].viewstart / CD2650_BLOCKSIZE; // zero-based
-    default:
-        // assert(0);
-    return 0; // should never happen
-}   }
-
-EXPORT void get_disk_byte(int whichdrive, FLAG withoffset)
-{   outofrange = FALSE;
-
-    switch (machine)
-    {
-    case BINBUG:
-        diskbyte = (drive[whichdrive].track * BINBUG_TRACKSIZE) + ((drive[whichdrive].sector - 1) * BINBUG_BLOCKSIZE);
-        if
-        (   drive[whichdrive].sector == 0
-         || drive[whichdrive].sector >  BINBUG_SECTORS
-         || drive[whichdrive].track  >= BINBUG_TRACKS
-        )
-        {   outofrange = TRUE;
-        }
-    acase TWIN:
-        diskbyte = (drive[whichdrive].track *   TWIN_TRACKSIZE) + ( drive[whichdrive].sector      *   TWIN_BLOCKSIZE);
-        if
-        (   drive[whichdrive].sector >= TWIN_SECTORS
-         || drive[whichdrive].track  >= TWIN_TRACKS
-        )
-        {   outofrange = TRUE;
-        }
-    acase CD2650:
-        diskbyte = (drive[whichdrive].track * CD2650_TRACKSIZE) + ((drive[whichdrive].sector - 1) * CD2650_BLOCKSIZE);
-        if
-        (   drive[whichdrive].sector == 0
-         || drive[whichdrive].sector >  CD2650_SECTORS
-         || drive[whichdrive].track  >= CD2650_TRACKS
-        )
-        {   outofrange = TRUE;
-        }
-    adefault:
-        ; // assert(0);
-    }
-
-    if (withoffset)
-    {   diskbyte += drive[whichdrive].blockoffset;
-}   }
 
 EXPORT void set_cpl(int newcpl)
 {   // assert(newcpl <= 227);
@@ -3889,15 +3947,6 @@ EXPORT void set_cpl(int newcpl)
     acase 3: frac[0]                               =  cpl / 4;
                        frac[1] = frac[2] = frac[3] = (cpl / 4) + 1;
 }   }
-
-EXPORT void set_drive_mode(int newdrivemode)
-{   drive_mode = newdrivemode;
-
-    update_floppydrive(2, 0);
-    update_floppydrive(2, 1);
-    update_floppydrive(2, 2);
-    update_floppydrive(2, 3);
-}
 
 #ifdef WIN32
 EXPORT void handle_keydown(UINT code)
@@ -3969,8 +4018,8 @@ EXPORT void handle_keydown(UWORD code)
     }
 
 #ifdef AMIGA
-    if (SubWindowPtr[SUBWINDOW_HOSTKYBD])
-    {   SetGadgetAttrs(kybdgad[code & 0x7F], SubWindowPtr[SUBWINDOW_HOSTKYBD], NULL, GA_Selected, TRUE, TAG_DONE); // this autorefreshes
+    if (subwin[SUBWINDOW_HOSTKYBD].hwnd)
+    {   SetGadgetAttrs(gadgets[GID_FIRSTKYBDGAD + (code & 0x7F)], subwin[SUBWINDOW_HOSTKYBD].hwnd, NULL, GA_Selected, TRUE, TAG_DONE); // this autorefreshes
     }
 #endif
 
@@ -4024,7 +4073,7 @@ EXPORT void handle_keydown(UWORD code)
             {   debugger_enter();
                 return;
             } // implied else
-            thekey =  keyname[code].shifted[keymap];
+            thekey =  specialshift(keyname[code].shifted[keymap]);
         } elif (capslock || machine == TWIN || !lowercase || (machine == CD2650 && cd2650_biosver != CD2650_IPL))
         {   thekey =  keyname[code].capslock[keymap];
         } elif (machine == CD2650)
@@ -4127,8 +4176,8 @@ EXPORT void handle_keydown(UWORD code)
     }   }   }
 #endif
 
-    if (SubWindowPtr[SUBWINDOW_HOSTKYBD])
-    {   updatekeynames(SubWindowPtr[SUBWINDOW_HOSTKYBD]);
+    if (subwin[SUBWINDOW_HOSTKYBD].hwnd)
+    {   updatekeynames(subwin[SUBWINDOW_HOSTKYBD].hwnd);
     }
 
 #ifdef AMIGA
@@ -4353,13 +4402,13 @@ EXPORT void handle_keyup(UWORD code)
     }
 
 #ifdef AMIGA
-    if (SubWindowPtr[SUBWINDOW_HOSTKYBD])
-    {   SetGadgetAttrs(kybdgad[code & 0x7F], SubWindowPtr[SUBWINDOW_HOSTKYBD], NULL, GA_Selected, FALSE, TAG_DONE); // this autorefreshes
+    if (subwin[SUBWINDOW_HOSTKYBD].hwnd)
+    {   SetGadgetAttrs(gadgets[GID_FIRSTKYBDGAD + (code & 0x7F)], subwin[SUBWINDOW_HOSTKYBD].hwnd, NULL, GA_Selected, FALSE, TAG_DONE); // this autorefreshes
     }
 #endif
 
-    if (SubWindowPtr[SUBWINDOW_HOSTKYBD])
-    {   updatekeynames(SubWindowPtr[SUBWINDOW_HOSTKYBD]);
+    if (subwin[SUBWINDOW_HOSTKYBD].hwnd)
+    {   updatekeynames(subwin[SUBWINDOW_HOSTKYBD].hwnd);
 }   }
 
 #ifdef AMIGA
@@ -4396,7 +4445,7 @@ EXPORT void update_memory(FLAG force)
 
     update_spriteeditor(force);
 
-    if (!SubWindowPtr[SUBWINDOW_MEMORY])
+    if (!subwin[SUBWINDOW_MEMORY].hwnd)
     {   return;
     }
 
@@ -4408,7 +4457,7 @@ EXPORT void update_memory(FLAG force)
 
     oldregionstart = regionstart;
     regionlevel = SendMessage
-    (   GetDlgItem(SubWindowPtr[SUBWINDOW_MEMORY], IDC_MEMREGION),
+    (   GetDlgItem(subwin[SUBWINDOW_MEMORY].hwnd, IDC_MEMREGION),
         TBM_GETPOS,
         0,
         0
@@ -4419,10 +4468,10 @@ EXPORT void update_memory(FLAG force)
     {   force = TRUE;
 
         sprintf(tempstring, "%02X00..%02XFF", regionstart / MEMGADGETS, regionstart / MEMGADGETS);
-        DISCARD SetDlgItemText(SubWindowPtr[SUBWINDOW_MEMORY], IDL_REGIONDISPLAY, tempstring);
+        DISCARD SetDlgItemText(subwin[SUBWINDOW_MEMORY].hwnd, IDL_REGIONDISPLAY, tempstring);
         for (i = 0; i < MEMGADGETS / 16; i++)
         {   sprintf(tempstring, "$%03Xx:", (regionstart / 16) + i);
-            DISCARD SetDlgItemText(SubWindowPtr[SUBWINDOW_MEMORY], IDL_REGION0 + i, tempstring);
+            DISCARD SetDlgItemText(subwin[SUBWINDOW_MEMORY].hwnd, IDL_REGION0 + i, tempstring);
     }   }
 #endif
 #ifdef AMIGA
@@ -4430,17 +4479,17 @@ EXPORT void update_memory(FLAG force)
     {   force = TRUE;
         oldregionlevel = regionlevel;
         SetGadgetAttrs
-        (   gadgets[GID_ME_SL1], SubWindowPtr[SUBWINDOW_MEMORY], NULL,
+        (   gadgets[GID_ME_SL1], subwin[SUBWINDOW_MEMORY].hwnd, NULL,
             SLIDER_Level, regionlevel,
         TAG_DONE); // this autorefreshes
         regionstart = (int) (regionlevel * MEMGADGETS);
     }
     if ((int) regionlevel != oldregionlevel || force)
     {   sprintf((char*) gtempstring, "%04X..%04X", regionstart, regionstart + MEMGADGETS - 1);
-        SetGadgetAttrs(gadgets[GID_ME_ST1], SubWindowPtr[SUBWINDOW_MEMORY], NULL, STRINGA_TextVal, gtempstring, TAG_DONE); // this autorefreshes
+        SetGadgetAttrs(gadgets[GID_ME_ST1], subwin[SUBWINDOW_MEMORY].hwnd, NULL, STRINGA_TextVal, gtempstring, TAG_DONE); // this autorefreshes
         for (i = 0; i < MEMGADGETS / 16; i++)
         {   sprintf((char*) gtempstring, "$%03Xx:", (regionstart / 16) + i);
-            SetGadgetAttrs(gadgets[GID_FIRSTMEMROWGAD + i], SubWindowPtr[SUBWINDOW_MEMORY], NULL, STRINGA_TextVal, gtempstring, TAG_DONE); // this autorefreshes
+            SetGadgetAttrs(gadgets[GID_FIRSTMEMROWGAD + i], subwin[SUBWINDOW_MEMORY].hwnd, NULL, STRINGA_TextVal, gtempstring, TAG_DONE); // this autorefreshes
     }   }
     if (force)
     {   update_memory_system();
@@ -4562,7 +4611,7 @@ EXPORT void update_memory(FLAG force)
                         }
 #endif
                     }
-                    DRAWMEMMAPPIXEL(x, y, colour);
+                    DRAWMEMMAP(x, y, colour);
                     // perhaps red and purple should always be shown at full intensity?
             }   }
         acase 1: // memory map
@@ -4589,7 +4638,7 @@ EXPORT void update_memory(FLAG force)
                     } else
                     {   colour = memory[whichaddr] ? EMURGBPEN_GREEN : EMURGBPEN_DARKGREEN; // green (read/write)
                     }
-                    DRAWMEMMAPPIXEL(x, y, colour);
+                    DRAWMEMMAP(x, y, colour);
             }   }
         acase 2: // coverage report
             for (y = 0; y < MEMMAPHEIGHT; y++)
@@ -4610,39 +4659,10 @@ EXPORT void update_memory(FLAG force)
                     } else
                     {   colour = EMURGBPEN_BLACK;
                     }
-                    DRAWMEMMAPPIXEL(x, y, colour);
+                    DRAWMEMMAP(x, y, colour);
         }   }   }
 
-#ifdef WIN32
-        MemMapRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MEMORY], IDC_MEMMAP));
-        DISCARD StretchDIBits
-        (   MemMapRastPtr,
-            0,              // dest leftx
-            0,              // dest topy
-            MEMMAPWIDTH,    // dest width
-            MEMMAPHEIGHT,   // dest height
-            0,              // source leftx
-            0,              // source topy
-            MEMMAPWIDTH,    // source width
-            MEMMAPHEIGHT,   // source height
-            canvasdisplay[CANVAS_MEMMAP], // pointer to the bits
-            (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_MEMMAP], // pointer to BITMAPINFO structure
-            DIB_RGB_COLORS, // format of data
-            SRCCOPY         // blit mode
-        );
-        ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MEMORY], IDC_MEMMAP), MemMapRastPtr);
-#endif
-#ifdef AMIGA
-        DISCARD WritePixelArray8
-        (   SubWindowPtr[SUBWINDOW_MEMORY]->RPort,
-            gadgets[GID_ME_SP1]->LeftEdge,
-            gadgets[GID_ME_SP1]->TopEdge,
-            gadgets[GID_ME_SP1]->LeftEdge + MEMMAPWIDTH  - 1,
-            gadgets[GID_ME_SP1]->TopEdge  + MEMMAPHEIGHT - 1,
-            canvasdisplay[CANVAS_MEMMAP],
-            &wpa8canvasrastport[CANVAS_MEMMAP]
-        );
-#endif
+        wpa8(CANVAS_MEMMAP, 0, 0);
 }   }
 
 EXPORT void update_magnifier(void)
@@ -4690,12 +4710,12 @@ EXPORT void update_magnifier(void)
              && newguesty <  machines[machine].height
             )
             {   if (rotating)
-                {   DRAWMAGNIFIERPIXEL(x, y, screen[newguesty][machines[machine].width - 1 - newguestx]);
+                {   DRAWMAGNIFIER(x, y, screen[newguesty][machines[machine].width - 1 - newguestx]);
                 } else
-                {   DRAWMAGNIFIERPIXEL(x, y, screen[newguestx][                              newguesty]);
+                {   DRAWMAGNIFIER(x, y, screen[newguestx][                              newguesty]);
             }   }
             else
-            {   DRAWMAGNIFIERPIXEL(x, y, BORDERPEN);
+            {   DRAWMAGNIFIER(x, y, BORDERPEN);
             }
             if (finex == magscalex - 1)
             {   finex = 0;
@@ -4710,36 +4730,7 @@ EXPORT void update_magnifier(void)
         {   finey++;
     }   }
 
-#ifdef WIN32
-    MagnifierRastPtr = GetDC(MagnifierWindowPtr);
-    DISCARD StretchDIBits
-    (   MagnifierRastPtr,
-        0,                // dest leftx
-        0,                // dest topy
-        MAGNIFIERWIDTH,   // dest width
-        MAGNIFIERHEIGHT,  // dest height
-        0,                // source leftx
-        0,                // source topy
-        MAGNIFIERWIDTH,   // source width
-        MAGNIFIERHEIGHT,  // source height
-        canvasdisplay[CANVAS_MAGNIFIER], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_MAGNIFIER], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS,   // format of data
-        SRCCOPY           // blit mode
-    );
-    ReleaseDC(MagnifierWindowPtr, MagnifierRastPtr);
-#endif
-#ifdef AMIGA
-    DISCARD WritePixelArray8
-    (   MagnifierWindowPtr->RPort,
-        MagnifierWindowPtr->BorderLeft,
-        MagnifierWindowPtr->BorderTop,
-        MagnifierWindowPtr->BorderLeft + MAGNIFIERWIDTH  - 1,
-        MagnifierWindowPtr->BorderTop  + MAGNIFIERHEIGHT - 1,
-        canvasdisplay[CANVAS_MAGNIFIER],
-        &wpa8canvasrastport[CANVAS_MAGNIFIER]
-    );
-#endif
+    wpa8(CANVAS_MAGNIFIER, 0, 0);
 }
 
 EXPORT int parse_hexbyte(void)
@@ -4779,7 +4770,7 @@ EXPORT void update_sliders(void)
 #ifdef AMIGA
     sl_set(SUBWINDOW_PALETTE, IDC_RED, number);
 
-    SetGadgetAttrs(gadgets[IDC_REDDEC], SubWindowPtr[SUBWINDOW_PALETTE], NULL, INTEGER_Number, number, TAG_DONE); // this autorefreshes
+    SetGadgetAttrs(gadgets[IDC_REDDEC], subwin[SUBWINDOW_PALETTE].hwnd, NULL, INTEGER_Number, number, TAG_DONE); // this autorefreshes
 #endif
 
     sprintf((char*) gtempstring, "%02X", (unsigned int) number);
@@ -4797,7 +4788,7 @@ EXPORT void update_sliders(void)
 #ifdef AMIGA
     sl_set(SUBWINDOW_PALETTE, IDC_GREEN, number);
 
-    SetGadgetAttrs(gadgets[IDC_GREENDEC], SubWindowPtr[SUBWINDOW_PALETTE], NULL, INTEGER_Number, number, TAG_DONE); // this autorefreshes
+    SetGadgetAttrs(gadgets[IDC_GREENDEC], subwin[SUBWINDOW_PALETTE].hwnd, NULL, INTEGER_Number, number, TAG_DONE); // this autorefreshes
 #endif
 
     sprintf((char*) gtempstring, "%02X", (unsigned int) number);
@@ -4815,7 +4806,7 @@ EXPORT void update_sliders(void)
 #ifdef AMIGA
     sl_set(SUBWINDOW_PALETTE, IDC_BLUE, number);
 
-    SetGadgetAttrs(gadgets[IDC_BLUEDEC], SubWindowPtr[SUBWINDOW_PALETTE], NULL, INTEGER_Number, number, TAG_DONE); // this autorefreshes
+    SetGadgetAttrs(gadgets[IDC_BLUEDEC], subwin[SUBWINDOW_PALETTE].hwnd, NULL, INTEGER_Number, number, TAG_DONE); // this autorefreshes
 #endif
 
     sprintf((char*) gtempstring, "%02X", (unsigned int) number);
@@ -4852,3 +4843,603 @@ EXPORT void play_bell(int kind)
     }
     playsound(FALSE);
 }
+
+EXPORT void updatepadnames(void)
+{   FAST int localmouse,
+             localwhose[2];
+
+    // For anything assigned to both players we currently show player 1's key names and overlays
+    localwhose[0] = (whose[0]   == 2) ? 0 : whose[0];
+    localwhose[1] = (whose[1]   == 2) ? 0 : whose[1];
+    localmouse    = (whosemouse == 2) ? 0 : whosemouse;
+
+    switch (viewpadsas)
+    {
+    case 0: // guest
+    case 2: // overlays
+#ifdef WIN32
+        setpadtext(IDC_PADS_LT_AUP2, "");
+        setpadtext(IDC_PADS_LT_ADN2, "");
+        setpadtext(IDC_PADS_LT_ALT2, "");
+        setpadtext(IDC_PADS_LT_ART2, "");
+#endif
+
+        if (whose[0] == 3)
+        {   setpadtext(IDC_PADS_LT_DUP, "");
+            setpadtext(IDC_PADS_LT_DDN, "");
+            setpadtext(IDC_PADS_LT_DLT, "");
+            setpadtext(IDC_PADS_LT_DRT, "");
+#ifdef WIN32
+            setpadtext(IDC_PADS_LT_A,   "");
+            setpadtext(IDC_PADS_LT_B  , "");
+            setpadtext(IDC_PADS_LT_1  , "");
+            setpadtext(IDC_PADS_LT_2  , "");
+            setpadtext(IDC_PADS_LT_3  , "");
+            setpadtext(IDC_PADS_LT_4  , "");
+            setpadtext(IDC_PADS_LT_5  , "");
+            setpadtext(IDC_PADS_LT_6  , "");
+            setpadtext(IDC_PADS_LT_7  , "");
+            setpadtext(IDC_PADS_LT_8  , "");
+            setpadtext(IDC_PADS_LT_11 , "");
+            setpadtext(IDC_PADS_LT_12 , "");
+            setpadtext(IDC_PADS_LT_AUP, "");
+            setpadtext(IDC_PADS_LT_ADN, "");
+            setpadtext(IDC_PADS_LT_ALT, "");
+            setpadtext(IDC_PADS_LT_ART, "");
+#endif
+#ifdef AMIGA
+            setpadtext(IDC_PADS_LT_START  , "");
+            setpadtext(IDC_PADS_LT_REVERSE, "");
+            setpadtext(IDC_PADS_LT_FORWARD, "");
+            setpadtext(IDC_PADS_LT_RED    , "");
+            setpadtext(IDC_PADS_LT_BLUE   , "");
+            setpadtext(IDC_PADS_LT_GREEN  , "");
+            setpadtext(IDC_PADS_LT_YELLOW , "");
+#endif
+        } else
+        {
+#ifdef WIN32
+            setpadtext(IDC_PADS_LT_A  , machines[machine].consolekeyname[0]);
+            setpadtext(IDC_PADS_LT_B  , "Reset");
+            switch (button[localwhose[0]][4])
+            {
+            case  5: setpadtext(IDC_PADS_LT_5, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_LT_5, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_LT_5, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_LT_5, LLL(MSG_PAUSE   , "Pause"));
+            }
+            switch (button[localwhose[0]][5])
+            {
+            case  5: setpadtext(IDC_PADS_LT_6, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_LT_6, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_LT_6, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_LT_6, LLL(MSG_PAUSE   , "Pause"   ));
+            }
+            switch (button[localwhose[0]][6])
+            {
+            case  5: setpadtext(IDC_PADS_LT_7, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_LT_7, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_LT_7, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_LT_7, LLL(MSG_PAUSE   , "Pause"   ));
+            }
+            switch (button[localwhose[0]][7])
+            {
+            case  5: setpadtext(IDC_PADS_LT_8, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_LT_8, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_LT_8, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_LT_8, LLL(MSG_PAUSE   , "Pause"   ));
+            }
+#endif
+
+            if (viewpadsas == 0 || whichoverlay == -1)
+            {
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_1     , machines[machine].keynames[localwhose[0]][buttontranslate(0, 0)]);
+                setpadtext(IDC_PADS_LT_2     , machines[machine].keynames[localwhose[0]][buttontranslate(0, 1)]);
+                setpadtext(IDC_PADS_LT_3     , machines[machine].keynames[localwhose[0]][buttontranslate(0, 2)]);
+                setpadtext(IDC_PADS_LT_4     , machines[machine].keynames[localwhose[0]][buttontranslate(0, 3)]);
+                setpadtext(IDC_PADS_LT_11    , machines[machine].keynames[localwhose[0]][key1]);
+                setpadtext(IDC_PADS_LT_12    , machines[machine].keynames[localwhose[0]][key1]);
+#endif
+#ifdef AMIGA
+                setpadtext(IDC_PADS_LT_RED   , machines[machine].keynames[localwhose[0]][buttontranslate(0, 0)]);
+                setpadtext(IDC_PADS_LT_BLUE  , machines[machine].keynames[localwhose[0]][buttontranslate(0, 1)]);
+                setpadtext(IDC_PADS_LT_GREEN , machines[machine].keynames[localwhose[0]][buttontranslate(0, 2)]);
+                setpadtext(IDC_PADS_LT_YELLOW, machines[machine].keynames[localwhose[0]][buttontranslate(0, 3)]);
+#endif
+            } else
+            {
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_1     , overlays[whichoverlay][keytable[buttontranslate(0, 0)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_2     , overlays[whichoverlay][keytable[buttontranslate(0, 1)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_3     , overlays[whichoverlay][keytable[buttontranslate(0, 2)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_4     , overlays[whichoverlay][keytable[buttontranslate(0, 3)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_11    , overlays[whichoverlay][keytable[key1                 ].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_12    , overlays[whichoverlay][keytable[key1                 ].overlay[localwhose[0]]]);
+#endif
+#ifdef AMIGA
+                setpadtext(IDC_PADS_LT_RED   , overlays[whichoverlay][keytable[buttontranslate(0, 0)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_BLUE  , overlays[whichoverlay][keytable[buttontranslate(0, 1)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_GREEN , overlays[whichoverlay][keytable[buttontranslate(0, 2)].overlay[localwhose[0]]]);
+                setpadtext(IDC_PADS_LT_YELLOW, overlays[whichoverlay][keytable[buttontranslate(0, 3)].overlay[localwhose[0]]]);
+#endif
+            }
+
+#ifdef AMIGA
+            setpadtext(IDC_PADS_LT_START  , machines[machine].consolekeyname[0]);
+            setpadtext(IDC_PADS_LT_REVERSE, machines[machine].consolekeyname[1]);
+            setpadtext(IDC_PADS_LT_FORWARD, machines[machine].consolekeyname[2]);
+#endif
+
+            if (whichgame == -1 || known[whichgame].paddleup == -1)
+            {   setpadtext(IDC_PADS_LT_DUP, LLL(MSG_KEY_UP, "Up"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_AUP, LLL(MSG_KEY_UP, "Up"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_LT_DUP, machines[machine].keynames[localwhose[0]][known[whichgame].paddleup]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_AUP, machines[machine].keynames[localwhose[0]][known[whichgame].paddleup]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_LT_DUP, overlays[whichoverlay][keytable[known[whichgame].paddleup].overlay[localwhose[0]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_AUP, overlays[whichoverlay][keytable[known[whichgame].paddleup].overlay[localwhose[0]]]);
+#endif
+            }
+            if (whichgame == -1 || known[whichgame].paddledown == -1)
+            {   setpadtext(IDC_PADS_LT_DDN, LLL(MSG_KEY_DN, "Dn"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ADN, LLL(MSG_KEY_DN, "Dn"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_LT_DDN, machines[machine].keynames[localwhose[0]][known[whichgame].paddledown]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ADN, machines[machine].keynames[localwhose[0]][known[whichgame].paddledown]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_LT_DDN, overlays[whichoverlay][keytable[known[whichgame].paddledown].overlay[localwhose[0]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ADN, overlays[whichoverlay][keytable[known[whichgame].paddledown].overlay[localwhose[0]]]);
+#endif
+            }
+            if (whichgame == -1 || known[whichgame].paddleleft == -1)
+            {   setpadtext(IDC_PADS_LT_DLT, LLL(MSG_KEY_LT, "Lt"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ALT, LLL(MSG_KEY_LT, "Lt"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_LT_DLT, machines[machine].keynames[localwhose[0]][known[whichgame].paddleleft]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ALT, machines[machine].keynames[localwhose[0]][known[whichgame].paddleleft]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_LT_DLT, overlays[whichoverlay][keytable[known[whichgame].paddleleft].overlay[localwhose[0]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ALT, overlays[whichoverlay][keytable[known[whichgame].paddleleft].overlay[localwhose[0]]]);
+#endif
+            }
+            if (whichgame == -1 || known[whichgame].paddleright == -1)
+            {   setpadtext(IDC_PADS_LT_DRT, LLL(MSG_KEY_RT, "Rt"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ART, LLL(MSG_KEY_RT, "Rt"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_LT_DRT, machines[machine].keynames[localwhose[0]][known[whichgame].paddleright]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ART, machines[machine].keynames[localwhose[0]][known[whichgame].paddleright]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_LT_DRT, overlays[whichoverlay][keytable[known[whichgame].paddleright].overlay[localwhose[0]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_LT_ART, overlays[whichoverlay][keytable[known[whichgame].paddleright].overlay[localwhose[0]]]);
+#endif
+        }   }
+
+        if (whosemouse == 3)
+        {   setpadtext(IDC_PADS_LTMOUSE, "");
+            setpadtext(IDC_PADS_MDMOUSE, "");
+            setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT, "Right"));
+        } elif (viewpadsas == 0) // guest
+        {   setpadtext(IDC_PADS_LTMOUSE, machines[machine].keynames[localmouse][key1]);
+            setpadtext(IDC_PADS_MDMOUSE, machines[machine].keynames[localmouse][key2]);
+            if (guestrmb)
+            {   setpadtext(IDC_PADS_RTMOUSE, machines[machine].keynames[localmouse][key3]);
+            } else
+            {   setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT, "Right"));
+        }   }
+        else
+        {   // assert(viewpadsas == 2); // overlays
+            setpadtext(IDC_PADS_LTMOUSE, overlays[whichoverlay][keytable[key1].overlay[localmouse]]);
+            setpadtext(IDC_PADS_MDMOUSE, overlays[whichoverlay][keytable[key2].overlay[localmouse]]);
+            if (guestrmb)
+            {   setpadtext(IDC_PADS_RTMOUSE, overlays[whichoverlay][keytable[key3].overlay[localmouse]]);
+            } else
+            {   setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT, "Right"));
+        }   }
+
+#ifdef WIN32
+        if (joys < 2)
+        {   return;
+        }
+#endif
+
+#ifdef WIN32
+        setpadtext(IDC_PADS_RT_AUP2, "");
+        setpadtext(IDC_PADS_RT_ADN2, "");
+        setpadtext(IDC_PADS_RT_ALT2, "");
+        setpadtext(IDC_PADS_RT_ART2, "");
+#endif
+
+        if (whose[1] == 3)
+        {   setpadtext(IDC_PADS_RT_DUP, "");
+            setpadtext(IDC_PADS_RT_DDN, "");
+            setpadtext(IDC_PADS_RT_DLT, "");
+            setpadtext(IDC_PADS_RT_DRT, "");
+#ifdef WIN32
+            setpadtext(IDC_PADS_RT_A,   "");
+            setpadtext(IDC_PADS_RT_B  , "");
+            setpadtext(IDC_PADS_RT_1  , "");
+            setpadtext(IDC_PADS_RT_2  , "");
+            setpadtext(IDC_PADS_RT_3  , "");
+            setpadtext(IDC_PADS_RT_4  , "");
+            setpadtext(IDC_PADS_RT_5  , "");
+            setpadtext(IDC_PADS_RT_6  , "");
+            setpadtext(IDC_PADS_RT_7  , "");
+            setpadtext(IDC_PADS_RT_8  , "");
+            setpadtext(IDC_PADS_RT_11 , "");
+            setpadtext(IDC_PADS_RT_12 , "");
+            setpadtext(IDC_PADS_RT_AUP, "");
+            setpadtext(IDC_PADS_RT_ADN, "");
+            setpadtext(IDC_PADS_RT_ALT, "");
+            setpadtext(IDC_PADS_RT_ART, "");
+#endif
+#ifdef AMIGA
+            setpadtext(IDC_PADS_RT_START  , "");
+            setpadtext(IDC_PADS_RT_REVERSE, "");
+            setpadtext(IDC_PADS_RT_FORWARD, "");
+            setpadtext(IDC_PADS_LT_RED    , "");
+            setpadtext(IDC_PADS_LT_BLUE   , "");
+            setpadtext(IDC_PADS_LT_GREEN  , "");
+            setpadtext(IDC_PADS_LT_YELLOW , "");
+#endif
+        } else
+        {
+#ifdef WIN32
+            setpadtext(IDC_PADS_RT_A  , machines[machine].consolekeyname[0]);
+            setpadtext(IDC_PADS_RT_B  , "Reset");
+            switch (button[localwhose[1]][4])
+            {
+            case  5: setpadtext(IDC_PADS_RT_5, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_RT_5, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_RT_5, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_RT_5, LLL(MSG_PAUSE   , "Pause"));
+            }
+            switch (button[localwhose[1]][5])
+            {
+            case  5: setpadtext(IDC_PADS_RT_6, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_RT_6, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_RT_6, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_RT_6, LLL(MSG_PAUSE   , "Pause"   ));
+            }
+            switch (button[localwhose[1]][6])
+            {
+            case  5: setpadtext(IDC_PADS_RT_7, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_RT_7, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_RT_7, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_RT_7, LLL(MSG_PAUSE   , "Pause"   ));
+            }
+            switch (button[localwhose[1]][7])
+            {
+            case  5: setpadtext(IDC_PADS_RT_8, machines[machine].consolekeyname[1]); // joy A
+            acase 6: setpadtext(IDC_PADS_RT_8, machines[machine].consolekeyname[2]); // joy B
+            acase 7: setpadtext(IDC_PADS_RT_8, LLL(MSG_AUTOFIRE, "Autofire"));
+            acase 8: setpadtext(IDC_PADS_RT_8, LLL(MSG_PAUSE   , "Pause"   ));
+            }
+#endif
+
+            if (viewpadsas == 0 || whichoverlay == -1)
+            {
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_1     , machines[machine].keynames[localwhose[1]][buttontranslate(1, 0)]);
+                setpadtext(IDC_PADS_RT_2     , machines[machine].keynames[localwhose[1]][buttontranslate(1, 1)]);
+                setpadtext(IDC_PADS_RT_3     , machines[machine].keynames[localwhose[1]][buttontranslate(1, 2)]);
+                setpadtext(IDC_PADS_RT_4     , machines[machine].keynames[localwhose[1]][buttontranslate(1, 3)]);
+                setpadtext(IDC_PADS_RT_11    , machines[machine].keynames[localwhose[1]][key1]);
+                setpadtext(IDC_PADS_RT_12    , machines[machine].keynames[localwhose[1]][key1]);
+#endif
+#ifdef AMIGA
+                setpadtext(IDC_PADS_RT_RED   , machines[machine].keynames[localwhose[1]][buttontranslate(1, 0)]);
+                setpadtext(IDC_PADS_RT_BLUE  , machines[machine].keynames[localwhose[1]][buttontranslate(1, 1)]);
+                setpadtext(IDC_PADS_RT_GREEN , machines[machine].keynames[localwhose[1]][buttontranslate(1, 2)]);
+                setpadtext(IDC_PADS_RT_YELLOW, machines[machine].keynames[localwhose[1]][buttontranslate(1, 3)]);
+#endif
+
+            } else
+            {
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_1     , overlays[whichoverlay][keytable[buttontranslate(1, 0)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_2     , overlays[whichoverlay][keytable[buttontranslate(1, 1)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_3     , overlays[whichoverlay][keytable[buttontranslate(1, 2)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_4     , overlays[whichoverlay][keytable[buttontranslate(1, 3)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_11    , overlays[whichoverlay][keytable[key1                 ].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_12    , overlays[whichoverlay][keytable[key1                 ].overlay[localwhose[1]]]);
+#endif
+#ifdef AMIGA
+                setpadtext(IDC_PADS_RT_RED   , overlays[whichoverlay][keytable[buttontranslate(1, 0)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_BLUE  , overlays[whichoverlay][keytable[buttontranslate(1, 1)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_GREEN , overlays[whichoverlay][keytable[buttontranslate(1, 2)].overlay[localwhose[1]]]);
+                setpadtext(IDC_PADS_RT_YELLOW, overlays[whichoverlay][keytable[buttontranslate(1, 3)].overlay[localwhose[1]]]);
+#endif
+            }
+
+#ifdef AMIGA
+            setpadtext(IDC_PADS_RT_START  , machines[machine].consolekeyname[0]);
+            setpadtext(IDC_PADS_RT_REVERSE, machines[machine].consolekeyname[1]);
+            setpadtext(IDC_PADS_RT_FORWARD, machines[machine].consolekeyname[2]);
+#endif
+
+            if (whichgame == -1 || known[whichgame].paddleup == -1)
+            {   setpadtext(IDC_PADS_RT_DUP, LLL(MSG_KEY_UP, "Up"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_AUP, LLL(MSG_KEY_UP, "Up"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_RT_DUP, machines[machine].keynames[localwhose[1]][known[whichgame].paddleup]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_AUP, machines[machine].keynames[localwhose[1]][known[whichgame].paddleup]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_RT_DUP, overlays[whichoverlay][keytable[known[whichgame].paddleup].overlay[localwhose[1]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_AUP, overlays[whichoverlay][keytable[known[whichgame].paddleup].overlay[localwhose[1]]]);
+#endif
+            }
+            if (whichgame == -1 || known[whichgame].paddledown == -1)
+            {   setpadtext(IDC_PADS_RT_DDN, LLL(MSG_KEY_DN, "Dn"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ADN, LLL(MSG_KEY_DN, "Dn"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_RT_DDN, machines[machine].keynames[localwhose[1]][known[whichgame].paddledown]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ADN, machines[machine].keynames[localwhose[1]][known[whichgame].paddledown]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_RT_DDN, overlays[whichoverlay][keytable[known[whichgame].paddledown].overlay[localwhose[1]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ADN, overlays[whichoverlay][keytable[known[whichgame].paddledown].overlay[localwhose[1]]]);
+#endif
+            }
+            if (whichgame == -1 || known[whichgame].paddleleft == -1)
+            {   setpadtext(IDC_PADS_RT_DLT, LLL(MSG_KEY_LT, "Lt"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ALT, LLL(MSG_KEY_LT, "Lt"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_RT_DLT, machines[machine].keynames[localwhose[1]][known[whichgame].paddleleft]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ALT, machines[machine].keynames[localwhose[1]][known[whichgame].paddleleft]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_RT_DLT, overlays[whichoverlay][keytable[known[whichgame].paddleleft].overlay[localwhose[1]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ALT, overlays[whichoverlay][keytable[known[whichgame].paddleleft].overlay[localwhose[1]]]);
+#endif
+            }
+            if (whichgame == -1 || known[whichgame].paddleright == -1)
+            {   setpadtext(IDC_PADS_RT_DRT, LLL(MSG_KEY_RT, "Rt"));
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ART, LLL(MSG_KEY_RT, "Rt"));
+#endif
+            } elif (viewpadsas == 0) // guest
+            {   setpadtext(IDC_PADS_RT_DRT, machines[machine].keynames[localwhose[1]][known[whichgame].paddleright]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ART, machines[machine].keynames[localwhose[1]][known[whichgame].paddleright]);
+#endif
+            } else
+            {   // assert(viewpadsas == 2);
+                setpadtext(IDC_PADS_RT_DRT, overlays[whichoverlay][keytable[known[whichgame].paddleright].overlay[localwhose[1]]]);
+#ifdef WIN32
+                setpadtext(IDC_PADS_RT_ART, overlays[whichoverlay][keytable[known[whichgame].paddleright].overlay[localwhose[1]]]);
+#endif
+        }   }
+    acase 1: // host
+        if (whosemouse == 3)
+        {   setpadtext(IDC_PADS_LTMOUSE, "");
+            setpadtext(IDC_PADS_MDMOUSE, "");
+            setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT , "Right"));
+        } else
+        {   setpadtext(IDC_PADS_LTMOUSE, LLL(MSG_LEFT  , "Left"  ));
+            setpadtext(IDC_PADS_MDMOUSE, LLL(MSG_MIDDLE, "Middle"));
+            setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT , "Right" ));
+        }
+
+        if (whose[0] == 3)
+        {   setpadtext(IDC_PADS_LT_DUP,  "");
+            setpadtext(IDC_PADS_LT_DDN,  "");
+            setpadtext(IDC_PADS_LT_DLT,  "");
+            setpadtext(IDC_PADS_LT_DRT,  "");
+#ifdef WIN32
+            setpadtext(IDC_PADS_LT_A,    "");
+            setpadtext(IDC_PADS_LT_B,    "");
+            setpadtext(IDC_PADS_LT_1,    "");
+            setpadtext(IDC_PADS_LT_2,    "");
+            setpadtext(IDC_PADS_LT_3,    "");
+            setpadtext(IDC_PADS_LT_4,    "");
+            setpadtext(IDC_PADS_LT_5,    "");
+            setpadtext(IDC_PADS_LT_6,    "");
+            setpadtext(IDC_PADS_LT_7,    "");
+            setpadtext(IDC_PADS_LT_8,    "");
+            setpadtext(IDC_PADS_LT_11,   "");
+            setpadtext(IDC_PADS_LT_12,   "");
+            setpadtext(IDC_PADS_LT_AUP,  "");
+            setpadtext(IDC_PADS_LT_ADN,  "");
+            setpadtext(IDC_PADS_LT_ALT,  "");
+            setpadtext(IDC_PADS_LT_ART,  "");
+            setpadtext(IDC_PADS_LT_AUP2, "");
+            setpadtext(IDC_PADS_LT_ADN2, "");
+            setpadtext(IDC_PADS_LT_ALT2, "");
+            setpadtext(IDC_PADS_LT_ART2, "");
+#endif
+#ifdef AMIGA
+            setpadtext(IDC_PADS_LT_START  , "");
+            setpadtext(IDC_PADS_LT_REVERSE, "");
+            setpadtext(IDC_PADS_LT_FORWARD, "");
+            setpadtext(IDC_PADS_LT_RED    , "");
+            setpadtext(IDC_PADS_LT_BLUE   , "");
+            setpadtext(IDC_PADS_LT_GREEN  , "");
+            setpadtext(IDC_PADS_LT_YELLOW , "");
+#endif
+        } else
+        {   setpadtext(IDC_PADS_LT_DUP,   LLL(MSG_KEY_UP, "Up"    ));
+            setpadtext(IDC_PADS_LT_DDN,   LLL(MSG_KEY_DN, "Dn"    ));
+            setpadtext(IDC_PADS_LT_DLT,   LLL(MSG_KEY_LT, "Lt"    ));
+            setpadtext(IDC_PADS_LT_DRT,   LLL(MSG_KEY_RT, "Rt"    ));
+#ifdef WIN32
+            setpadtext(IDC_PADS_LT_A,     LLL(MSG_START2, "Start" ));
+            setpadtext(IDC_PADS_LT_B,     LLL(MSG_SELECT, "SELECT")); // would be better in mixed case in this instance
+            setpadtext(IDC_PADS_LT_1,     "1");
+            setpadtext(IDC_PADS_LT_2,     "2");
+            setpadtext(IDC_PADS_LT_3,     "3");
+            setpadtext(IDC_PADS_LT_4,     "4");
+            setpadtext(IDC_PADS_LT_5,     "5");
+            setpadtext(IDC_PADS_LT_6,     "6");
+            setpadtext(IDC_PADS_LT_7,     "7");
+            setpadtext(IDC_PADS_LT_8,     "8");
+            setpadtext(IDC_PADS_LT_11,    "11");
+            setpadtext(IDC_PADS_LT_12,    "12");
+            setpadtext(IDC_PADS_LT_AUP,   LLL(MSG_KEY_UP, "Up"    ));
+            setpadtext(IDC_PADS_LT_ADN,   LLL(MSG_KEY_DN, "Dn"    ));
+            setpadtext(IDC_PADS_LT_ALT,   LLL(MSG_KEY_LT, "Lt"    ));
+            setpadtext(IDC_PADS_LT_ART,   LLL(MSG_KEY_RT, "Rt"    ));
+            setpadtext(IDC_PADS_LT_AUP2,  LLL(MSG_KEY_UP, "Up"    ));
+            setpadtext(IDC_PADS_LT_ADN2,  LLL(MSG_KEY_DN, "Dn"    ));
+            setpadtext(IDC_PADS_LT_ALT2,  LLL(MSG_KEY_LT, "Lt"    ));
+            setpadtext(IDC_PADS_LT_ART2,  LLL(MSG_KEY_RT, "Rt"    ));
+#endif
+#ifdef AMIGA
+            setpadtext(IDC_PADS_LT_START, LLL(MSG_START2, "Start" ));
+            if (viewpadsas2 == 0) // CD³²
+            {   setpadtext(IDC_PADS_LT_REVERSE, LLL(MSG_REVERSE       , "Reverse"));
+                setpadtext(IDC_PADS_LT_FORWARD, LLL(MSG_FORWARD       , "Forward"));
+                setpadtext(IDC_PADS_LT_RED    , LLL(MSG_LABEL_RED     , "Red"    ));
+                setpadtext(IDC_PADS_LT_BLUE   , LLL(MSG_LABEL_BLUE    , "Blue"   ));
+                setpadtext(IDC_PADS_LT_GREEN  , LLL(MSG_LABEL_GREEN   , "Green"  ));
+                setpadtext(IDC_PADS_LT_YELLOW , LLL(MSG_COLOUR2_YELLOW, "Yellow" ));
+            } else // Megadrive
+            {   setpadtext(IDC_PADS_LT_REVERSE,                         "Y"       );
+                setpadtext(IDC_PADS_LT_FORWARD,                         "Z"       );
+                setpadtext(IDC_PADS_LT_RED    ,                         "A"       );
+                setpadtext(IDC_PADS_LT_BLUE   ,                         "B"       );
+                setpadtext(IDC_PADS_LT_GREEN  ,                         "C"       );
+                setpadtext(IDC_PADS_LT_YELLOW ,                         "X"       );
+            }
+#endif
+        }
+
+#ifdef WIN32
+        if (joys < 2)
+        {   return;
+        }
+#endif
+
+        if (whose[1] == 3)
+        {   setpadtext(IDC_PADS_RT_DUP,  "");
+            setpadtext(IDC_PADS_RT_DDN,  "");
+            setpadtext(IDC_PADS_RT_DLT,  "");
+            setpadtext(IDC_PADS_RT_DRT,  "");
+#ifdef WIN32
+            setpadtext(IDC_PADS_RT_A,    "");
+            setpadtext(IDC_PADS_RT_B,    "");
+            setpadtext(IDC_PADS_RT_1,    "");
+            setpadtext(IDC_PADS_RT_2,    "");
+            setpadtext(IDC_PADS_RT_3,    "");
+            setpadtext(IDC_PADS_RT_4,    "");
+            setpadtext(IDC_PADS_RT_5,    "");
+            setpadtext(IDC_PADS_RT_6,    "");
+            setpadtext(IDC_PADS_RT_7,    "");
+            setpadtext(IDC_PADS_RT_8,    "");
+            setpadtext(IDC_PADS_RT_11,   "");
+            setpadtext(IDC_PADS_RT_12,   "");
+            setpadtext(IDC_PADS_RT_AUP,  "");
+            setpadtext(IDC_PADS_RT_ADN,  "");
+            setpadtext(IDC_PADS_RT_ALT,  "");
+            setpadtext(IDC_PADS_RT_ART,  "");
+            setpadtext(IDC_PADS_RT_AUP2, "");
+            setpadtext(IDC_PADS_RT_ADN2, "");
+            setpadtext(IDC_PADS_RT_ALT2, "");
+            setpadtext(IDC_PADS_RT_ART2, "");
+#endif
+#ifdef AMIGA
+            setpadtext(IDC_PADS_RT_START  , "");
+            setpadtext(IDC_PADS_RT_REVERSE, "");
+            setpadtext(IDC_PADS_RT_FORWARD, "");
+            setpadtext(IDC_PADS_RT_RED    , "");
+            setpadtext(IDC_PADS_RT_BLUE   , "");
+            setpadtext(IDC_PADS_RT_GREEN  , "");
+            setpadtext(IDC_PADS_RT_YELLOW , "");
+#endif
+        } else
+        {   setpadtext(IDC_PADS_RT_DUP,   LLL(MSG_KEY_UP, "Up"    ));
+            setpadtext(IDC_PADS_RT_DDN,   LLL(MSG_KEY_DN, "Dn"    ));
+            setpadtext(IDC_PADS_RT_DLT,   LLL(MSG_KEY_LT, "Lt"    ));
+            setpadtext(IDC_PADS_RT_DRT,   LLL(MSG_KEY_RT, "Rt"    ));
+#ifdef WIN32
+            setpadtext(IDC_PADS_RT_A,     LLL(MSG_START2, "Start" ));
+            setpadtext(IDC_PADS_RT_B,     LLL(MSG_SELECT, "SELECT")); // would be better in mixed case in this instance
+            setpadtext(IDC_PADS_RT_1,     "1");
+            setpadtext(IDC_PADS_RT_2,     "2");
+            setpadtext(IDC_PADS_RT_3,     "3");
+            setpadtext(IDC_PADS_RT_4,     "4");
+            setpadtext(IDC_PADS_RT_5,     "5");
+            setpadtext(IDC_PADS_RT_6,     "6");
+            setpadtext(IDC_PADS_RT_7,     "7");
+            setpadtext(IDC_PADS_RT_8,     "8");
+            setpadtext(IDC_PADS_RT_11,    "11");
+            setpadtext(IDC_PADS_RT_12,    "12");
+            setpadtext(IDC_PADS_RT_AUP,   LLL(MSG_KEY_UP, "Up"    ));
+            setpadtext(IDC_PADS_RT_ADN,   LLL(MSG_KEY_DN, "Dn"    ));
+            setpadtext(IDC_PADS_RT_ALT,   LLL(MSG_KEY_LT, "Lt"    ));
+            setpadtext(IDC_PADS_RT_ART,   LLL(MSG_KEY_RT, "Rt"    ));
+            setpadtext(IDC_PADS_RT_AUP2,  LLL(MSG_KEY_UP, "Up"    ));
+            setpadtext(IDC_PADS_RT_ADN2,  LLL(MSG_KEY_DN, "Dn"    ));
+            setpadtext(IDC_PADS_RT_ALT2,  LLL(MSG_KEY_LT, "Lt"    ));
+            setpadtext(IDC_PADS_RT_ART2,  LLL(MSG_KEY_RT, "Rt"    ));
+#endif
+#ifdef AMIGA
+            setpadtext(IDC_PADS_RT_START, LLL(MSG_START2, "Start" ));
+            if (viewpadsas2 == 0) // CD³²
+            {   setpadtext(IDC_PADS_RT_REVERSE, LLL(MSG_REVERSE       , "Reverse"));
+                setpadtext(IDC_PADS_RT_FORWARD, LLL(MSG_FORWARD       , "Forward"));
+                setpadtext(IDC_PADS_RT_RED    , LLL(MSG_LABEL_RED     , "Red"    ));
+                setpadtext(IDC_PADS_RT_BLUE   , LLL(MSG_LABEL_BLUE    , "Blue"   ));
+                setpadtext(IDC_PADS_RT_GREEN  , LLL(MSG_LABEL_GREEN   , "Green"  ));
+                setpadtext(IDC_PADS_RT_YELLOW , LLL(MSG_COLOUR2_YELLOW, "Yellow" ));
+            } else // Megadrive
+            {   setpadtext(IDC_PADS_RT_REVERSE,                         "Y"       );
+                setpadtext(IDC_PADS_RT_FORWARD,                         "Z"       );
+                setpadtext(IDC_PADS_RT_RED    ,                         "A"       );
+                setpadtext(IDC_PADS_RT_BLUE   ,                         "B"       );
+                setpadtext(IDC_PADS_RT_GREEN  ,                         "C"       );
+                setpadtext(IDC_PADS_RT_YELLOW ,                         "X"       );
+            }
+#endif
+}   }   }
+
+MODULE int buttontranslate(int player, int which)
+{   switch (button[swapped ? (1 - player) : player][which])
+    {
+    acase 2: return key2;
+    acase 3: return key3;
+    acase 4: return key4;
+    adefault: // eg. 1
+        return key1;
+}   }

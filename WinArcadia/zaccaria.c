@@ -168,9 +168,7 @@ IMPORT UBYTE                cc,
                             circle,
                             coinops_colltable[3][PVI_RASTLINES][PVI_XSIZE],
                             memory[32768],
-                            OutputBuffer[18],
-                            sx[2],
-                            sy[2];
+                            OutputBuffer[18];
 IMPORT ASCREEN              screen[BOXWIDTH][BOXHEIGHT];
 IMPORT UWORD                console[4],
                             pc,
@@ -179,7 +177,7 @@ IMPORT UWORD                console[4],
                             sp;
 IMPORT ULONG                analog,
                             collisions,
-                            jff[2],
+                            jf[2],
                             swapped;
 IMPORT int                  ambient,
                             ax[2],
@@ -230,15 +228,10 @@ IMPORT UBYTE*               IOBuffer;
 IMPORT FILE*                MacroHandle;
 IMPORT MEMFLAG              memflags[ALLTOKENS];
 IMPORT struct HostMachineStruct hostmachines[MACHINES];
-IMPORT struct IOPortStruct  ioport[258];
-IMPORT struct MachineStruct machines[MACHINES];
-IMPORT struct NoteStruct    notes[NOTES + 1];
-#ifdef AMIGA
-    IMPORT struct Window*   SubWindowPtr[SUBWINDOWS];
-#endif
-#ifdef WIN32
-    IMPORT HWND             SubWindowPtr[SUBWINDOWS];
-#endif
+IMPORT struct IOPortStruct      ioport[258];
+IMPORT struct MachineStruct     machines[MACHINES];
+IMPORT struct NoteStruct        notes[NOTES + 1];
+IMPORT struct SubWindowStruct   subwin[SUBWINDOWS];
 
 // MODULE VARIABLES-------------------------------------------------------
 
@@ -315,6 +308,9 @@ EXPORT void astrowars_setmemmap(void)
     machines[machine].pvis = 1;
     pvibase = 0x1500;
     pvi_memmap();
+
+    machines[machine].firstdatacomment = FIRSTZACCARIADATACOMMENT;
+    machines[machine].lastdatacomment  = LASTASTROWARSDATACOMMENT;
 
 #ifdef WIN32
     hostmachines[machine].controls = IDD_CONTROLS_ASTROWARS;
@@ -408,6 +404,9 @@ EXPORT void galaxia_setmemmap(void)
     pvi_memmap();
     pvibase = 0x1500;
 
+    machines[machine].firstdatacomment = FIRSTZACCARIADATACOMMENT;
+    machines[machine].lastdatacomment  = LASTZACCARIADATACOMMENT;
+
 #ifdef WIN32
     hostmachines[machine].controls = IDD_CONTROLS_GALAXIA;
     hostmachines[machine].monitor_xvi = IDD_MONITOR_3PVI;
@@ -495,6 +494,9 @@ EXPORT void lb_setmemmap(void)
             memory[0x4000 + i] = lb_game[0x2800 + i];  // $2800..$3BFF -> $4000..$43FF (5K)
             memory[0x6000 + i] = lb_game[0x3C00 + i];  // $3C00..$4FFF -> $6000..$63FF (5K)
     }   }
+
+    machines[machine].firstdatacomment = FIRSTZACCARIADATACOMMENT;
+    machines[machine].lastdatacomment  = LASTZACCARIADATACOMMENT;
 
 #ifdef WIN32
     hostmachines[machine].controls = IDD_CONTROLS_LASERBATTLE;
@@ -659,12 +661,12 @@ EXPORT void galaxia_drawscreen(void)
     if (galaxia_scrolly < 0)
     {   for (b = 240 + galaxia_scrolly; b < 240; b++)
         {   for (a = 4*8; a < 14*8; a++)
-            {   changepixel(a, b, BLACK);
+            {   changebgpixel(a, b, BLACK);
     }   }   }
     elif (galaxia_scrolly > 0)
     {   for (b = 0; b < galaxia_scrolly; b++)
         {   for (a = 4*8; a < 14*8; a++)
-            {   changepixel(a, b, BLACK);
+            {   changebgpixel(a, b, BLACK);
     }   }   }
 
     for (b = 2; b < 32; b++) // Y from machine's point of view
@@ -1240,27 +1242,27 @@ EXPORT void zaccaria_emuinput(void)
         }   }
 
         if (coinop_joy1left == coinop_joy1right)
-        {   ax[0] = sx[0] = 128;
+        {   ax[0] = 128;
         } elif (coinop_joy1right)
-        {   ax[0] = sx[0] = 255;
+        {   ax[0] = 255;
         } elif (coinop_joy1left)
-        {   ax[0] = sx[0] =   0;
+        {   ax[0] =   0;
         }
         if (coinop_joy1up == coinop_joy1down)
-        {   ay[0] = sy[0] = 128;
+        {   ay[0] = 128;
         } elif (coinop_joy1down)
-        {   ay[0] = sy[0] = 255;
+        {   ay[0] = 255;
         } elif (coinop_joy1up)
-        {   ay[0] = sy[0] =   0;
+        {   ay[0] =   0;
         }
         if (coinop_joy2left == coinop_joy2right)
-        {   ax[1] = sx[1] = 128;
+        {   ax[1] = 128;
         } elif (coinop_joy2right)
-        {   ax[1] = sx[1] = 255;
+        {   ax[1] = 255;
         } elif (coinop_joy2left)
-        {   ax[1] = sx[1] =   0;
+        {   ax[1] =   0;
         }
-        ay[1] = sy[1] = 128;
+        ay[1] = 128;
     } else
     {   old_coina        = coinop_coina;
         old_coinb        = coinop_coinb;
@@ -1288,7 +1290,7 @@ EXPORT void zaccaria_emuinput(void)
             coinop_playerinput(1, 1);
         }
 
-        if (KeyDown(console[0]) || (jff[0] & JOYSTART) || (jff[1] & JOYSTART) || console_start)
+        if (KeyDown(console[0]) || (jf[0] & JOYSTART) || (jf[1] & JOYSTART) || console_start)
         {   if (!stale[0])
             {   coinop_1p |= 1; // 1UP
             }
@@ -1297,7 +1299,7 @@ EXPORT void zaccaria_emuinput(void)
         {   stale[0] = 0;
         }
 
-        if (KeyDown(console[1]) || (jff[0] & JOYA    ) || (jff[1] & JOYA    ) || console_a    )
+        if (KeyDown(console[1]) || (jf[0] & JOYA    ) || (jf[1] & JOYA    ) || console_a    )
         {   if (!stale[1])
             {   coinop_2p |= 1; // 2UP
             }
@@ -1306,7 +1308,7 @@ EXPORT void zaccaria_emuinput(void)
         {   stale[1] = 0;
         }
 
-        if (KeyDown(console[2]) || (jff[0] & JOYB    ) || (jff[1] & JOYB    ) || console_b    )
+        if (KeyDown(console[2]) || (jf[0] & JOYB    ) || (jf[1] & JOYB    ) || console_b    )
         {   if (!stale[2])
             {   coinop_coina |= 1; // generous coin slot A (1C, 2C, 3C or 5C)
                 if (ambient && !(old_coina & 1))
@@ -1711,7 +1713,7 @@ MODULE void init_cvs_stars(void)
 EXPORT void zaccaria_ghostdips(void)
 {   if
     (   machine != ZACCARIA
-     || !SubWindowPtr[SUBWINDOW_DIPS]
+     || !subwin[SUBWINDOW_DIPS].hwnd
     )
     {   return;
     }
@@ -1777,7 +1779,7 @@ EXPORT void zaccaria_updatedips(void)
 
     if
     (   machine != ZACCARIA
-     || !SubWindowPtr[SUBWINDOW_DIPS]
+     || !subwin[SUBWINDOW_DIPS].hwnd
     )
     {   return;
     }

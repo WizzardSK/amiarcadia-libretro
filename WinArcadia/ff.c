@@ -15,29 +15,38 @@
 // #define FFVERBOSE
 // whether you want diagnostic messages re. the force feedback subsystem
 
+#define AUTOACTIVATEPADS
+// whether manipulation of unassigned host gamepads by user should
+// automagically assign the pad to a suitable guest player
+
 // EXPORTED VARIABLES-----------------------------------------------------
 
 EXPORT struct IDirectInput*        lpdi         = NULL;
 EXPORT struct IDirectInputDevice2* ffjoy2[2]    = { NULL,  NULL };
 EXPORT TEXT                        joyname[2][MAX_PATH];
 EXPORT int                         rumbling[2]  = {    0,     0 };
-
+EXPORT ULONG                       softpad[2]   = {    0,     0 };
+                                   
 // IMPORTED VARIABLES-----------------------------------------------------
 
 IMPORT FLAG                        unit[2];
 IMPORT UBYTE                       button[2][8],
                                    jx[2], jy[2];
-IMPORT ULONG                       jff[2],
+IMPORT ULONG                       jf[2],
                                    swapped;
-IMPORT int                         joys,
+IMPORT int                         hostcontroller[2],
+                                   joys,
                                    machine,
                                    p1rumble,
                                    p2rumble,
-                                   useff[2];
+                                   useff[2],
+                                   whichgame;
 IMPORT HINSTANCE                   InstancePtr;
-IMPORT HWND                        MainWindowPtr,
-                                   SubWindowPtr[SUBWINDOWS];
+IMPORT HWND                        MainWindowPtr;
 IMPORT const DWORD                 joyfires[8];
+IMPORT struct KnownStruct          known[KNOWNGAMES + 1];
+IMPORT struct MachineStruct        machines[MACHINES];
+IMPORT struct SubWindowStruct      subwin[SUBWINDOWS];
 
 // MODULE VARIABLES-------------------------------------------------------
 
@@ -85,6 +94,7 @@ EXPORT void ff_initjoys(void)
         NULL,
         DIEDFL_ATTACHEDONLY
     );
+    // assert(joys <= 2);
 
     if (joys == 0)
     {
@@ -158,12 +168,6 @@ BOOL CALLBACK DIEnumDevicesProc(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
     if (dapter[joys]) zprintf(TEXTPEN_VERBOSE, "Is a dapter.\n");
     else              zprintf(TEXTPEN_VERBOSE, "Is not a dapter.\n");
 #endif
-    if (joys == 0)
-    {   strcat(joyname[joys], " (&1)");
-    } else
-    {   // assert(joys == 1);
-        strcat(joyname[joys], " (&2)");
-    }
 
     unit[joys] = TRUE;
     joys++;
@@ -337,33 +341,38 @@ EXPORT void ff_ReadJoystick(UWORD joynum)
 
     if (joynum < joys && ffjoy2[joynum])
     {   hr = ffjoy2[joynum]->lpVtbl->Poll(ffjoy2[joynum]);
-#ifdef FFVERBOSE
         switch (hr)
         {
-        case  DI_OK:                zprintf(TEXTPEN_VERBOSE, "Polled data.\n");
-        acase DIERR_INPUTLOST:      zprintf(TEXTPEN_ERROR,   "Poll(): Input lost!\n");
-        acase DIERR_NOTACQUIRED:    zprintf(TEXTPEN_ERROR,   "Poll(): Not acquired!\n");
-        acase DIERR_NOTINITIALIZED: zprintf(TEXTPEN_ERROR,   "Poll(): Not initialized!\n");
-        adefault:                   zprintf(TEXTPEN_ERROR,   "Poll(): Unknown error!\n");
-        }
-#endif
-        if (hr == DI_OK)
-        {   hr = ffjoy2[joynum]->lpVtbl->GetDeviceState(ffjoy2[joynum], sizeof(DIJOYSTATE), &js);
+        case DI_OK:
 #ifdef FFVERBOSE
+            zprintf(TEXTPEN_VERBOSE, "Polled data for unit %d.\n", joynum);
+#endif
+            hr = ffjoy2[joynum]->lpVtbl->GetDeviceState(ffjoy2[joynum], sizeof(DIJOYSTATE), &js);
             switch (hr)
             {
-            case  DI_OK:                zprintf(TEXTPEN_VERBOSE, "Read data.\n");
-            acase DIERR_INPUTLOST:      zprintf(TEXTPEN_ERROR,   "GetDeviceState(): Input lost!\n");
-            acase E_PENDING:            zprintf(TEXTPEN_ERROR,   "GetDeviceState(): Data is not yet available.\n");
-            acase DIERR_INVALIDPARAM:   zprintf(TEXTPEN_ERROR,   "GetDeviceState(): Invalid parameter!\n");
-            acase DIERR_NOTACQUIRED:    zprintf(TEXTPEN_ERROR,   "GetDeviceState(): Not acquired!\n");
-            acase DIERR_NOTINITIALIZED: zprintf(TEXTPEN_ERROR,   "GetDeviceState(): Not initialized!\n");
-            adefault:                   zprintf(TEXTPEN_ERROR,   "GetDeviceState(): Unknown error!\n");
-            }
+            case  DI_OK:
+                ok = TRUE;
+#ifdef FFVERBOSE
+                zprintf(TEXTPEN_VERBOSE, "Read data for unit %d.\n", joynum);
+            acase DIERR_INPUTLOST:      zprintf(TEXTPEN_ERROR,   "GetDeviceState(%d): Input lost!\n"               , joynum);
+            acase E_PENDING:            zprintf(TEXTPEN_ERROR,   "GetDeviceState(%d): Data is not yet available.\n", joynum);
+            acase DIERR_INVALIDPARAM:   zprintf(TEXTPEN_ERROR,   "GetDeviceState(%d): Invalid parameter!\n"        , joynum);
+            acase DIERR_NOTACQUIRED:    zprintf(TEXTPEN_ERROR,   "GetDeviceState(%d): Not acquired!\n"             , joynum);
+            acase DIERR_NOTINITIALIZED: zprintf(TEXTPEN_ERROR,   "GetDeviceState(%d): Not initialized!\n"          , joynum);
+            adefault:                   zprintf(TEXTPEN_ERROR,   "GetDeviceState(%d): Unknown error!\n"            , joynum);
 #endif
-            if (hr == DI_OK)
-            {   ok = TRUE;
-        }   }
+            }
+#ifdef FFVERBOSE
+        acase DIERR_INPUTLOST:
+            zprintf(TEXTPEN_ERROR,   "Poll(%d): Input lost!\n"     , joynum);
+        acase DIERR_NOTACQUIRED:
+            zprintf(TEXTPEN_ERROR,   "Poll(%d): Not acquired!\n"   , joynum);
+        acase DIERR_NOTINITIALIZED:
+            zprintf(TEXTPEN_ERROR,   "Poll(%d): Not initialized!\n", joynum);
+        adefault:
+            zprintf(TEXTPEN_ERROR,   "Poll(%d): Unknown error!\n"  , joynum);
+#endif
+        }
 
         if (!ok)
         {   ff_off();
@@ -375,7 +384,7 @@ EXPORT void ff_ReadJoystick(UWORD joynum)
     if (!ok)
     {   jx[joynum] =
         jy[joynum] = 128;
-        jff[joynum] = 0;
+        jf[joynum] = softpad[joynum];
         return;
     } // implied else
 
@@ -386,47 +395,98 @@ EXPORT void ff_ReadJoystick(UWORD joynum)
     if (machine == ARCADIA && jx[joynum] >= 0x7E && jx[joynum] <= 0x81) // && game == ALIENINV
     {   jx[joynum] = 0x7D;
     }
+    if (softpad[joynum] & JOYLEFT)
+    {   if (!(softpad[joynum] & JOYRIGHT))
+        {   jx[joynum] = machines[machine].digipos[0];
+    }   }
+    elif (softpad[joynum] & JOYRIGHT)
+    {   jx[joynum] = machines[machine].digipos[2];
+    }
+    if (softpad[joynum] & JOYUP)
+    {   if (!(softpad[joynum] & JOYDOWN))
+        {   jy[joynum] = machines[machine].digipos[0];
+    }   }
+    elif (softpad[joynum] & JOYDOWN)
+    {   jy[joynum] = machines[machine].digipos[2];
+    }
 
-    oldjf = jff[joynum];
-    jff[joynum] = 0;
+    oldjf = jf[joynum];
+    jf[joynum] = softpad[joynum];
     if (dapter[joynum])
     {   if ((js.rgbButtons[0] | js.rgbButtons[1] | js.rgbButtons[2]) & 0x80) // [0] is top left and top right. [1] is bottom left. [2] is bottom right.
-        {   jff[joynum] |= JOYFIRE1;
+        {   jf[joynum] |= JOYFIRE1;
         }
         if (js.rgbButtons[3] & 0x80)
-        {   jff[joynum] |= JOYPAUSE;
+        {   jf[joynum] |= JOYPAUSE;
         }
         if (js.rgbButtons[4] & 0x80)
-        {   jff[joynum] |= JOYRESET;
+        {   jf[joynum] |= JOYRESET;
         }
         if (js.rgbButtons[5] & 0x80) // [5] is "quit" button
-        {   jff[joynum] |= JOYSTART;
+        {   jf[joynum] |= JOYSTART;
         }
         for (i = 0; i <= 11; i++)
         {   if (js.rgbButtons[8 + i] & 0x80) // 8..19
-            {   jff[joynum] |= 1 << i; // bits 0..11
+            {   jf[joynum] |= 1 << i; // bits 0..11
     }   }   }
     else
-    {   if (js.rgbButtons[ 0] & 0x80) jff[joynum] |= joyfires[button[joynum][0] - 1];
-        if (js.rgbButtons[ 1] & 0x80) jff[joynum] |= joyfires[button[joynum][1] - 1];
-        if (js.rgbButtons[ 2] & 0x80) jff[joynum] |= joyfires[button[joynum][2] - 1];
-        if (js.rgbButtons[ 3] & 0x80) jff[joynum] |= joyfires[button[joynum][3] - 1];
-        if (js.rgbButtons[ 4] & 0x80) jff[joynum] |= joyfires[button[joynum][4] - 1];
-        if (js.rgbButtons[ 5] & 0x80) jff[joynum] |= joyfires[button[joynum][5] - 1];
-        if (js.rgbButtons[ 6] & 0x80) jff[joynum] |= joyfires[button[joynum][6] - 1];
-        if (js.rgbButtons[ 7] & 0x80) jff[joynum] |= joyfires[button[joynum][7] - 1];
-        if (js.rgbButtons[ 8] & 0x80) jff[joynum] |= JOYRESET;
-        if (js.rgbButtons[ 9] & 0x80) jff[joynum] |= JOYSTART;
+    {   if (js.rgbButtons[ 0] & 0x80) jf[joynum] |= joyfires[button[joynum][0] - 1];
+        if (js.rgbButtons[ 1] & 0x80) jf[joynum] |= joyfires[button[joynum][1] - 1];
+        if (js.rgbButtons[ 2] & 0x80) jf[joynum] |= joyfires[button[joynum][2] - 1];
+        if (js.rgbButtons[ 3] & 0x80) jf[joynum] |= joyfires[button[joynum][3] - 1];
+        if (js.rgbButtons[ 4] & 0x80) jf[joynum] |= joyfires[button[joynum][4] - 1];
+        if (js.rgbButtons[ 5] & 0x80) jf[joynum] |= joyfires[button[joynum][5] - 1];
+        if (js.rgbButtons[ 6] & 0x80) jf[joynum] |= joyfires[button[joynum][6] - 1];
+        if (js.rgbButtons[ 7] & 0x80) jf[joynum] |= joyfires[button[joynum][7] - 1];
+        if (js.rgbButtons[ 8] & 0x80) jf[joynum] |= JOYRESET;
+        if (js.rgbButtons[ 9] & 0x80) jf[joynum] |= JOYSTART;
         if
         (   (js.rgbButtons[10] & 0x80)
          || (js.rgbButtons[11] & 0x80)
         )
-        {   jff[joynum] |= JOYFIRE1;
+        {   jf[joynum] |= JOYFIRE1;
     }   }
 
-    if (SubWindowPtr[SUBWINDOW_HOSTPADS])
-    {   if (oldjf != jff[joynum] || oldjx != jx[joynum] || oldjy != jy[joynum])
-        {   DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+#ifdef AUTOACTIVATEPADS
+    if (jf[joynum])
+    {   if (joynum == 0)
+        {   if
+            (   hostcontroller[0] != CONTROLLER_1STDJOY
+             && hostcontroller[0] != CONTROLLER_1STDPAD
+             && hostcontroller[0] != CONTROLLER_1STAPAD
+             && hostcontroller[1] != CONTROLLER_1STDJOY
+             && hostcontroller[1] != CONTROLLER_1STDPAD
+             && hostcontroller[1] != CONTROLLER_1STAPAD
+            )
+            {   if (whichgame != -1 && known[whichgame].swapped)
+                {   hostcontroller[1] = CONTROLLER_1STDJOY;
+                    docommand(MENUFAKE_RIGHT);
+                } else
+                {   hostcontroller[0] = CONTROLLER_1STDJOY;
+                    docommand(MENUFAKE_LEFT);
+        }   }   }
+        else
+        {   // assert(joynum == 1);
+            if
+            (   hostcontroller[0] != CONTROLLER_2NDDJOY
+             && hostcontroller[0] != CONTROLLER_2NDDPAD
+             && hostcontroller[0] != CONTROLLER_2NDAPAD
+             && hostcontroller[1] != CONTROLLER_2NDDJOY
+             && hostcontroller[1] != CONTROLLER_2NDDPAD
+             && hostcontroller[1] != CONTROLLER_2NDAPAD
+            )
+            {   if (whichgame != -1 && known[whichgame].swapped)
+                {   hostcontroller[1] = CONTROLLER_2NDDJOY;
+                    docommand(MENUFAKE_RIGHT);
+                } else
+                {   hostcontroller[0] = CONTROLLER_2NDDJOY;
+                    docommand(MENUFAKE_LEFT);
+    }   }   }   }
+#endif
+
+    if (subwin[SUBWINDOW_HOSTPADS].hwnd)
+    {   if (oldjf != jf[joynum] || oldjx != jx[joynum] || oldjy != jy[joynum])
+        {   DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }   }   }
 
 EXPORT void ff_uninitjoys(void)

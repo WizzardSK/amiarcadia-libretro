@@ -185,8 +185,6 @@ EXPORT       int                bottomheight,
                                 storedmenu1          = -1,
                                 storedmenu2          = -1;
                                 stretch43            = FALSE,
-                                subwinx[SUBWINDOWS],
-                                subwiny[SUBWINDOWS],
                                 titleheight,
                                 useff[2]             = { TRUE, TRUE },
                                 winheight,
@@ -195,12 +193,10 @@ EXPORT       int                bottomheight,
                                 wintopy              = -1,
                                 xoffset,
                                 yoffset;
-EXPORT       ULONG              jff[2],
+EXPORT       ULONG              jf[2],
                                 keyframes[SCANCODES],
                                 ptrinc,
                                 speech_rate          = 10;
-EXPORT       ULONG             *canvasdisplay[CANVASES],
-                               *stars                = NULL;
 EXPORT       UBYTE              jx[2], jy[2],
                                 KeyMatrix[SCANCODES / 8]; // to allow keycodes up to 511
 EXPORT       STRPTR             rexxwhere;
@@ -212,9 +208,7 @@ EXPORT       HWND               hDebugger            = NULL,
                                 hStatusBar           = NULL,
                                 hToolbar             = NULL,
                                 ListeningWindowPtr   = NULL,
-                                MainWindowPtr        = NULL,
-                                SubWindowPtr[SUBWINDOWS],
-                                TipsPtr[SUBWINDOWS];
+                                MainWindowPtr        = NULL;
 EXPORT       HBRUSH             hBrush[EMUBRUSHES];
 EXPORT       HCURSOR            hArrow,
                                 hBusy,
@@ -240,12 +234,7 @@ EXPORT       TEXT               consolestring[OUTPUTLENGTH + 1],
 EXPORT       HDC                OurhDC               = NULL;
 EXPORT       HINSTANCE          InstancePtr          = NULL;
 EXPORT       struct RTCStruct   rtc;
-EXPORT const DWORD              joyfires[8]          = { JOYFIRE1, JOYFIRE2, JOYFIRE3, JOYFIRE4, JOYA, JOYB, JOYAUTOFIRE, JOYPAUSE };
-
-EXPORT struct
-{   BITMAPINFOHEADER Header;
-    DWORD            Colours[3];
-} CanvasBitMapInfo[CANVASES];
+EXPORT       ULONG*             stars                = NULL;
 
 EXPORT       struct HostMachineStruct hostmachines[MACHINES] =
 { {          "WinArcadia " DECIMALVERSION, IDD_MONITOR_CPU_2650 , 0               , IDD_MONITOR_XVI_ARCADIA , 0                      ,  4.0f, 512 }, // height of 269 or 312 (assuming PAL)
@@ -311,10 +300,8 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_FILE_QUICKSAVE,
     ID_FILE_AUDIT,
     ID_FILE_REGISTER,
-    ID_FILE_SERVER,
-    ID_FILE_CLIENT,              //  20
     ID_FILE_RECENT1,
-    ID_FILE_RECENT2,
+    ID_FILE_RECENT2,             //  20
     ID_FILE_RECENT3,
     ID_FILE_RECENT4,
     ID_FILE_RECENT5,
@@ -322,9 +309,13 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_FILE_RECENT7,
     ID_FILE_RECENT8,
     ID_FILE_ICONIFY,
-    ID_FILE_UNICONIFY,           //  30
+    ID_FILE_UNICONIFY,
     ID_FILE_EXIT,
 // "Edit" menu
+    ID_TOOLS_MEMORY,             //  30
+    ID_TOOLS_PALETTE,
+    ID_TOOLS_SCREENEDITOR,
+    ID_TOOLS_SPRITES,
     ID_EDIT_COPY,
     ID_EDIT_COPYTEXT,
     ID_EDIT_PASTETEXT,
@@ -332,21 +323,18 @@ EXPORT const int menucode[MENUITEMS] = {
 // "View" menu
     ID_VIEW_HISCORES,
     ID_VIEW_DEBUGGER,
-    ID_VIEW_MENU,
+    ID_VIEW_MENU,                //  40
     ID_VIEW_POINTER,
-    ID_VIEW_SIDEBAR,             //  40
+    ID_VIEW_SIDEBAR,
     ID_VIEW_STATUS,
     ID_VIEW_TITLE,
     ID_VIEW_TOOL,
     ID_VIEW_BUILTIN,
-    -1, // MENUFAKE_SORTBY
-    -1, // MENUFAKE_SPEEDINDICATOR
 // "Macross" ;-) menu
     ID_MACRO_STARTRECORDING,
     ID_MACRO_RESTARTPLAYBACK,
     ID_MACRO_STOP,
     ID_MACRO_LOOP,               //  50
-    ID_DEBUG_WARN,
     ID_MACRO_IFFANIMS,
     ID_MACRO_GIF,
     ID_MACRO_MNG,
@@ -355,9 +343,10 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_MACRO_AIFF,
     ID_MACRO_SMUS,
     ID_MACRO_MIDI,
-    ID_MACRO_PSGS,               //  60
-    ID_MACRO_WAV,
+    ID_MACRO_PSGS,
+    ID_MACRO_WAV,                //  60
     ID_MACRO_YM,
+    ID_MACRO_GENERATE,
     ID_MACRO_RUNREXX,
     ID_MACRO_REPEATREXX,
 // "Debug|General" submenu
@@ -370,25 +359,28 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Debug|File »" submenu
     ID_DEBUG_ASTERISK,
     ID_DEBUG_ASM,
-    ID_DEBUG_DEL,
-    ID_DEBUG_DIR,
     ID_DEBUG_DISGAME,
     ID_DEBUG_EDIT,
-    ID_DEBUG_EXTRACT,
     ID_DEBUG_LOAD,
     ID_DEBUG_SAVEAOF,
-    ID_DEBUG_SAVE,               //  80
+    ID_DEBUG_SAVE,
     ID_DEBUG_SAVEBPNF,
     ID_DEBUG_SAVECMD,
-    ID_DEBUG_SAVEHEX,
+    ID_DEBUG_SAVEHEX,            //  80
     ID_DEBUG_SAVESMS,
     ID_DEBUG_SAVETVC,
+// "Debug|Disk »" submenu
+    ID_DEBUG_DEL,
+    ID_DEBUG_DIR,
+    ID_DEBUG_EXTRACT,
+    ID_DEBUG_INJECT,
+    ID_DEBUG_REN,
     -1, // MENUFAKE_DRIVE
 // "Debug|Edit »" submenu
     ID_DEBUG_DOKE,
-    ID_DEBUG_POKE,
+    ID_DEBUG_POKE,               //  90
     ID_DEBUG_FPOKE,
-    ID_DEBUG_WRITEPORT,          //  90
+    ID_DEBUG_WRITEPORT,
 // "Debug|View »" submenu
     ID_DEBUG_EQUALS,
     ID_DEBUG_COVER,
@@ -397,9 +389,9 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_ERROR,
     ID_DEBUG_FPEEK,
     ID_DEBUG_HISTORY,
-    ID_DEBUG_IM,
+    ID_DEBUG_IM,                 // 100
     ID_DEBUG_READPORT,
-    ID_DEBUG_VIEW_BASIC,         // 100
+    ID_DEBUG_VIEW_BASIC,         // 102
     ID_DEBUG_VIEW_BIOS,
     ID_DEBUG_VIEW_CPU,
     ID_DEBUG_VIEW_PSG,
@@ -410,7 +402,7 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Debug|Log »" submenu
     ID_DEBUG_L_A,
     ID_DEBUG_L_B,
-    ID_DEBUG_L_C,                // 110
+    ID_DEBUG_L_C,                // 112
     ID_DEBUG_L_I,
     ID_DEBUG_L_N,
     ID_DEBUG_L_S,
@@ -421,7 +413,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_GI,
     ID_DEBUG_I,
     ID_DEBUG_JUMP,
-    ID_DEBUG_O,                  // 120
+    ID_DEBUG_O,                  // 122
     ID_DEBUG_S,
     ID_DEBUG_R,
     ID_DEBUG_R_F,
@@ -432,7 +424,7 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Debug|Breakpoints »" submenu
     ID_DEBUG_BP,
     ID_DEBUG_BC,
-    ID_DEBUG_BL,                 // 130
+    ID_DEBUG_BL,                 // 132
     ID_DEBUG_FP,
     ID_DEBUG_FC,
     ID_DEBUG_FL,
@@ -442,7 +434,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_WP,
     ID_DEBUG_WC,
     ID_DEBUG_WL,
-    ID_DEBUG_PB,                 // 140
+    ID_DEBUG_PB,                 // 142
     ID_DEBUG_WR,
     -1, // MENUFAKE_WW
 // "Debug|Symbols »" submenu
@@ -454,7 +446,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_COMP,
     ID_DEBUG_COPY,
     ID_DEBUG_FILL,
-    ID_DEBUG_FIND,               // 150
+    ID_DEBUG_FIND,               // 152
     ID_DEBUG_REL,
     ID_DEBUG_SWAP,
     ID_DEBUG_TRAIN,
@@ -463,22 +455,22 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUFAKE_CPU
     -1, // MENUFAKE_N
     -1, // MENUFAKE_TU
-    -1, // MENUFAKE_VERBOSITY
+    -1, // MENUFAKE_VERBOSITY       160
     ID_DEBUG_GR,
+    ID_DEBUG_WARN,
 // "Debug|Graphics »" submenu
-    -1, // MENUFAKE_DRAW,        // 160
+    -1, // MENUFAKE_DRAW,
     -1, // MENUFAKE_SPR
 // "Debug" menu
     ID_TOOLS_DEBUGGER,
 // "Tools" menu
-    ID_TOOLS_MEMORY,
-    ID_TOOLS_MUSIC,
-    ID_TOOLS_SCREENEDITOR,
-    ID_TOOLS_SPRITES,
     ID_TOOLS_MONITOR_CPUS,
     ID_TOOLS_MONITOR_PSGS,
     ID_TOOLS_MONITOR_XVI,
-    ID_TOOLS_CHEEVOS,            // 170
+    ID_TOOLS_MUSIC,
+    ID_FILE_SERVER,              // 170
+    ID_FILE_CLIENT,
+    ID_TOOLS_CHEEVOS,
 // "Peripherals" menu
     ID_TOOLS_CONTROLS,
     ID_TOOLS_DIPS,
@@ -489,23 +481,23 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_LEFT_FORCEFEEDBACK,
 // "Peripherals|Right controller »" submenu
     -1, // MENUFAKE_RIGHT
-    ID_RIGHT_AUTOFIRE,
+    ID_RIGHT_AUTOFIRE,           // 180
     ID_RIGHT_REQUIREBUTTON,
-    ID_RIGHT_FORCEFEEDBACK,      // 180
+    ID_RIGHT_FORCEFEEDBACK,
 // "Peripherals" menu
     ID_TOOLS_TAPEDECK,
     ID_TOOLS_FLOPPYDRIVE,
+    ID_PERIPHERALS_INDUSTRIAL,
     ID_TOOLS_PAPERTAPE,
     ID_TOOLS_PRINTER,
 // "Settings|BIOS »" submenu
     -1, // MENUFAKE_ELEKTORBIOS
     -1, // MENUFAKE_PIPBUGBIOS
-    -1, // MENUFAKE_BINBUGBIOS
+    -1, // MENUFAKE_BINBUGBIOS      190
     -1, // MENUFAKE_CD2650BIOS
     -1, // MENUFAKE_PHUNSYBIOS
-    -1, // MENUFAKE_SELBSTBIOS      190
+    -1, // MENUFAKE_SELBSTBIOS
 // "Settings|Colours »" submenu
-    ID_TOOLS_PALETTE,
     ID_COLOURS_ARTEFACTS,
     ID_COLOURS_DARKENBG,
     ID_GRAPHICS_FLAGLINE,
@@ -513,10 +505,10 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUFAKE_COLOURSET
 // "Settings|DOS »" submenu
     -1, // MENUFAKE_BINBUGDOS
-    -1, // MENUFAKE_TWINDOS
+    -1, // MENUFAKE_TWINDOS         200
     -1, // MENUFAKE_CD2650DOS
 // "Settings|Emulator »" submenu
-    ID_EMULATOR_AUTOSAVE,        // 200
+    ID_EMULATOR_AUTOSAVE,
     ID_EMULATOR_STARTUPUPDATES,
     ID_EMULATOR_CONFIRM,
     -1, // MENUITEM_CREATEICONS
@@ -524,9 +516,10 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_EMULATOR_EMUID,
     ID_EMULATOR_POST,
     ID_EMULATOR_RANDOMIZE,
-    ID_EMULATOR_SENSEGAME,
+    ID_EMULATOR_SENSEGAME,       // 210
     ID_EMULATOR_SHOWTOD,
-    ID_EMULATOR_USESTUBS,        // 210
+    ID_EMULATOR_USESTUBS,
+    -1, // MENUFAKE_FRAMEBASED
     -1, // MENUFAKE_LOGTOFILE
     ID_EMULATOR_PATHS,
 // "Settings|Filters »" submenu
@@ -535,13 +528,17 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_FILTERS_STRETCHWINDOWED,
     -1, // MENUFAKE_STRETCHING,
 // "Settings|Graphics »" submenu
-    -1, // MENUFAKE_SIZE
+    -1, // MENUFAKE_SIZE         // 220
+    ID_VDU_BEZEL,
+    ID_GRAPHICS_USEMARGINS,
+    ID_VDU_BLINK,
     ID_GRAPHICS_DEJITTER,
     ID_GRAPHICS_SKIES,
-    ID_GRAPHICS_CORNERS,         // 220
+    ID_GRAPHICS_CORNERS,
     ID_GRAPHICS_FULLSCREEN,
+    ID_VDU_COOMER,
     ID_GRAPHICS_NARROW,
-    -1, // spare
+    ID_GRAPHICS_ROTATE,          // 230
     ID_GRAPHICS_UNLIT,
     ID_GRAPHICS_SHOWLEDS,
 // "Settings|Input »" submenu
@@ -549,18 +546,19 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_INPUT_SHOWPOSITIONS,
     ID_INPUT_SPRINGLOADED,
     ID_INPUT_SWAPPED,
-    ID_INPUT_CALIBRATE,          // 230
+    ID_INPUT_CALIBRATE,
     ID_INPUT_REARRANGE,
     ID_INPUT_REDEFINE,
-    ID_INPUT_SENSITIVITY,
+    ID_INPUT_SENSITIVITY,        // 240
     ID_INPUT_LOWERCASE,
     ID_INPUT_CONFINE,
+    ID_INPUT_ERASEDEL,
     ID_INPUT_AUTOCOIN,
     ID_INPUT_GUESTRMB,
     ID_INPUT_QUEUEKEYSTROKES,
     -1, // MENUFAKE_KEYMAP
 // "Settings|Language »" submenu
-    -1, // MENUFAKE_LANGUAGE     // 240
+    -1, // MENUFAKE_LANGUAGE     // 248
 // "Settings|Machine »" submenu
     -1, // MENUFAKE_MACHINE
 // "Settings|Sound »" submenu
@@ -573,8 +571,9 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Settings|Speed »" submenu
     ID_SPEED_ADJUST,
     ID_SPEED_PAUSED,
-    ID_SPEED_AUTOPAUSE,          // 250
-    ID_SPEED_LIMIT,
+    ID_SPEED_AUTOPAUSE,
+    ID_SPEED_EXACT,
+    ID_SPEED_LIMIT,              // 260
     ID_SPEED_TURBO,
     -1, // MENUFAKE_REGION
     -1, // MENUFAKE_PRIORITY
@@ -585,41 +584,43 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_CHEATS_LIVES,
     ID_CHEATS_TIME,
     ID_CHEATS_INVINCIBILITY,
-    ID_CHEATS_LEVELSKIP,         // 260
+    ID_CHEATS_LEVELSKIP,
 // "Settings|VDU »" submenu
-    ID_GRAPHICS_USEMARGINS,
-    ID_VDU_BLINK,
-    ID_VDU_COOMER,
-    ID_GRAPHICS_ROTATE,
-    -1, // MENUFAKE_PIPBUGVDU
-    -1, // MENUFAKE_BINBUGVDU
+    -1, // MENUFAKE_PIPBUGVDU       270
     -1, // MENUFAKE_CD2650VDU
 // "Help" menu
     ID_HELP_GAMEINFO,
     ID_HELP_PADS,
-    ID_HELP_KYBD,                // 270
+    ID_HELP_KYBD,
     ID_HELP_OPCODES,
     ID_HELP_CODINGGUIDE,
     ID_HELP_GAMINGGUIDE,
     ID_HELP_MANUAL,
     ID_HELP_UPDATE,
-    -1, // MENUITEM_REACTION
+    -1, // MENUITEM_REACTION        280
     ID_HELP_ABOUT,
+// "RetroAchievements" menu
+    ID_EMULATOR_CHEEVOS,
 // menus
     -1, // MENUMENU_PROJECT
     -1, // MENUMENU_EDIT
-    -1, // MENUMENU_VIEW            280
+    -1, // MENUMENU_VIEW
     -1, // MENUMENU_MACRO
     -1, // MENUMENU_DEBUG
     -1, // MENUMENU_TOOLS
     -1, // MENUMENU_PERIPHERALS,
-    -1, // MENUMENU_SETTINGS
+    -1, // MENUMENU_SETTINGS        290
     -1, // MENUMENU_HELP
 // submenus
+    -1, // MENUMENU_SORTBY
+    -1, // MENUMENU_SPEEDINDICATOR
+    -1, // MENUMENU_MACRO_ANIMS
+    -1, // MENUMENU_MACRO_SOUNDS
     -1, // MENUMENU_DEBUG_GENERAL
     -1, // MENUMENU_DEBUG_FILE
+    -1, // MENUMENU_DEBUG_DISK
     -1, // MENUMENU_DEBUG_EDIT
-    -1, // MENUMENU_DEBUG_VIEW      290
+    -1, // MENUMENU_DEBUG_VIEW      300
     -1, // MENUMENU_DEBUG_LOG
     -1, // MENUMENU_DEBUG_RUN
     -1, // MENUMENU_DEBUG_BP
@@ -629,26 +630,15 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUMENU_DEBUG_GRAPHICS
     -1, // MENUMENU_LEFT
     -1, // MENUMENU_RIGHT
-    -1, // MENUMENU_BIOS            300
+    -1, // MENUMENU_BIOS            310
     -1, // MENUMENU_DOS
     -1, // MENUMENU_FILTERS
     -1, // MENUMENU_MACHINE
     -1, // MENUMENU_SPRITES
     -1, // MENUMENU_TRAINERS
-    -1, // MENUMENU_VDU             306
+    -1, // MENUMENU_VDU             316
 // new ones
-    -1, // MENUFAKE_FRAMEBASED      307
-    ID_DEBUG_INJECT,             // 308
-    ID_DEBUG_REN,                // 309
-    -1, // MENUMENU_DEBUG_DISK      310
-    ID_SPEED_EXACT,              // 311
-    ID_MACRO_GENERATE,           // 312
-    -1, // MENUMENU_MACRO_ANIMS     313
-    -1, // MENUMENU_MACRO_SOUNDS    314
-    ID_VDU_BEZEL,                // 315
-    ID_EMULATOR_CHEEVOS,         // 316
-    ID_INPUT_ERASEDEL,           // 317
-    ID_PERIPHERALS_INDUSTRIAL,   // 318
+    ID_DEBUG_SWAPDISKS,          // 317
 }, menuopt[MENUOPTS] = {
     ID_SORTBY_NAME,              //   0 "View" menu
     ID_SORTBY_MACHINE,
@@ -657,10 +647,12 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_INDICATOR_PERCENT,
     ID_DEBUG_DRIVE_0,            //   5 "Debug|File »" submenu
     ID_DEBUG_DRIVE_1,
-    ID_DEBUG_WW_NONE,            //   7 "Debug|Breakpoints »" submenu
-    ID_DEBUG_WW_SOME,
+    ID_DEBUG_DRIVE_2,
+    ID_DEBUG_DRIVE_3,
+    ID_DEBUG_WW_NONE,            //   9 "Debug|Breakpoints »" submenu
+    ID_DEBUG_WW_SOME,            //  10
     ID_DEBUG_WW_ALL,
-    ID_DEBUG_BASE_BINARY,        //  10 "Debug|Options »" submenu
+    ID_DEBUG_BASE_BINARY,        //  12 "Debug|Options »" submenu
     ID_DEBUG_BASE_OCTAL,
     ID_DEBUG_BASE_DECIMAL,
     ID_DEBUG_BASE_HEX,
@@ -668,15 +660,16 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_CPU_1,
     ID_DEBUG_N_0,
     ID_DEBUG_N_1,
-    ID_DEBUG_N_2,
+    ID_DEBUG_N_2,                //  20
     ID_DEBUG_N_3,
+    ID_DEBUG_N_4,
     ID_DEBUG_TU_0,
     ID_DEBUG_TU_1,
     ID_DEBUG_TU_2,
     ID_DEBUG_VB_0,
     ID_DEBUG_VB_1,
     ID_DEBUG_VB_2,
-    ID_DEBUG_DRAW_0,             //  26 "Debug|Graphics »" submenu
+    ID_DEBUG_DRAW_0,             //  29 "Debug|Graphics »" submenu
     ID_DEBUG_DRAW_1,
     ID_DEBUG_DRAW_2,
     ID_DEBUG_DRAW_3,
@@ -684,30 +677,30 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_SPR_0,
     ID_DEBUG_SPR_1,
     ID_DEBUG_SPR_2,
-    ID_LEFT_TRACKBALL,           //  34 "Peripherals|Left controller »" submenu
+    ID_LEFT_TRACKBALL,           //  37 "Peripherals|Left controller »" submenu
     ID_LEFT_NONE,
     ID_LEFT_1STDJOY,
-    ID_LEFT_2NDDJOY,
+    ID_LEFT_2NDDJOY,             //  40
     -1, // MENUOPT_LEFT_2NDAJOY
     -1, // MENUOPT_LEFT_1STDPAD
     -1, // MENUOPT_LEFT_2NDDPAD
     -1, // MENUOPT_LEFT_1STAPAD
     -1, // MENUOPT_LEFT_2NDAPAD
-    ID_RIGHT_TRACKBALL,          //  43 "Peripherals|Right controller »" submenu
+    ID_RIGHT_TRACKBALL,          //  46 "Peripherals|Right controller »" submenu
     ID_RIGHT_NONE,
     ID_RIGHT_1STDJOY,
     ID_RIGHT_2NDDJOY,
-    -1, // MENUOPT_RIGHT_2NDAJOY
+    -1, // MENUOPT_RIGHT_2NDAJOY     50
     -1, // MENUOPT_RIGHT_1STDPAD
     -1, // MENUOPT_RIGHT_2NDDPAD
     -1, // MENUOPT_RIGHT_1STAPAD
     -1, // MENUOPT_RIGHT_2NDAPAD
-    ID_BIOS_PHILIPS,             //  52 "Settings|BIOS »" submenu
+    ID_BIOS_PHILIPS,             //  55 "Settings|BIOS »" submenu
     ID_BIOS_HOBBYMODULE,
     ID_BIOS_ARTEMIS,
     ID_BIOS_HYBUG,
     ID_BIOS_PIPBUG,
-    ID_BIOS_PIPBUG2,
+    ID_BIOS_PIPBUG2,             //  60
     ID_BIOS_BINBUG35,
     ID_BIOS_BINBUG36,
     ID_BIOS_BINBUG61,
@@ -717,19 +710,19 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_BIOS_IPL,
     ID_BIOS_POPMON,
     ID_BIOS_SUPERVISOR,
-    ID_BIOS_MINIMONITOR,
+    ID_BIOS_MINIMONITOR,         //  70
     ID_BIOS_PHUNSY,
     ID_BIOS_SELBST00,
     ID_BIOS_SELBST09,
     ID_BIOS_SELBST10,
     ID_BIOS_SELBST20,
-    ID_COLOURS_AMBER,            //  73 "Settings|Colours »" submenu
+    ID_COLOURS_AMBER,            //  76 "Settings|Colours »" submenu
     ID_COLOURS_GREEN,
     ID_COLOURS_GREYSCALE,
     ID_COLOURS_PURE,
     ID_COLOURS_PVI,
     ID_COLOURS_UVI,
-    ID_DOS_MICRODOS,             //  79 "Settings|DOS »" submenu
+    ID_DOS_MICRODOS,             //  82 "Settings|DOS »" submenu
     ID_DOS_VHSDOS,
     ID_DOS_NOBINBUGDOS,
     ID_DOS_EXOS,
@@ -737,45 +730,47 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DOS_SDOS40,
     ID_DOS_SDOS42,
     ID_DOS_TOS,
-    ID_DOS_UDOS,
+    ID_DOS_UDOS,                 //  90
     ID_DOS_NOTWINDOS,
     ID_DOS_CDDOS,
     ID_DOS_P1DOS,
     ID_DOS_NOCD2650DOS,
-    ID_LOG_APPEND,               //  92 "Settings|Emulator »" submenu
+    ID_EMULATOR_FRAMEBASED,
+    ID_EMULATOR_PIXELBASED,
+    ID_LOG_APPEND,               //  97 "Settings|Emulator »" submenu
     ID_LOG_IGNORE,
     ID_LOG_REPLACE,
-    ID_FILTERS_3D,               //  95 "Settings|Filters »" submenu
+    ID_FILTERS_3D,               // 100 "Settings|Filters »" submenu
     ID_FILTERS_HQX,
     ID_FILTERS_SCALE2X,
     ID_FILTERS_NONE,
     ID_FILTERS_UNSTRETCHED,
     ID_FILTERS_STRETCH43,
     ID_FILTERS_STRETCHTOFIT,
-    ID_GRAPHICS_1XSIZE,          // 102 "Settings|Graphics »" submenu
+    ID_GRAPHICS_1XSIZE,          // 107 "Settings|Graphics »" submenu
     ID_GRAPHICS_2XSIZE,
     ID_GRAPHICS_3XSIZE,
-    ID_GRAPHICS_4XSIZE,
+    ID_GRAPHICS_4XSIZE,          // 110
     ID_GRAPHICS_5XSIZE,
     ID_GRAPHICS_6XSIZE,
-    ID_INPUT_HOSTLAYOUT,         // 108 "Settings|Input »" submenu
+    ID_INPUT_HOSTLAYOUT,         // 113 "Settings|Input »" submenu
     ID_INPUT_EALAYOUT,
     ID_INPUT_TTLAYOUT,
-    ID_LANGUAGE_ENG,             // 111 "Settings|Language »" submenu
+    ID_LANGUAGE_ENG,             // 116 "Settings|Language »" submenu
     ID_LANGUAGE_HOL,
     ID_LANGUAGE_FRA,
     ID_LANGUAGE_GER,
-    ID_LANGUAGE_GRE,
+    ID_LANGUAGE_GRE,             // 120
     ID_LANGUAGE_ITA,
     ID_LANGUAGE_POL,
     ID_LANGUAGE_RUS,
     ID_LANGUAGE_SPA,
-    ID_MACHINE_ARCADIA,          // 120 "Settings|Machine »" submenu
+    ID_MACHINE_ARCADIA,          // 125 "Settings|Machine »" submenu
     ID_MACHINE_INTERTON,
     ID_MACHINE_ELEKTOR,
     ID_MACHINE_PIPBUG,
     ID_MACHINE_BINBUG,
-    ID_MACHINE_INSTRUCTOR,
+    ID_MACHINE_INSTRUCTOR,       // 130
     ID_MACHINE_TWIN,
     ID_MACHINE_CD2650,
     ID_MACHINE_PHUNSY,
@@ -785,36 +780,30 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_MACHINE_GALAXIA,
     ID_MACHINE_LASERBATTLE,
     ID_MACHINE_LAZARIAN,
-    ID_MACHINE_M1,
+    ID_MACHINE_M1,               // 140
     ID_MACHINE_M2,
     ID_MACHINE_8550,
     ID_MACHINE_8600,
     ID_MACHINE_TYPERIGHT,
-    -1, // MENUOPT_SOUND_AHI     // 140 "Settings|Sound »" submenu
+    -1, // MENUOPT_SOUND_AHI     // 145 "Settings|Sound »" submenu
     -1, // MENUOPT_SOUND_PAULA
-    ID_SPEED_NTSC,               // 142 "Settings|Speed »" submenu
+    ID_SPEED_NTSC,               // 147 "Settings|Speed »" submenu
     ID_SPEED_PAL,
     ID_SPEED_HIGHPRI,
-    ID_SPEED_NORMALPRI,
+    ID_SPEED_NORMALPRI,          // 150
     ID_SPEED_LOWPRI,
-    ID_VDU_ELEKTERMINAL,         // 147 "Settings|VDU »" submenu
+    ID_DEMULTIPLEX_MULTIPLEX,
+    ID_DEMULTIPLEX_TRANSPARENT,
+    ID_DEMULTIPLEX_OPAQUE,
+    ID_VDU_ELEKTERMINAL,         // 155 "Settings|VDU »" submenu
     ID_VDU_LCVDU_NARROW,
     ID_VDU_LCVDU_WIDE,
-    ID_VDU_RADIOBULLETIN,        // 150
-    ID_VDU_SVT100,               // 151
-    ID_VDU_VT100,
+    ID_VDU_RADIOBULLETIN,
+    ID_VDU_SVT100,
+    ID_VDU_VT100,                // 160
     ID_VDU_ASCII,
     ID_VDU_CHESSMEN,
-    ID_VDU_LOWERCASE,            // 155
-// new ones
-    ID_DEBUG_DRIVE_2,            // 156
-    ID_DEBUG_DRIVE_3,            // 157
-    ID_DEMULTIPLEX_MULTIPLEX,    // 158
-    ID_DEMULTIPLEX_TRANSPARENT,  // 159
-    ID_DEMULTIPLEX_OPAQUE,       // 160
-    ID_EMULATOR_FRAMEBASED,      // 161
-    ID_EMULATOR_PIXELBASED,      // 162
-    ID_DEBUG_N_4,                // 163
+    ID_VDU_LOWERCASE,            // 163
 };
 
 // MODULE VARIABLES ------------------------------------------------------
@@ -826,6 +815,7 @@ MODULE FLAG                    cheevos_reopen      = FALSE,
                                lockconfig          = FALSE,
                                menuhelp            = FALSE,
                                override_fullscreen = FALSE,
+                               pendpause           = FALSE,
                                showingpointer      = TRUE;
 // MODULE FLAG                 win8                = FALSE;
 MODULE TEXT                    coinstring[2][40 + 1];
@@ -984,6 +974,169 @@ MODULE const int gadgetcode[] =
     ID_MACRO_STOP,            // 9
 };
 
+PERSIST const int glyph_to_idi[GAMEGLYPHS] = {
+// ARCADIA games
+IDI_3DATTACK,
+IDI_3DSOCCER,
+IDI_HOMERUN,
+IDI_ALIENINVADERS,
+IDI_ASTROINVADER,
+IDI_AUTORACE,
+IDI_BASEBALL,      //  5
+IDI_BASKETBALL,
+IDI_BATTLE,
+IDI_BLACKJACK,
+IDI_BOWLING,
+IDI_BOXING,
+IDI_BRAINQUIZ,
+IDI_BREAKAWAY,
+IDI_CAPTURE,
+IDI_CATTRAX,
+IDI_CIRCUS,
+IDI_COMBAT,
+IDI_CRAZYCLIMBER,
+IDI_CRAZYGOBBLER,
+IDI_DICTIONARY,
+IDI_DORAEMON,
+IDI_DRSLUMP,
+IDI_ESCAPE,
+IDI_GRIDIRON,
+IDI_FROGGER,
+IDI_FUNKYFISH,
+IDI_GOLF,
+IDI_GUNDAM,
+IDI_HOBO,
+IDI_HORSERACING,
+IDI_JOURNEY,
+IDI_JUMPBUG,
+IDI_JUNGLER,
+IDI_KOTONOHA,
+IDI_MACROSS,
+IDI_MISSILEWAR,
+IDI_MONACO,
+IDI_NIBBLEMEN,
+IDI_OCEANBATTLE,
+IDI_PARASHOOTER,
+IDI_PLEIADES,
+IDI_R2DTANK,
+IDI_REDCLASH,
+IDI_ROBOTKILLER,
+IDI_ROUTE16,
+IDI_2DSOCCER,
+IDI_SPACEATTACK,
+IDI_SPACEBUSTER,
+IDI_SPACEMISSION,
+IDI_SPACERAIDERS,
+IDI_SPACESQUADRON,
+IDI_SPACEVULTURES,
+IDI_SPIDERS,
+IDI_STARCHESS,
+IDI_SUPERBUG,
+IDI_TANKSALOT,
+IDI_TENNIS,
+IDI_THEEND,
+IDI_TURTLES,
+// INTERTON games
+IDI_I_37BYTES,
+IDI_I_AIRSEA,
+IDI_I_BOWLING,
+IDI_I_BOXING,
+IDI_I_CANABALT,
+IDI_I_CAPTURE,
+IDI_I_CASINO,
+IDI_I_CIRCUS,
+IDI_I_COCKPIT,
+IDI_I_COMBAT,
+IDI_I_COMECOME,
+IDI_I_COMEFRUTAS,
+IDI_I_COWBOY,
+IDI_I_CRAZYCRAB,
+IDI_I_FLAPPYBIRDS,
+IDI_I_GOLF,
+IDI_I_GRANDPRIX,
+IDI_I_HANGMAN,
+IDI_I_HEADON,
+IDI_I_HORSERACING,
+IDI_I_HUNTING,
+IDI_I_HYPERSPACE,
+IDI_I_INVADERS,
+IDI_I_KABOOM,
+IDI_I_LABYRINTH,
+IDI_I_LASERATTACK,
+IDI_I_LEAPFROG,
+IDI_I_MONSTERMAN,
+IDI_I_MONSTERMUNCHERS,
+IDI_I_MUNCHANDCRUNCH,
+IDI_I_MUSICALGAMES,
+IDI_I_PINBALL,
+IDI_I_SHOOTOUT,
+IDI_I_SOCCER,
+IDI_I_SPACEWAR,
+IDI_I_SPACEZAP,
+IDI_I_SUPERINVADERS,
+IDI_I_SUPERSPACE,
+IDI_I_TREASUREHUNT,
+IDI_I_WINTERSPORTS,
+// ELEKTOR games
+IDI_E_AGGRESSOR,        // 100
+IDI_E_AMAZONE,
+IDI_E_ANIMATEDS,
+IDI_E_ASTEROIDS,
+IDI_E_ATTACKFROMSPACE,
+IDI_E_BASKETBALL,
+IDI_E_BURSTINGBALLOONS,
+IDI_E_CARDTRICK,
+IDI_E_CARGOSHIP,
+IDI_E_CARRACE,
+IDI_E_CATAPULT,
+IDI_E_CHICKEN,
+IDI_E_CHRISTMASTREE,    // 112
+IDI_E_CIRCLEDRIVE,
+IDI_E_COSMICADVENTURE,
+IDI_E_DESTROYER,
+IDI_E_ENTERPRISE,
+IDI_E_ENTERPRISE2,
+IDI_E_ENTERPRISE3,
+IDI_E_EXPLODINGMAN,
+IDI_E_FLYINGPC,
+IDI_E_HAMISH,
+IDI_E_HELICOPTER,       // 122
+IDI_E_HORSERACES,
+IDI_E_HUNTING,
+IDI_E_INVADERS,
+IDI_E_JACKPOT,
+IDI_E_LABYRINTH,
+IDI_E_LAUNCHINGENTERPRISE,
+IDI_E_MAZES,
+IDI_E_MEMORY,
+IDI_E_MOLEBASHER,
+IDI_E_MOONLANDING,
+IDI_E_MULTIPLEOBJECTS,
+IDI_E_NEWTON,           // 134
+IDI_E_NIM,
+IDI_E_OFFSHOREFISHING,
+IDI_E_OMEGALANDING,
+IDI_E_PAINTING,
+IDI_E_PENALTY,
+IDI_E_PIANO,
+IDI_E_PILOT,
+IDI_E_PINBALL,
+IDI_E_PVIART,
+IDI_E_QUEEN,            // 144
+IDI_E_RASTER,
+IDI_E_ROCKETHUNTING,
+IDI_E_SEAWAR,
+IDI_E_SNAKESANDLADDERS,
+IDI_E_SNAP,
+IDI_E_SPACEBATTLE,
+IDI_E_SPACESCENE,
+IDI_E_STEAMENGINE,
+IDI_E_SUBMARINES,
+IDI_E_SURVIVAL,         // 154
+IDI_E_TINYTIM,
+IDI_E_UFOSHOOTING,      // 156
+};
+
 // IMPORTED VARIABLES ----------------------------------------------------
 
 IMPORT       FLAG                        aborting,
@@ -1002,13 +1155,7 @@ IMPORT       UBYTE                       cheevomem[12 * KILOBYTE],
                                          psu,
                                          startaddr_h,
                                          startaddr_l;
-IMPORT       TEXT                        arg1[MAX_PATH + 80 + 1],
-                                         arg2[MAX_PATH + 80 + 1],
-                                         arg3[MAX_PATH + 80 + 1],
-                                         arg4[MAX_PATH + 80 + 1],
-                                         arg5[MAX_PATH + 80 + 1],
-                                         arg6[MAX_PATH + 80 + 1],
-                                         arg7[MAX_PATH + 80 + 1],
+IMPORT       TEXT                        thearg[7][MAX_PATH + 80 + 1],
                                          autotext[GAMEINFOLINES][80 + 1],
                                          datetimestring[40 + 1],
                                          decpoint,
@@ -1019,7 +1166,9 @@ IMPORT       TEXT                        arg1[MAX_PATH + 80 + 1],
                                          fn_game[MAX_PATH + 1], // the entire pathname (path and file)
                                          fn_screenshot[MAX_PATH + 1],
                                          fn_script[MAX_PATH + 1],
+                                         fn_sym[MAX_PATH + 1],
                                          groupsep,
+                                         gtempstring[256 + 1],
                                          joyname[2][MAX_PATH],
                                          olduserinput[HISTORYLINES][MAX_PATH + 80 + 1],
                                          path_disks[MAX_PATH + 1],
@@ -1098,6 +1247,7 @@ IMPORT       int                         ambient,
                                          queuekeystrokes,
                                          queuepos,
                                          randomizememory,
+                                         rastn,
                                          recentgame[8],
                                          recents,
                                          recentmemmap[8],
@@ -1136,6 +1286,7 @@ IMPORT       int                         ambient,
                                          trainer_time,
                                          usemargins,
                                          usespeech,
+                                         viewpadsas2[2],
                                          warnings,
                                          wsm,
                                          whichgame,
@@ -1149,6 +1300,7 @@ IMPORT       ULONG                      *pixelulong,
 IMPORT       RECT                        therect;
 IMPORT       FILE*                       DisHandle;
 IMPORT       struct AuditStruct          auditlist[FOUNDGAMES_MAX];
+IMPORT       struct CanvasStruct         canvas[CANVASES];
 IMPORT       struct KeyNameStruct        keyname[SCANCODES];
 IMPORT       struct KindStruct           filekind[KINDS];
 IMPORT       struct MachineStruct        machines[MACHINES];
@@ -1156,7 +1308,7 @@ IMPORT       struct HiScoreStruct        hiscore[HISCORES];
 IMPORT       struct IDirectInput*        lpdi;
 IMPORT       struct IDirectInputDevice2* ffjoy2[2];
 IMPORT       struct MemMapInfoStruct     memmapinfo[MEMMAPS];
-IMPORT const struct CanvasStruct         canvas[CANVASES];
+IMPORT       struct SubWindowStruct      subwin[SUBWINDOWS];
 IMPORT const struct KnownStruct          known[KNOWNGAMES];
 IMPORT const struct MenuStruct           menuinfo1[MENUITEMS],
                                          menuinfo2[MENUOPTS];
@@ -1465,7 +1617,6 @@ EXPORT struct LangStruct langs[LANGUAGES] = {
 MODULE void printusage(STRPTR progname);
 MODULE void sidebar_down(void);
 MODULE void sidebar_up(void);
-MODULE void subreq(void);
 MODULE void disassociate(int kind);
 MODULE void upgradeconfigs(void);
 MODULE HBITMAP getmib(void);
@@ -1672,19 +1823,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         elif (hostcontroller[0] == CONTROLLER_TRACKBALL || hostcontroller[1] == CONTROLLER_TRACKBALL)
         {   // assuming it is within in guest screen boundaries
             if (!lmb && !ignorelmb)
-            {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+            {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
                 {   lmb = TRUE;
-                    DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+                    DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
                 } else
                 {   lmb = TRUE;
         }   }   }
+        elif (shift() && hasrastlines())
+        {   hosttoguestmouse(NULL, NULL, &mousex, &mousey, NULL, NULL);
+            rastn = mousey;
+            emu_unpause();
+        }
         ignorelmb = FALSE;
     acase WM_LBUTTONUP:
         ReleaseCapture();
         if (lmb)
-        {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+        {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
             {   lmb = FALSE;
-                DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+                DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
             } else
             {   lmb = FALSE;
         }   }
@@ -1692,18 +1848,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_MBUTTONDOWN:
         SetCapture(hwnd);
         if (!mmb)
-        {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+        {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
             {   mmb = TRUE;
-                DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+                DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
             } else
             {   mmb = TRUE;
         }   }
     acase WM_MBUTTONUP:
         ReleaseCapture();
         if (mmb)
-        {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+        {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
             {   mmb = FALSE;
-                DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+                DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
             } else
             {   mmb = FALSE;
         }   }
@@ -1719,9 +1875,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         )
         {   SetCapture(hwnd);
             if (!rmb)
-            {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+            {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
                 {   rmb = TRUE;
-                    DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+                    DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
                 } else
                 {   rmb = TRUE;
         }   }   }
@@ -1736,9 +1892,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         )
         {   ReleaseCapture();
             if (rmb)
-            {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+            {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
                 {   rmb = FALSE;
-                    DISCARD RedrawWindow(SubWindowPtr[SUBWINDOW_HOSTPADS], NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+                    DISCARD RedrawWindow(subwin[SUBWINDOW_HOSTPADS].hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
                 } else
                 {   rmb = FALSE;
         }   }   }
@@ -2074,15 +2230,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         langs[i].offset    = NULL;
     }
     for (i = 0; i < SUBWINDOWS; i++)
-    {   subwinx[i]         =
-        subwiny[i]         = -1;
-        TipsPtr[i]         = NULL;
+    {   subwin[i].x        =
+        subwin[i].y        = -1;
+        subwin[i].tips     = NULL;
     }
     for (i = 0; i < MEMMAPS; i++)
     {   memmap_to_smlimage[i] = i;
     }
     for (i = 0; i < CANVASES; i++)
-    {   canvasdisplay[i]   = NULL;
+    {   canvas[i].display  = NULL;
     }
 
     joyname[0][0] =
@@ -2314,6 +2470,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             } elif (!strnicmp(argv[i], "DISGAME=", 8))
             {   strcpy(fn_game, (STRPTR) &argv[i][8]);
                 climode = 2;
+            } elif (!strnicmp(argv[i], "SYM=", 4))
+            {   strcpy(fn_sym, (STRPTR) &argv[i][4]);
             } else
             {   strcpy(fn_game, argv[i]);
                 gotfilename = TRUE; // we don't load it yet
@@ -2526,25 +2684,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     for (i = 0; i < CANVASES; i++)
-    {   memset(&CanvasBitMapInfo[i], 0, sizeof(CanvasBitMapInfo[i]));
-        CanvasBitMapInfo[i].Header.biSize        = sizeof(BITMAPINFOHEADER);
-        CanvasBitMapInfo[i].Header.biWidth       = canvas[i].width;
-        CanvasBitMapInfo[i].Header.biHeight      = -canvas[i].height;
-        CanvasBitMapInfo[i].Header.biBitCount    = 32;
-        CanvasBitMapInfo[i].Header.biPlanes      = 1;
-        CanvasBitMapInfo[i].Header.biCompression = BI_RGB;
-        CanvasBitMapInfo[i].Colours[0]           = 0x00FF0000;
-        CanvasBitMapInfo[i].Colours[1]           = 0x0000FF00;
-        CanvasBitMapInfo[i].Colours[2]           = 0x000000FF;
+    {   memset(&canvas[i].bitmapinfo, 0, sizeof(canvas[i].bitmapinfo));
+        canvas[i].bitmapinfo.Header.biSize        = sizeof(BITMAPINFOHEADER);
+        canvas[i].bitmapinfo.Header.biWidth       = canvas[i].maxwidth;
+        canvas[i].bitmapinfo.Header.biHeight      = -canvas[i].maxheight;
+        canvas[i].bitmapinfo.Header.biBitCount    = 32;
+        canvas[i].bitmapinfo.Header.biPlanes      = 1;
+        canvas[i].bitmapinfo.Header.biCompression = BI_RGB;
+        canvas[i].bitmapinfo.Colours[0]           = 0x00FF0000;
+        canvas[i].bitmapinfo.Colours[1]           = 0x0000FF00;
+        canvas[i].bitmapinfo.Colours[2]           = 0x000000FF;
 
-        canvasdisplay[i] = malloc(canvas[i].width * canvas[i].height * sizeof(ULONG));
+        canvas[i].display   = malloc(canvas[i].maxwidth * canvas[i].maxheight * sizeof(ULONG));
+        canvas[i].nowwidth  = canvas[i].maxwidth;
+        canvas[i].nowheight = canvas[i].maxheight;
     }
 
     for (i = 0; i < MIBS; i++)
     {   mib[i].bitmap = LoadBitmap(InstancePtr, MAKEINTRESOURCE(mib[i].resource));
     }
 
-    changemachine(machine, memmap, FALSE, TRUE, FALSE);
+    changemachine(machine, memmap, FALSE, 1, FALSE);
     allglyphs = (langs[language].codepage == CODEPAGE_ENG) ? TRUE : FALSE;
     load_catalog();
     translate();
@@ -2554,6 +2714,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     // coherent.
     needaudit = TRUE;
 
+    if (fn_sym[0])
+    {   loadsym_full(fn_sym);
+    }
     if (climode == 1)
     {   assemble();
         if (errors)
@@ -2593,6 +2756,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     speech_setrate((int) (speech_rate - 10));
     ff_init();
     ff_initjoys();
+    if (joys >= 1)
+    {   // Gameware USB Rumble Control pads are just "USB Gamepad"
+        if (!strcmp(joyname[0], "Logitech Dual Action"))
+        {   viewpadsas2[0] = 1;
+        }
+        if (joys == 2 && !strcmp(joyname[1], "Logitech Dual Action"))
+        {   viewpadsas2[1] = 1;
+    }   }
     openwindow(TRUE);
     if (gotfilename)
     {   add_recent(); // must not be done until after opening the window
@@ -2762,7 +2933,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {   if (paused)
         {   wa_checkinput();
             process_code();
-            update_controlstip();
+            update_controlstip(FALSE);
         } else
         {   wait_first();
             emulate();
@@ -2816,11 +2987,18 @@ EXPORT void wa_checkinput(void)
         case WM_KEYDOWN:
             scancode = (Msg.lParam & 33488896) >> 16;
             if
-            (   (SubWindowPtr[SUBWINDOW_TAPEDECK  ] && GetActiveWindow() == SubWindowPtr[SUBWINDOW_TAPEDECK  ])
-             || (SubWindowPtr[SUBWINDOW_INDUSTRIAL] && GetActiveWindow() == SubWindowPtr[SUBWINDOW_INDUSTRIAL])
+            (   (subwin[SUBWINDOW_TAPEDECK  ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_TAPEDECK  ].hwnd)
+             || (subwin[SUBWINDOW_INDUSTRIAL].hwnd && GetActiveWindow() == subwin[SUBWINDOW_INDUSTRIAL].hwnd)
+             || (subwin[SUBWINDOW_MEMORY    ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_MEMORY    ].hwnd)
             )
             {   handle_escdown(scancode, GetActiveWindow());
-            } else
+            } elif (subwin[SUBWINDOW_OUTPUT ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_OUTPUT    ].hwnd)
+            {   SetActiveWindow(MainWindowPtr);
+                if (scancode != SCAN_TAB)
+                {   // unfortunately the debugger doesn't hear the first character
+                    handle_keydown(scancode);
+            }   }
+            else
             {   handle_keydown(scancode);
             }
         acase WM_SYSKEYDOWN:
@@ -2828,8 +3006,9 @@ EXPORT void wa_checkinput(void)
             if (Msg.lParam & (1 << 29))
             {   storedaltcode = scancode;
             } elif
-            (   (SubWindowPtr[SUBWINDOW_TAPEDECK  ] && GetActiveWindow() == SubWindowPtr[SUBWINDOW_TAPEDECK])
-             || (SubWindowPtr[SUBWINDOW_INDUSTRIAL] && GetActiveWindow() == SubWindowPtr[SUBWINDOW_INDUSTRIAL])
+            (   (subwin[SUBWINDOW_TAPEDECK  ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_TAPEDECK  ].hwnd)
+             || (subwin[SUBWINDOW_INDUSTRIAL].hwnd && GetActiveWindow() == subwin[SUBWINDOW_INDUSTRIAL].hwnd)
+             || (subwin[SUBWINDOW_MEMORY    ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_MEMORY    ].hwnd)
             )
             {   ;
             } else
@@ -2838,15 +3017,16 @@ EXPORT void wa_checkinput(void)
         acase WM_KEYUP:
             scancode = (Msg.lParam & 33488896) >> 16;
             if
-            (   (SubWindowPtr[SUBWINDOW_TAPEDECK  ] && GetActiveWindow() == SubWindowPtr[SUBWINDOW_TAPEDECK  ])
-             || (SubWindowPtr[SUBWINDOW_INDUSTRIAL] && GetActiveWindow() == SubWindowPtr[SUBWINDOW_INDUSTRIAL])
+            (   (subwin[SUBWINDOW_TAPEDECK  ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_TAPEDECK  ].hwnd)
+             || (subwin[SUBWINDOW_INDUSTRIAL].hwnd && GetActiveWindow() == subwin[SUBWINDOW_INDUSTRIAL].hwnd)
+             || (subwin[SUBWINDOW_MEMORY    ].hwnd && GetActiveWindow() == subwin[SUBWINDOW_MEMORY    ].hwnd)
             )
             {   handle_escup(scancode);
             } else
             {   handle_keyup(scancode);
             }
         acase WM_RBUTTONUP:
-            if (!guestrmb && GetActiveWindow() != SubWindowPtr[SUBWINDOW_MUSIC])
+            if (!guestrmb && GetActiveWindow() != subwin[SUBWINDOW_MUSIC].hwnd)
             {   SetCursor(hArrow);
                 if (!showpointers[wsm])
                 {   showpointers[wsm] = TRUE;
@@ -2879,8 +3059,8 @@ EXPORT void wa_checkinput(void)
 
     if
     (   !crippled
-     && (   (jff[0] & JOYRESET)
-         || (jff[1] & JOYRESET)
+     && (   (jf[0] & JOYRESET)
+         || (jf[1] & JOYRESET)
     )   )
     {   storedcode = SCAN_F5; // ie. pending |= PENDING_RESET;
     }
@@ -2910,19 +3090,19 @@ EXPORT void wa_checkinput(void)
         {   dest = 1 - dest; // 0 -> 1 or 1 -> 0
         }
 
-        if (dest != 2 && (jff[i] & JOYPAUSE))
+        if (dest != 2 && (jf[i] & JOYPAUSE))
         {   if (fresh[i][0])
             {   fresh[i][0] = FALSE;
                 if (paused)
                 {   emu_unpause();
                 } else
-                {   emu_pause();
+                {   pendpause = TRUE;
         }   }   }
         else
         {   fresh[i][0] = TRUE;
         }
 
-        if (dest != 2 && (jff[i] & JOYAUTOFIRE))
+        if (dest != 2 && (jf[i] & JOYAUTOFIRE))
         {   if (fresh[i][1])
             {   fresh[i][1] = FALSE;
                 if (dest == 0 || dest == 3)
@@ -3041,9 +3221,9 @@ EXPORT void freeall(void)
         pixelulong = NULL;
     }
     for (i = 0; i < CANVASES; i++)
-    {   if (canvasdisplay[i])
-        {   free(canvasdisplay[i]);
-            canvasdisplay[i] = NULL;
+    {   if (canvas[i].display)
+        {   free(canvas[i].display);
+            canvas[i].display = NULL;
     }   }
     EXITING(20);
     freelanguage();
@@ -3202,7 +3382,7 @@ EXPORT void cleanexit(SBYTE rc)
         {   return;
     }   }
 
-    if (SubWindowPtr[SUBWINDOW_OUTPUT])
+    if (subwin[SUBWINDOW_OUTPUT].hwnd)
     {   quitting = TRUE;
         zprintf(TEXTPEN_DEFAULT, "%s.\n", LLL(MSG_QUITTING, "Quitting"));
     }
@@ -3857,73 +4037,19 @@ EXPORT FLAG rshift(void)
     {   return FALSE;
 }   }
 
+EXPORT int getsmallimage1(int thegame, int thememmap)
+{   if (thegame == -1 || known[thegame].glyph == -1)
+    {   return memmap_to[thememmap].icon;
+    } // implied else
+    return glyph_to_idi[known[thegame].glyph];
+}
+
 EXPORT void openwindow(FLAG reopen)
 {   int        i;
     HDC        OnScreenRastPort;
     HFONT      OldFontPtr;
     HMENU      MenuColumnPtr;
     TEXTMETRIC tm;
-PERSIST const int glyph_to_idi[ARCADIAGLYPHS] = {
-IDI_3DATTACK,
-IDI_3DSOCCER,
-IDI_HOMERUN,
-IDI_ALIENINVADERS,
-IDI_ASTROINVADER,
-IDI_AUTORACE,
-IDI_BASEBALL,      //  5
-IDI_BASKETBALL,
-IDI_BATTLE,
-IDI_BLACKJACK,
-IDI_BOWLING,
-IDI_BOXING,
-IDI_BRAINQUIZ,
-IDI_BREAKAWAY,
-IDI_CAPTURE,
-IDI_CATTRAX,
-IDI_CIRCUS,
-IDI_COMBAT,
-IDI_CRAZYCLIMBER,
-IDI_CRAZYGOBBLER,
-IDI_DICTIONARY,
-IDI_DORAEMON,
-IDI_DRSLUMP,
-IDI_ESCAPE,
-IDI_GRIDIRON,
-IDI_FROGGER,
-IDI_FUNKYFISH,
-IDI_GOLF,
-IDI_GUNDAM,
-IDI_HOBO,
-IDI_HORSERACING,
-IDI_JOURNEY,
-IDI_JUMPBUG,
-IDI_JUNGLER,
-IDI_MACROSS,
-IDI_MISSILEWAR,
-IDI_MONACO,
-IDI_NIBBLEMEN,
-IDI_OCEANBATTLE,
-IDI_PARASHOOTER,
-IDI_PLEIADES,
-IDI_R2DTANK,
-IDI_REDCLASH,
-IDI_ROBOTKILLER,
-IDI_ROUTE16,
-IDI_2DSOCCER,
-IDI_SPACEATTACK,
-IDI_SPACEBUSTER,
-IDI_SPACEMISSION,
-IDI_SPACERAIDERS,
-IDI_SPACESQUADRON,
-IDI_SPACEVULTURES,
-IDI_SPIDERS,
-IDI_STARCHESS,
-IDI_SUPERBUG,
-IDI_TANKSALOT,
-IDI_TENNIS,
-IDI_THEEND,
-IDI_TURTLES,
-};
 
     ready = FALSE;
 
@@ -4047,7 +4173,7 @@ IDI_TURTLES,
         DISCARD ImageList_AddIcon(himl, hicon);
         DeleteObject(hicon);
 
-        for (i = 0; i < ARCADIAGLYPHS; i++)
+        for (i = 0; i < GAMEGLYPHS; i++)
         {   hicon = LoadImage(InstancePtr, MAKEINTRESOURCE(glyph_to_idi[i]), IMAGE_ICON, 16, 16, 0);
             DISCARD ImageList_AddIcon(himl, hicon);
             DeleteObject(hicon);
@@ -4342,7 +4468,7 @@ EXPORT void do_autopause(WPARAM wParam, LPARAM lParam)
 
     found = FALSE;
     for (i = 0; i < SUBWINDOWS; i++)
-    {   if ((HWND) lParam == SubWindowPtr[i])
+    {   if ((HWND) lParam == subwin[i].hwnd)
         {   found = TRUE;
             break; // for speed
     }   }
@@ -4671,8 +4797,7 @@ EXPORT void capslock_off(void)
 }   }
 
 EXPORT void ReadJoystick(int joy)
-{   ff_ReadJoystick(0);
-    ff_ReadJoystick(1);
+{   ff_ReadJoystick((UWORD) joy);
 }
 
 EXPORT void setpri(void)
@@ -4771,15 +4896,21 @@ EXPORT void make_statusbar(void)
         update_speed();
     }
 
-    generate_autotext();      // for panes 0 and 1
-    update_floppydrive(2, 0); // for pane  4
-    update_floppydrive(2, 1); // for pane  5
-    update_floppydrive(2, 2); // for pane  6
-    update_floppydrive(2, 3); // for pane  7
+    generate_autotext();         // for panes 0 and 1
+    update_floppydrive(TRUE, 0); // for pane  4
+    update_floppydrive(TRUE, 1); // for pane  5
+    update_floppydrive(TRUE, 2); // for pane  6
+    update_floppydrive(TRUE, 3); // for pane  7
 }
 
 EXPORT void process_code(void)
-{   switch (storedcode)
+{   if (pendpause)
+    {   pendpause = FALSE;
+        // assert(!paused);
+        emu_pause();
+    }
+
+    switch (storedcode)
     {
     case SCAN_ESCAPE:
         if (!ctrl() && confirm())
@@ -4814,7 +4945,7 @@ EXPORT void process_code(void)
         {   if (shift())
             {   docommand(MENUITEM_LEVELSKIP);
             } else
-            {   if (SubWindowPtr[SUBWINDOW_MONITOR_XVI])
+            {   if (subwin[SUBWINDOW_MONITOR_XVI].hwnd)
                 {   close_subwindow(SUBWINDOW_MONITOR_XVI);
                 } else
                 {   view_monitor(SUBWINDOW_MONITOR_XVI);
@@ -4872,7 +5003,7 @@ EXPORT void process_code(void)
         }
     acase SCAN_G:
         if (ctrl() && !shift())
-        {   if (SubWindowPtr[SUBWINDOW_HOSTPADS])
+        {   if (subwin[SUBWINDOW_HOSTPADS].hwnd)
             {   close_subwindow(SUBWINDOW_HOSTPADS);
             } else
             {   help_hostpads();
@@ -4894,7 +5025,7 @@ EXPORT void process_code(void)
         }   }
     acase SCAN_K:
         if (ctrl() && !shift())
-        {   if (SubWindowPtr[SUBWINDOW_HOSTKYBD])
+        {   if (subwin[SUBWINDOW_HOSTKYBD].hwnd)
             {   close_subwindow(SUBWINDOW_HOSTKYBD);
             } else
             {   help_hostkybd();
@@ -4992,7 +5123,7 @@ EXPORT void process_code(void)
         }
     acase SCAN_W:
         if (ctrl() && !shift())
-        {   if (SubWindowPtr[SUBWINDOW_CONTROLS])
+        {   if (subwin[SUBWINDOW_CONTROLS].hwnd)
             {   close_subwindow(SUBWINDOW_CONTROLS);
             } else
             {   view_controls();
@@ -5029,7 +5160,7 @@ EXPORT void process_code(void)
     case SCAN_N2:
         if (ctrl())
         {   if (shift())
-            {   if (SubWindowPtr[SUBWINDOW_DIPS])
+            {   if (subwin[SUBWINDOW_DIPS].hwnd)
                 {   close_subwindow(SUBWINDOW_DIPS);
                 } else
                 {   edit_dips();
@@ -5041,7 +5172,7 @@ EXPORT void process_code(void)
     case SCAN_N3:
         if (ctrl())
         {   if (shift())
-            {   if (SubWindowPtr[SUBWINDOW_MEMORY])
+            {   if (subwin[SUBWINDOW_MEMORY].hwnd)
                 {   close_subwindow(SUBWINDOW_MEMORY);
                 } else
                 {   edit_memory();
@@ -5053,7 +5184,7 @@ EXPORT void process_code(void)
     case SCAN_N4:
         if (ctrl())
         {   if (shift())
-            {   if (SubWindowPtr[SUBWINDOW_PALETTE])
+            {   if (subwin[SUBWINDOW_PALETTE].hwnd)
                 {   close_subwindow(SUBWINDOW_PALETTE);
                 } else
                 {   edit_palette();
@@ -5065,7 +5196,7 @@ EXPORT void process_code(void)
     case SCAN_N5:
         if (ctrl())
         {   if (shift())
-            {   if (SubWindowPtr[SUBWINDOW_SPRITES])
+            {   if (subwin[SUBWINDOW_SPRITES].hwnd)
                 {   close_subwindow(SUBWINDOW_SPRITES);
                 } else
                 {   open_spriteeditor();
@@ -5078,7 +5209,7 @@ EXPORT void process_code(void)
     case SCAN_N6:
         if (ctrl())
         {   if (shift())
-            {   if (SubWindowPtr[SUBWINDOW_MONITOR_PSGS])
+            {   if (subwin[SUBWINDOW_MONITOR_PSGS].hwnd)
                 {   close_subwindow(SUBWINDOW_MONITOR_PSGS);
                 } else
                 {   view_monitor(SUBWINDOW_MONITOR_PSGS);
@@ -5225,7 +5356,7 @@ EXPORT void process_code(void)
     acase SCAN_F12:
         if (shift())
         {   if (!ctrl())
-            {   if (SubWindowPtr[SUBWINDOW_MONITOR_CPU])
+            {   if (subwin[SUBWINDOW_MONITOR_CPU].hwnd)
                 {   close_subwindow(SUBWINDOW_MONITOR_CPU);
                 } else
                 {   view_monitor(SUBWINDOW_MONITOR_CPU);
@@ -5291,20 +5422,20 @@ EXPORT void process_code(void)
     acase SCAN_AE:
     case SCAN_NE:
         if (!ctrl() && !shift())
-        {   if (GetActiveWindow() == SubWindowPtr[SUBWINDOW_PALETTE])
+        {   if (GetActiveWindow() == subwin[SUBWINDOW_PALETTE].hwnd)
             {   SetFocus
                 (   GetNextDlgTabItem
-                    (   SubWindowPtr[SUBWINDOW_PALETTE],
+                    (   subwin[SUBWINDOW_PALETTE].hwnd,
                         GetFocus(),
                         FALSE
                 )   );
         }   }
     acase SCAN_TAB:
         if (!ctrl())
-        {   if (GetActiveWindow() == SubWindowPtr[SUBWINDOW_PALETTE])
+        {   if (GetActiveWindow() == subwin[SUBWINDOW_PALETTE].hwnd)
             {   SetFocus
                 (   GetNextDlgTabItem
-                    (   SubWindowPtr[SUBWINDOW_PALETTE],
+                    (   subwin[SUBWINDOW_PALETTE].hwnd,
                         GetFocus(),
                         shift() ? TRUE : FALSE
                 )   );
@@ -5321,7 +5452,7 @@ EXPORT void process_code(void)
         }   }
     acase SCAN_CALC:
         if (!shift() && !ctrl())
-        {   if (SubWindowPtr[SUBWINDOW_MONITOR_CPU])
+        {   if (subwin[SUBWINDOW_MONITOR_CPU].hwnd)
             {   close_subwindow(SUBWINDOW_MONITOR_CPU);
             } else
             {   view_monitor(SUBWINDOW_MONITOR_CPU);
@@ -6118,8 +6249,8 @@ EXPORT void iconify(void)
 
     ShowWindow(MainWindowPtr, SW_HIDE);
     for (i = 0; i < SUBWINDOWS; i++)
-    {   if (SubWindowPtr[i])
-        {   ShowWindow(SubWindowPtr[i], SW_HIDE);
+    {   if (subwin[i].hwnd)
+        {   ShowWindow(subwin[i].hwnd, SW_HIDE);
     }   }
 
     blanker_on();
@@ -6134,8 +6265,8 @@ EXPORT void uniconify(FLAG exiting)
     if (!exiting)
     {   ShowWindow(MainWindowPtr, SW_SHOW);
         for (i = 0; i < SUBWINDOWS; i++)
-        {   if (SubWindowPtr[i])
-            {   ShowWindow(SubWindowPtr[i], SW_SHOW);
+        {   if (subwin[i].hwnd)
+            {   ShowWindow(subwin[i].hwnd, SW_SHOW);
         }   }
         DISCARD SetActiveWindow(MainWindowPtr);
     }
@@ -6189,30 +6320,38 @@ EXPORT void update_joynames(void)
 
     if (showmenubars[wsm])
     {   if (joyname[0][0])
-        {   ModifyMenu( MenuPtr, ID_LEFT_1STDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_1STDJOY,  joyname[0]);
-            ModifyMenu( MenuPtr, ID_RIGHT_1STDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_1STDJOY, joyname[0]);
+        {   strcpy(gtempstring, joyname[0]);
+            strcat(gtempstring, " (&1)");
+            ModifyMenu( MenuPtr, ID_LEFT_1STDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_1STDJOY,  gtempstring);
+            ModifyMenu( MenuPtr, ID_RIGHT_1STDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_1STDJOY, gtempstring);
         } else
         {   ModifyMenu( MenuPtr, ID_LEFT_1STDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_1STDJOY,  LLL(MSG_1STPAD, "&1st gamepad"));
             ModifyMenu( MenuPtr, ID_RIGHT_1STDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_1STDJOY, LLL(MSG_1STPAD, "&1st gamepad"));
         }
         if (joyname[1][0])
-        {   ModifyMenu( MenuPtr, ID_LEFT_2NDDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_2NDDJOY,  joyname[1]);
-            ModifyMenu( MenuPtr, ID_RIGHT_2NDDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_2NDDJOY, joyname[1]);
+        {   strcpy(gtempstring, joyname[1]);
+            strcat(gtempstring, " (&2)");
+            ModifyMenu( MenuPtr, ID_LEFT_2NDDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_2NDDJOY,  gtempstring);
+            ModifyMenu( MenuPtr, ID_RIGHT_2NDDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_2NDDJOY, gtempstring);
         } else
         {   ModifyMenu( MenuPtr, ID_LEFT_2NDDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_2NDDJOY,  LLL(MSG_2NDPAD, "&2nd gamepad"));
             ModifyMenu( MenuPtr, ID_RIGHT_2NDDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_2NDDJOY, LLL(MSG_2NDPAD, "&2nd gamepad"));
     }   }
 
     if (joyname[0][0])
-    {   ModifyMenu(PopUpMenuPtr, ID_LEFT_1STDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_1STDJOY,  joyname[0]);
-        ModifyMenu(PopUpMenuPtr, ID_RIGHT_1STDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_1STDJOY, joyname[0]);
+    {   strcpy(gtempstring, joyname[0]);
+        strcat(gtempstring, " (&1)");
+        ModifyMenu(PopUpMenuPtr, ID_LEFT_1STDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_1STDJOY,  gtempstring);
+        ModifyMenu(PopUpMenuPtr, ID_RIGHT_1STDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_1STDJOY, gtempstring);
     } else
     {   ModifyMenu(PopUpMenuPtr, ID_LEFT_1STDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_1STDJOY,  LLL(MSG_1STPAD, "&1st gamepad"));
         ModifyMenu(PopUpMenuPtr, ID_RIGHT_1STDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_1STDJOY, LLL(MSG_1STPAD, "&1st gamepad"));
     }
     if (joyname[1][0])
-    {   ModifyMenu(PopUpMenuPtr, ID_LEFT_2NDDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_2NDDJOY,  joyname[1]);
-        ModifyMenu(PopUpMenuPtr, ID_RIGHT_2NDDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_2NDDJOY, joyname[1]);
+    {   strcpy(gtempstring, joyname[1]);
+        strcat(gtempstring, " (&2)");
+        ModifyMenu(PopUpMenuPtr, ID_LEFT_2NDDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_2NDDJOY,  gtempstring);
+        ModifyMenu(PopUpMenuPtr, ID_RIGHT_2NDDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_2NDDJOY, gtempstring);
     } else
     {   ModifyMenu(PopUpMenuPtr, ID_LEFT_2NDDJOY,  MF_BYCOMMAND | MF_STRING, ID_LEFT_2NDDJOY,  LLL(MSG_2NDPAD, "&2nd gamepad"));
         ModifyMenu(PopUpMenuPtr, ID_RIGHT_2NDDJOY, MF_BYCOMMAND | MF_STRING, ID_RIGHT_2NDDJOY, LLL(MSG_2NDPAD, "&2nd gamepad"));
@@ -6351,15 +6490,15 @@ EXPORT void hexify(int y, UBYTE thebyte)
 {   TEXT tempstring[2 + 1];
 
     hex1(tempstring, thebyte);
-    DISCARD SetDlgItemText(SubWindowPtr[SUBWINDOW_SPRITES], IDC_SPRITEHEX_0 + y, tempstring);
+    DISCARD SetDlgItemText(subwin[SUBWINDOW_SPRITES].hwnd, IDC_SPRITEHEX_0 + y, tempstring);
     if (sprad[y][0] == '-' && sprad[y][1] == EOS)
-    {   EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_SPRITEHEX_0 + y), FALSE);
+    {   EnableWindow(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_SPRITEHEX_0 + y), FALSE);
     } else
-    {   EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_SPRITEHEX_0 + y), TRUE);
+    {   EnableWindow(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_SPRITEHEX_0 + y), TRUE);
 }   }
 
 EXPORT void dospraddress(int y, STRPTR thetext)
-{   DISCARD SetDlgItemText(SubWindowPtr[SUBWINDOW_SPRITES], IDC_SPRITEADDR_1 + y, thetext);
+{   DISCARD SetDlgItemText(subwin[SUBWINDOW_SPRITES].hwnd, IDC_SPRITEADDR_1 + y, thetext);
     strcpy(sprad[y], thetext);
 }
 
@@ -7019,19 +7158,16 @@ EXPORT void drawitem(LPDRAWITEMSTRUCT lpDIS, FLAG pushed)
         localicon  = icons[10];
         multiline  = FALSE;
     acase IDC_CREATEDISK:
-    case IDC_CREATEDISK2:
         stringptr1 =
         stringptr2 = LLL(MSG_CREATEDISK     , "Create disk");
         localicon  = icons[11];
         multiline  = FALSE;
     acase IDC_INSERTDISK:
-    case IDC_INSERTDISK2:
         stringptr1 =
         stringptr2 = LLL(MSG_INSERTDISK     , "Insert disk");
         localicon  = icons[12];
         multiline  = FALSE;
     acase IDC_UPDATEDISK:
-    case IDC_UPDATEDISK2:
         stringptr1 =
         stringptr2 = LLL(MSG_UPDATEDISK     , "Update disk");
         localicon  = icons[13];
@@ -7318,24 +7454,24 @@ APIRET APIENTRY rexx_cmdshell(CONST CHAR* name, ULONG numargs, RXSTRING args[], 
 APIRET APIENTRY rexx_debugger(CONST CHAR* name, ULONG numargs, RXSTRING args[], CONST UCHAR* queuename, RXSTRING* retstr)
 {   if (numargs >= 1 && !stricmp(args[0].strptr, "QUIET"))
     {   quiet = TRUE;
-        if (numargs >= 8) strcpy(arg7, args[7].strptr);
-        if (numargs >= 7) strcpy(arg6, args[6].strptr);
-        if (numargs >= 6) strcpy(arg5, args[5].strptr);
-        if (numargs >= 5) strcpy(arg4, args[4].strptr);
-        if (numargs >= 4) strcpy(arg3, args[3].strptr);
-        if (numargs >= 3) strcpy(arg2, args[2].strptr);
-        if (numargs >= 2) strcpy(arg1, args[1].strptr); else arg1[0] = EOS;
+        if (numargs >= 8) strcpy(thearg[6], args[7].strptr);
+        if (numargs >= 7) strcpy(thearg[5], args[6].strptr);
+        if (numargs >= 6) strcpy(thearg[4], args[5].strptr);
+        if (numargs >= 5) strcpy(thearg[3], args[4].strptr);
+        if (numargs >= 4) strcpy(thearg[2], args[3].strptr);
+        if (numargs >= 3) strcpy(thearg[1], args[2].strptr);
+        if (numargs >= 2) strcpy(thearg[0], args[1].strptr); else thearg[0][0] = EOS;
     } else
-    {   if (numargs >= 7) strcpy(arg7, args[6].strptr);
-        if (numargs >= 6) strcpy(arg6, args[5].strptr);
-        if (numargs >= 5) strcpy(arg5, args[4].strptr);
-        if (numargs >= 4) strcpy(arg4, args[3].strptr);
-        if (numargs >= 3) strcpy(arg3, args[2].strptr);
-        if (numargs >= 2) strcpy(arg2, args[1].strptr);
-        if (numargs >= 1) strcpy(arg1, args[0].strptr); else arg1[0] = EOS;
+    {   if (numargs >= 7) strcpy(thearg[6], args[6].strptr);
+        if (numargs >= 6) strcpy(thearg[5], args[5].strptr);
+        if (numargs >= 5) strcpy(thearg[4], args[4].strptr);
+        if (numargs >= 4) strcpy(thearg[3], args[3].strptr);
+        if (numargs >= 3) strcpy(thearg[2], args[2].strptr);
+        if (numargs >= 2) strcpy(thearg[1], args[1].strptr);
+        if (numargs >= 1) strcpy(thearg[0], args[0].strptr); else thearg[0][0] = EOS;
     }
 
-    if (arg1[0] != EOS)
+    if (thearg[0][0] != EOS)
     {   debug_command();
     }
     quiet = FALSE;
@@ -7747,7 +7883,7 @@ APIRET APIENTRY rexx_setmachine(CONST CHAR* name, ULONG numargs, RXSTRING args[]
     if (numargs >= 1)
     {   for (i = 0; i < MACHINES; i++)
         {   if (!stricmp(args[0].strptr, machines[i].cli))
-            {   changemachine(i, TRUE, FALSE, TRUE, FALSE);
+            {   changemachine(i, machines[i].memmap, FALSE, 2, FALSE);
                 break;
     }   }   }
 
@@ -7985,13 +8121,13 @@ EXPORT void RA_ProcessInputs(void)
     if (RA_IsOverlayFullyVisible())
     {   ff_ReadJoystick(0);
 
-        input.m_bUpPressed      = (jff[0] & JOYUP   ) ? TRUE : FALSE;
-        input.m_bDownPressed    = (jff[0] & JOYDOWN ) ? TRUE : FALSE;
-        input.m_bLeftPressed    = (jff[0] & JOYLEFT ) ? TRUE : FALSE;
-        input.m_bRightPressed   = (jff[0] & JOYRIGHT) ? TRUE : FALSE;
-        input.m_bConfirmPressed = (jff[0] & JOYA    ) ? TRUE : FALSE;
-        input.m_bCancelPressed  = (jff[0] & JOYB    ) ? TRUE : FALSE;
-        input.m_bQuitPressed    = (jff[0] & JOYSTART) ? TRUE : FALSE;
+        input.m_bUpPressed      = (jf[0] & JOYUP   ) ? TRUE : FALSE;
+        input.m_bDownPressed    = (jf[0] & JOYDOWN ) ? TRUE : FALSE;
+        input.m_bLeftPressed    = (jf[0] & JOYLEFT ) ? TRUE : FALSE;
+        input.m_bRightPressed   = (jf[0] & JOYRIGHT) ? TRUE : FALSE;
+        input.m_bConfirmPressed = (jf[0] & JOYA    ) ? TRUE : FALSE;
+        input.m_bCancelPressed  = (jf[0] & JOYB    ) ? TRUE : FALSE;
+        input.m_bQuitPressed    = (jf[0] & JOYSTART) ? TRUE : FALSE;
 
 #ifdef LOGCHEEVOS
         zprintf(TEXTPEN_VERBOSE, "RA_NavigateOverlay()\n");
@@ -8102,7 +8238,7 @@ MODULE void refresh_quals(void)
     activewin = GetForegroundWindow();
     if (activewin != MainWindowPtr)
     {   for (i = 0; i < SUBWINDOWS; i++)
-        {   if (activewin == SubWindowPtr[i])
+        {   if (activewin == subwin[i].hwnd)
             {   ok = TRUE;
                 break;
         }   }

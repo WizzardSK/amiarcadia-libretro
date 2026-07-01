@@ -73,10 +73,11 @@ EXPORT       UBYTE           drive_control,
 EXPORT       UWORD           other_iar,
                              other_ras[8];
 EXPORT       int             other_slice,
-                             prtunit        = 0,
+                             prtunit         = 0,
                              prtscrollx,
                              prtscrolly,
-                             twin_dosver    = WHICHDOS,
+                             twin_dosver     = WHICHDOS,
+                             twin_userdrives = 4,
                              whichcpu;
 
 EXPORT const UWORD fileoffset[78] = // offset of the "file block bitmap" for each file
@@ -202,6 +203,8 @@ IMPORT       FLAG            ignore_cout,
                              paperreaderenabled,
                              paperpunchenabled;
 IMPORT       TEXT            asciiname_short[259][3 + 1],
+                             friendly[FRIENDLYLENGTH + 1],
+                             friendly2[FRIENDLYLENGTH + 1],
                              gtempstring[256 + 1],
                              path_disks[MAX_PATH + 1],
                              thequeue[QUEUESIZE];
@@ -237,7 +240,7 @@ IMPORT       int             ambient,
                              blink,
                              colourset,
                              debugdrive,
-                             diskbyte,
+                             diskblocksize,
                              drawmode,
                              drive_mode,
                              frameskip,
@@ -255,40 +258,37 @@ IMPORT       int             ambient,
                              slice_2650,
                              trace,
                              vdu_x, vdu_y,
+                             viewingdrive,
                              watchreads,
                              watchwrites,
                              whichkeyrect;
 IMPORT       UBYTE*          IOBuffer;
 IMPORT       MEMFLAG         memflags[ALLTOKENS];
+IMPORT       struct CanvasStruct      canvas[CANVASES];
 IMPORT       struct DriveStruct       drive[DRIVES_MAX];
 IMPORT       struct HostMachineStruct hostmachines[MACHINES];
 IMPORT       struct IOPortStruct      ioport[258];
 IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct PrinterStruct     printer[2];
 IMPORT       struct RTCStruct         rtc;
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 #ifdef WIN32
-    IMPORT   int             CatalogPtr;
-    IMPORT   HWND            SubWindowPtr[SUBWINDOWS];
-    IMPORT   ULONG*          canvasdisplay[CANVASES];
+    IMPORT   int                      CatalogPtr;
 #endif
 #ifdef AMIGA
-    IMPORT   struct Catalog* CatalogPtr;
-    IMPORT   struct Window*  SubWindowPtr[SUBWINDOWS];
-    IMPORT   UBYTE           bytepens[PENS];
-    IMPORT   UBYTE          *canvasbyteptr[CANVASES][CANVASHEIGHT],
-                            *canvasdisplay[CANVASES];
+    IMPORT   struct Catalog*          CatalogPtr;
+    IMPORT   UBYTE                    bytepens[PENS];
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
 
-MODULE       UBYTE              crtstatus,
-                                slavemem[32 * KILOBYTE];
-MODULE       MEMFLAG            masterflags[16 * KILOBYTE],
-                                slaveflags[32 * KILOBYTE];
-MODULE       int                commands = 0,
-                                drive_stage,
-                                freesize;
-MODULE       struct DriveStruct tempdrive;
+MODULE       UBYTE                    crtstatus,
+                                      slavemem[32 * KILOBYTE];
+MODULE       MEMFLAG                  masterflags[16 * KILOBYTE],
+                                      slaveflags[32 * KILOBYTE];
+MODULE       int                      commands = 0,
+                                      drive_stage,
+                                      freesize;
 
 // MODULE FUNCTIONS-------------------------------------------------------
 
@@ -366,7 +366,7 @@ EXPORT void twin_setmemmap(void)
     blank = TWIN_BLANK;
     whichkeyrect = KEYRECT_TWIN;
 
-    curdrive            = 0;
+    curdrive = 0;
     if (debugdrive >= machines[machine].drives)
     {   debugdrive = machines[machine].drives - 1;
     }
@@ -379,6 +379,8 @@ EXPORT void twin_setmemmap(void)
         drive[i].sector      = 0;
         drive[i].inserted    = FALSE;
     }
+
+    diskblocksize = TWIN_BLOCKSIZE;
 
     twin_create_disk(0); // because it won't even boot without DOS available on disk
 }
@@ -492,7 +494,8 @@ EXPORT UBYTE twin_readport(int port)
 {   FAST UBYTE oldtrack,
                oldsector,
                t;
-    FAST int   oldmode,
+    FAST int   diskbyte,
+               oldmode,
                oldoffset;
 
     // assert(machine == TWIN);
@@ -558,7 +561,8 @@ EXPORT UBYTE twin_readport(int port)
                     {   zprintf(TEXTPEN_VERBOSE, LLL(MSG_ILLEGALSECTORREAD, "Attempted to read from sector %d on drive %d!\n"), drive[curdrive].sector, curdrive);
                 }   }
                 else
-                {   get_disk_byte(curdrive, TRUE);
+                {   get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+                    // assert(diskbyte >= 0);
                     t = drive[curdrive].contents[diskbyte];
                     if
                     (
@@ -570,17 +574,19 @@ EXPORT UBYTE twin_readport(int port)
                          && watchreads
                       // && conditional(&fp[address], data, TRUE)
                     )   )
-                    {   zprintf
+                    {   DISCARD number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+                        DISCARD number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+                        zprintf
                         (   TEXTPEN_LOG,
                             LLL
                             (   MSG_READFLOPPY2,
-                               "Instruction at $%X read $%02X [%s] from floppy byte $%X. Previous IAR/PC was $%X.\n\n"
+                               "Instruction at %s read $%02X [%s] from floppy byte $%X. Previous IAR/PC was %s.\n\n"
                             ), // we should say which drive too
-                            (int) iar,
+                            friendly,
                             (int) t,
-                                  asciiname_short[t],
-                                  diskbyte,
-                            (int) oldiar
+                            asciiname_short[t],
+                            diskbyte,
+                            friendly2
                         );
                         if
                         (   (drive[curdrive].flags[diskbyte / 8] & (1 << (diskbyte % 8)))
@@ -609,9 +615,10 @@ EXPORT UBYTE twin_readport(int port)
                     {   drive[curdrive].blockoffset++;
                     }
                     generate_interrupt(11);
-                    get_disk_byte(curdrive, FALSE);
-                    drive[curdrive].viewstart = diskbyte;
-            }   }
+                    get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+                    if (diskbyte != -1)
+                    {   drive[curdrive].viewstart = diskbyte - drive[curdrive].blockoffset;
+            }   }   }
             else
             {   t = drive[curdrive].writeprotect ? 8 : 0;
                 if (drive[curdrive].track >= 77 || drive[curdrive].sector >= 32)
@@ -626,15 +633,15 @@ EXPORT UBYTE twin_readport(int port)
 
     logport(port, t, FALSE);
 
-    if
-    (   whichcpu == 0 // master
-     && (   drive[curdrive].track       != oldtrack
+    if (whichcpu == 0) // master
+    {   if
+        (   drive[curdrive].track       != oldtrack
          || drive[curdrive].sector      != oldsector
+         || drive[curdrive].blockoffset != oldoffset
          || drive_mode                  != oldmode
-         || drive[curdrive].blockoffset != oldoffset)
-    )
-    {   update_floppydrive(1, curdrive);
-    }
+        )
+        {   update_floppydrive(FALSE, curdrive);
+    }   }
 
     return t;
 }
@@ -642,14 +649,17 @@ EXPORT UBYTE twin_readport(int port)
 EXPORT void twin_writeport(int port, UBYTE data)
 {   FAST UBYTE oldtrack,
                oldsector;
-    FAST int   oldmode,
+    FAST int   diskbyte,
+               oldcurdrive,
+               oldmode,
                oldoffset;
 
     if (whichcpu == 0) // master
-    {   oldtrack  = drive[curdrive].track;
-        oldsector = drive[curdrive].sector;
-        oldmode   = drive_mode;
-        oldoffset = drive[curdrive].blockoffset;
+    {   oldtrack    = drive[curdrive].track;
+        oldsector   = drive[curdrive].sector;
+        oldmode     = drive_mode;
+        oldoffset   = drive[curdrive].blockoffset;
+        oldcurdrive = curdrive;
 
         switch (port)
         {
@@ -715,6 +725,7 @@ EXPORT void twin_writeport(int port, UBYTE data)
                 switch (drive_stage)
                 {
                 case  1: curdrive               = data; drive_stage = 2; // if (verbosedisk) zprintf(TEXTPEN_VERBOSE, "Drive is %d.\n" , data);
+                         viewingdrive = curdrive;
                 acase 2: drive[curdrive].sector = data; drive_stage = 3; // if (verbosedisk) zprintf(TEXTPEN_VERBOSE, "Sector is %d.\n", data);
                 acase 3: drive[curdrive].track  = data; drive_stage = 4; // if (verbosedisk) zprintf(TEXTPEN_VERBOSE, "Track is %d.\n" , data);
                     generate_interrupt(11);
@@ -733,7 +744,8 @@ EXPORT void twin_writeport(int port, UBYTE data)
                             {   zprintf(TEXTPEN_VERBOSE, LLL(MSG_ILLEGALSECTORWRITE, "Attempted to write to sector %d on drive %d!\n"), drive[curdrive].sector, curdrive);
                         }   }
                         else
-                        {   get_disk_byte(curdrive, TRUE);
+                        {   get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+                            // assert(diskbyte >= 0);
                             if
                             (
 #ifdef VERBOSEDISKWRITES
@@ -745,17 +757,19 @@ EXPORT void twin_writeport(int port, UBYTE data)
                                  && (watchwrites == WATCH_ALL || (!drive[curdrive].writeprotect && data != drive[curdrive].contents[diskbyte]))
                               // && conditional(&fp[address], data, TRUE)
                             )   )
-                            {   zprintf
+                            {   DISCARD number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+                                DISCARD number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+                                zprintf
                                 (   TEXTPEN_LOG,
                                     LLL
                                     (   MSG_WROTEFLOPPY2,
-                                        "Instruction at $%X wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was $%X.\n\n"
+                                        "Instruction at %s wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was %s.\n\n"
                                     ), // we should say which drive too
-                                    (int) iar,
+                                    friendly,
                                     (int) data,
-                                          asciiname_short[data],
-                                          diskbyte,
-                                    (int) oldiar
+                                    asciiname_short[data],
+                                    diskbyte,
+                                    friendly2
                                 );
                                 if
                                 (   (drive[curdrive].flags[diskbyte / 8] & (1 << (diskbyte % 8)))
@@ -787,9 +801,10 @@ EXPORT void twin_writeport(int port, UBYTE data)
                             {   drive[curdrive].blockoffset++;
                             }
                             generate_interrupt(11);
-                            get_disk_byte(curdrive, FALSE);
-                            drive[curdrive].viewstart = diskbyte;
-                }   }   }
+                            get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+                            if (diskbyte != -1)
+                            {   drive[curdrive].viewstart = diskbyte - drive[curdrive].blockoffset;
+                }   }   }   }
             acase PTS:
                 ; // ioport[0xEB].contents = data;
             }
@@ -817,11 +832,14 @@ EXPORT void twin_writeport(int port, UBYTE data)
         // $F8..$FF are debug I/O ports (not emulated)
         }
 
-        // if curdrive has changed above we might do unnecessary refreshing
-        if (drive[curdrive].track != oldtrack || drive[curdrive].sector != oldsector)
-        {   update_floppydrive(2, curdrive);
-        } elif (drive_mode != oldmode || drive[curdrive].blockoffset != oldoffset)
-        {   update_floppydrive(1, curdrive);
+        if
+        (   (int) curdrive              != oldcurdrive
+         || drive[curdrive].track       != oldtrack
+         || drive[curdrive].sector      != oldsector
+         || drive[curdrive].blockoffset != oldoffset
+         || drive_mode                  != oldmode
+        )
+        {   update_floppydrive(FALSE, curdrive);
     }   }
     else
     {   switch (port)
@@ -940,7 +958,7 @@ EXPORT FLAG twin_load_disk(FLAG wantasl, int whichdrive)
 
     drive[whichdrive].inserted = TRUE;
     twin_dir_disk(TRUE, whichdrive);
-    if (!SubWindowPtr[SUBWINDOW_FLOPPYDRIVE])
+    if (!subwin[SUBWINDOW_FLOPPYDRIVE].hwnd)
     {   open_floppydrive(FALSE);
     }
 
@@ -1320,7 +1338,7 @@ EXPORT void twin_dir_disk(FLAG quiet, int whichdrive)
             {   zprintf(TEXTPEN_CLIOUTPUT, "\n");
     }   }   }
 
-    update_floppydrive(3, whichdrive);
+    update_floppydrive(TRUE, whichdrive);
 }
 
 EXPORT FLAG twin_extract_file(int whichfile, int whichdrive)
@@ -1474,7 +1492,7 @@ MODULE void generate_interrupt(int level)
 }
 
 EXPORT void twin_serialize_cos(void)
-{   int i,
+{   int i, j,
         x, y;
 
     serialize_byte_int(&whichcpu);
@@ -1531,23 +1549,20 @@ EXPORT void twin_serialize_cos(void)
         {   serialize_byte(&vdu[x][y]);
     }   }
 
-    serialize_byte((UBYTE*) &drive[0].inserted);
-    if (drive[0].inserted)
-    {   for (i = 0; i < TWIN_DISKSIZE; i++)
-        {   serialize_byte(&drive[0].contents[i]);
-    }   }
-    serialize_byte((UBYTE*) &drive[1].inserted);
-    if (drive[1].inserted)
-    {   for (i = 0; i < TWIN_DISKSIZE; i++)
-        {   serialize_byte(&drive[1].contents[i]);
-    }   }
+    for (i = 0; i < ((cosversion >= 41) ? 4 : 2); i++)
+    {   serialize_byte((UBYTE*) &drive[i].inserted);
+        if (drive[i].inserted)
+        {   for (j = 0; j < TWIN_DISKSIZE; j++)
+            {   serialize_byte(&drive[i].contents[j]);
+    }   }   }
 
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < ((cosversion >= 41) ? 4 : 2); i++)
     {   serialize_byte(&drive[i].track);
         serialize_byte(&drive[i].sector);
         serialize_long((ULONG*) &drive[i].blockoffset);
         serialize_byte_int((int*) &drive[i].writeprotect);
     }
+
     serialize_byte_int((int*) &curdrive);
     serialize_byte_int(&drive_mode);
     serialize_byte_int(&drive_stage);
@@ -1588,9 +1603,16 @@ EXPORT void twin_serialize_cos(void)
     if (serializemode == SERIALIZE_READ)
     {   drive[0].fn_disk[0] =
         drive[1].fn_disk[0] = EOS;
+        if (cosversion >= 41)
+        {   drive[2].fn_disk[0] =
+            drive[3].fn_disk[0] = EOS;
+        }
         twin_dir_disk(TRUE, 0);
         twin_dir_disk(TRUE, 1);
-}   }
+        if (cosversion >= 41)
+        {   twin_dir_disk(TRUE, 2);
+            twin_dir_disk(TRUE, 3);
+}   }   }
 
 MODULE void twin_runcpu(void)
 {   FAST ULONG endcycle;
@@ -2052,27 +2074,10 @@ EXPORT void change_printer(void)
     // assert(prtunit >= 0);
     // assert(prtunit <= 1);
 
-    for (y = 0; y < PRINTERHEIGHT_VIEW; y++)
-    {   for (x = 0; x < PRINTERWIDTH_VIEW; x++)
-        {
-#ifdef WIN32
-            canvasdisplay[CANVAS_PRINTER][( y * PRINTERWIDTH_VIEW) + x] = pencolours[colourset][printer[prtunit].scrn[y + prtscrolly][x + prtscrollx]];
-#endif
-#ifdef AMIGA
-            *(canvasbyteptr[CANVAS_PRINTER][y]                     + x) = bytepens[             printer[prtunit].scrn[y + prtscrolly][x + prtscrollx]];
-#endif
+    for (y = 0; y < canvas[CANVAS_PRINTER].nowheight; y++)
+    {   for (x = 0; x < canvas[CANVAS_PRINTER].nowwidth; x++)
+        {   DRAWPRINTER(x, y, printer[prtunit].scrn[y + prtscrolly][x + prtscrollx]);
 }   }   }
-
-EXPORT void twin_swapdisks(void)
-{   // assert(machine == TWIN);
-
-    tempdrive = drive[0];
-    drive[0] = drive[1];
-    drive[1] = tempdrive;
-
-    update_floppydrive(3, 0);
-    update_floppydrive(3, 1);
-}
 
 EXPORT FLAG load_mod(int localsize)
 {   if (localsize < 128)
@@ -2709,7 +2714,9 @@ EXPORT void twin_reset(void)
     // floppy drives
     drive_mode            = DRIVEMODE_IDLE;
     drive[0].blockoffset  =
-    drive[1].blockoffset  = 0;
+    drive[1].blockoffset  =
+    drive[2].blockoffset  =
+    drive[3].blockoffset  = 0;
     curdrive              = 0;
     ioport[0xEA].contents = drive_control = RST;
     drive_stage           = 0;

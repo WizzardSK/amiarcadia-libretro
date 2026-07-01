@@ -29,7 +29,9 @@
 
 // 3. EXPORTED VARIABLES--------------------------------------------------
 
-EXPORT char  mn[256 + 1];
+EXPORT char  mn[1024 + 1],
+             v[3 + 8 + 1], // enough for "'B'01010101"
+             v_pse[9 + 1]; // enough for "%01010101"
 EXPORT int   disassembling = 0,
              nextdis       = 0;
 EXPORT FILE* DisHandle     = NULL;
@@ -1658,12 +1660,10 @@ EXPORT const STRPTR opcodelink[256] = {
 
 // 4. IMPORTED VARIABLES--------------------------------------------------
 
-IMPORT       FLAG  forcedollar,
-                   hurry;
+IMPORT       FLAG  hurry;
 IMPORT       TEXT  asciiname_short[259][3 + 1],
                    datetimestring[40 + 1],
-                   friendly[FRIENDLYLENGTH + 1],
-                   v_bin[3 + 8 + 1];
+                   friendly[FRIENDLYLENGTH + 1];
 IMPORT       UBYTE memory[32768],
                    opcode,
                    psl,
@@ -1675,7 +1675,6 @@ IMPORT       UWORD iar,
                    mirror_r[32768],
                    mirror_w[32768];
 IMPORT       ULONG cycles_2650;
-IMPORT       char  v[5 + 1]; // enough for "16'AB"
 IMPORT       int   addr,
                    firstdoscodecomment, lastdoscodecomment,
                    firstdosdatacomment, lastdosdatacomment,
@@ -1725,10 +1724,8 @@ MODULE char  addressstring[80 + 1], // "*SPRITECOLLIDE,r3+ [SPRITECOLLIDE]" is n
              byte2[2 + 1],
              byte3[2 + 1],
              en[512 + 1],
-             mn2[256 + 1],
              pseudostring[80 + 1],
              reg[2 + 1],
-             v_pse[3 + 1], // enough for "$12"
              tn[80 + 1];
 MODULE int   ccmode      = CCMODE_UNDEFINED,
              duration;
@@ -1811,13 +1808,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     OPERAND = memory[WRAPMEM(1)];
 
     if (full)
-    {   if (verbosity && !quiet)
-        {   forcedollar = TRUE;
-            if (number_to_friendly(iar, (STRPTR) friendly, FALSE, 0) != EOS)
+    {   if (verbosity != VERBOSITY_MINIMUM && !quiet)
+        {   if (number_to_friendly(iar, (STRPTR) friendly, FALSE, 0, 15, TRUE) != EOS)
             {   zprintf(TEXTPEN_LABEL, "%s: ;$%X\n", friendly, iar);
-            }
-            forcedollar = FALSE;
-    }   }
+    }   }   }
     else
     {   opcode = memory[iar]; // needed!
     }
@@ -1844,7 +1838,9 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         reg[2] = EOS;
     }
 
-    if (verbosity == 1)
+    en[0] = EOS;
+
+    if (verbosity == VERBOSITY_TABLE)
     {   sprintf(tn, "%04X %02X", iar, opcode);
 
         if (table_size_2650[opcode] == 3)
@@ -1907,10 +1903,6 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         } else
         {   strcat(tn, "     "); // or " ...."
     }   }
-    else
-    {   en[0] = EOS;
-        mn[8] = EOS;
-    }
 
     switch (opcode)
     {
@@ -1920,10 +1912,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0x3:
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     A,%s"  , reg   );               sprintf(an, "A = %s;" , reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,r0" , reg   );               sprintf(an, "r0 = %s;", reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "MOV    .0,%s"   , reg   );               sprintf(an, ".0 = %s;", reg);
-        adefault:             sprintf(ENDOF(mn), "LODZ    %s"     , reg   );               sprintf(an, "r0 = %s;", reg);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     A,%s"  , reg   );               sprintf(an, "A = %s;" , reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,r0" , reg   );               sprintf(an, "r0 = %s;", reg);
+        acase STYLE_IEEE:     sprintf(mn, "MOV    .0,%s"   , reg   );               sprintf(an, ".0 = %s;", reg);
+        adefault:             sprintf(mn, "LODZ    %s"     , reg   );               sprintf(an, "r0 = %s;", reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0x4:
@@ -1933,10 +1925,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         dec_to_hex(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     %s,#%s", reg, v);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     #%s,%s", v, reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "LD     %s,#%s"  , reg, v);
-        adefault:             sprintf(ENDOF(mn), "LODI,%s %s"     , reg, v);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     %s,#%s", reg, v);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     #%s,%s", v, reg);
+        acase STYLE_IEEE:     sprintf(mn, "LD     %s,#%s"  , reg, v);
+        adefault:             sprintf(mn, "LODI,%s %s"     , reg, v);
         }
                                                                                            sprintf(an, "%s = %s", reg, v_pse);
                                                                                            if (ISQWERTY)
@@ -1954,10 +1946,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     %s,%s", reg, addressstring);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,%s", addressstring, reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "LD     %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "LODR,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     %s,%s", reg, addressstring);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,%s", addressstring, reg);
+        acase STYLE_IEEE:     sprintf(mn, "LD     %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "LODR,%s %s"    , reg, addressstring);
         }
                                                                                            sprintf(an, "%s = *(%s);", reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
@@ -1968,10 +1960,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ABS_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     %s,%s", reg, addressstring);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,%s", addressstring, reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "LD     %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "LODA,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     %s,%s", reg, addressstring);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,%s", addressstring, reg);
+        acase STYLE_IEEE:     sprintf(mn, "LD     %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "LODA,%s %s"    , reg, addressstring);
         }
                                                                                            sprintf(an, "%s = *(%s);", reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
@@ -1980,10 +1972,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {   BRA_EA_TRACE(TRUE);
             switch (style)
             {
-            case  STYLE_OLDCALM: sprintf(ENDOF(mn), "LOAD     L,%s", addressstring);       sprintf(an, "L = *(%s);"  , pseudostring);
-            acase STYLE_NEWCALM: sprintf(ENDOF(mn), "MOVE     %s,PSL", addressstring);     sprintf(an, "PSL = *(%s);", pseudostring);
-            acase STYLE_IEEE:    sprintf(ENDOF(mn), "LD     .L,%s" , addressstring);       sprintf(an, ".L = *(%s);" , pseudostring);
-            adefault:            sprintf(ENDOF(mn), "LDPL    %s"   , addressstring);       sprintf(an, "PSL = *(%s);", pseudostring);
+            case  STYLE_OLDCALM: sprintf(mn, "LOAD     L,%s", addressstring);       sprintf(an, "L = *(%s);"  , pseudostring);
+            acase STYLE_NEWCALM: sprintf(mn, "MOVE     %s,PSL", addressstring);     sprintf(an, "PSL = *(%s);", pseudostring);
+            acase STYLE_IEEE:    sprintf(mn, "LD     .L,%s" , addressstring);       sprintf(an, ".L = *(%s);" , pseudostring);
+            adefault:            sprintf(mn, "LDPL    %s"   , addressstring);       sprintf(an, "PSL = *(%s);", pseudostring);
             }
 
             if (!disassembling)
@@ -2008,9 +2000,9 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {   switch (style)
             {
             case  STYLE_OLDCALM:
-            case  STYLE_NEWCALM: sprintf(ENDOF(mn), "DB       16'%02X", opcode);
-            acase STYLE_IEEE:    sprintf(ENDOF(mn), "DATA   $%02X"    , opcode);
-            adefault:            sprintf(ENDOF(mn), "DB      $%02X"   , opcode);
+            case  STYLE_NEWCALM: sprintf(mn, "DB       16'%02X", opcode);
+            acase STYLE_IEEE:    sprintf(mn, "DATA   $%02X"    , opcode);
+            adefault:            sprintf(mn, "DB      $%02X"   , opcode);
             }                                                                              strcpy( an, "?");
         }
         ccmode = CCMODE_UNDEFINED;
@@ -2019,10 +2011,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {   BRA_EA_TRACE(TRUE);
             switch (style)
             {
-            case  STYLE_OLDCALM: sprintf(ENDOF(mn), "LOAD     %s,L", addressstring);       sprintf(an, "*(%s) = L;"  , pseudostring);
-            acase STYLE_NEWCALM: sprintf(ENDOF(mn), "MOVE     PSL,%s", addressstring);     sprintf(an, "*(%s) = PSL;", pseudostring);
-            acase STYLE_IEEE:    sprintf(ENDOF(mn), "ST     .L,%s" , addressstring);       sprintf(an, "*(%s) = .L;" , pseudostring);
-            adefault:            sprintf(ENDOF(mn), "STPL    %s"   , addressstring);       sprintf(an, "*(%s) = PSL;", pseudostring);
+            case  STYLE_OLDCALM: sprintf(mn, "LOAD     %s,L", addressstring);       sprintf(an, "*(%s) = L;"  , pseudostring);
+            acase STYLE_NEWCALM: sprintf(mn, "MOVE     PSL,%s", addressstring);     sprintf(an, "*(%s) = PSL;", pseudostring);
+            acase STYLE_IEEE:    sprintf(mn, "ST     .L,%s" , addressstring);       sprintf(an, "*(%s) = .L;" , pseudostring);
+            adefault:            sprintf(mn, "STPL    %s"   , addressstring);       sprintf(an, "*(%s) = PSL;", pseudostring);
             }
 
             if (!disassembling)
@@ -2046,19 +2038,19 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {   switch (style)
             {
             case  STYLE_OLDCALM:
-            case  STYLE_NEWCALM: sprintf(ENDOF(mn), "DB       16'%02X", opcode);
-            acase STYLE_IEEE:    sprintf(ENDOF(mn), "DATA   $%02X"    , opcode);
-            adefault:            sprintf(ENDOF(mn), "DB      $%02X"   , opcode);
+            case  STYLE_NEWCALM: sprintf(mn, "DB       16'%02X", opcode);
+            acase STYLE_IEEE:    sprintf(mn, "DATA   $%02X"    , opcode);
+            adefault:            sprintf(mn, "DB      $%02X"   , opcode);
             }                                                                              strcpy( an, "?");
         }
         ccmode = CCMODE_UNDEFINED;
     acase 0x12:
         switch (style)
         {
-        case  STYLE_OLDCALM: strcat(mn, "LOAD     A,U");                                   strcpy(an, "A = U;");
-        acase STYLE_NEWCALM: strcat(mn, "MOVE     PSU,r0");                                strcpy(an, "r0 = PSU;");
-        acase STYLE_IEEE:    strcat(mn, "MOV    .0,.U");                                   strcpy(an, ".0 = .U;");
-        adefault:            strcat(mn, "SPSU"); /* or "SPSU    r0" */                     strcpy(an, "r0 = PSU;");
+        case  STYLE_OLDCALM: strcpy(mn, "LOAD     A,U");                                   strcpy(an, "A = U;");
+        acase STYLE_NEWCALM: strcpy(mn, "MOVE     PSU,r0");                                strcpy(an, "r0 = PSU;");
+        acase STYLE_IEEE:    strcpy(mn, "MOV    .0,.U");                                   strcpy(an, ".0 = .U;");
+        adefault:            strcpy(mn, "SPSU"); /* or "SPSU    r0" */                     strcpy(an, "r0 = PSU;");
         }
 
         if (!disassembling)
@@ -2075,10 +2067,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     acase 0x13:
         switch (style)
         {
-        case  STYLE_OLDCALM: strcat(mn, "LOAD     A,L");                                   strcpy(an, "A = L;");
-        acase STYLE_NEWCALM: strcat(mn, "MOVE     PSL,r0");                                strcpy(an, "r0 = PSL;");
-        acase STYLE_IEEE:    strcat(mn, "MOV    .0,.L");                                   strcpy(an, ".0 = .L;");
-        adefault:            strcat(mn, "SPSL"); /* or "SPSL    r0" */                     strcpy(an, "r0 = PSL;");
+        case  STYLE_OLDCALM: strcpy(mn, "LOAD     A,L");                                   strcpy(an, "A = L;");
+        acase STYLE_NEWCALM: strcpy(mn, "MOVE     PSL,r0");                                strcpy(an, "r0 = PSL;");
+        acase STYLE_IEEE:    strcpy(mn, "MOV    .0,.L");                                   strcpy(an, ".0 = .L;");
+        adefault:            strcpy(mn, "SPSL"); /* or "SPSL    r0" */                     strcpy(an, "r0 = PSL;");
         }
 
         if (!disassembling)
@@ -2104,15 +2096,15 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {
         case STYLE_OLDCALM:
             if (ccmode == CCMODE_TEST)
-            {   strcat(mn, "RET,AO");
+            {   strcpy(mn, "RET,AO");
             } else
-            {   sprintf(ENDOF(mn), "RET%s", ccstring[style][BRANCHCODE]);
+            {   sprintf(mn, "RET%s", ccstring[style][BRANCHCODE]);
             }
         acase STYLE_NEWCALM:
         case STYLE_IEEE:
-            sprintf(ENDOF(mn), "RET%s"  , ccstring[style][BRANCHCODE]);
+            sprintf(mn, "RET%s"  , ccstring[style][BRANCHCODE]);
         adefault:
-            sprintf(ENDOF(mn), "RETC,%s", ccstring[style][BRANCHCODE]);
+            sprintf(mn, "RETC,%s", ccstring[style][BRANCHCODE]);
         }
                                                                                        sprintf(an, "%sreturn;", cctrue[style][BRANCHCODE]);
     acase 0x15:
@@ -2121,9 +2113,9 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
         case STYLE_IEEE:
-            sprintf(ENDOF(mn), "RET%s"  , ccstring[style][BRANCHCODE]);
+            sprintf(mn, "RET%s"  , ccstring[style][BRANCHCODE]);
         adefault:
-            sprintf(ENDOF(mn), "RETC,%s", ccstring[style][BRANCHCODE]);
+            sprintf(mn, "RETC,%s", ccstring[style][BRANCHCODE]);
         }
                                                                                        sprintf(an, "%sreturn;", cctrue[style][BRANCHCODE]);
     acase 0x16:
@@ -2131,22 +2123,22 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {
         case STYLE_OLDCALM:
             if (ccmode == CCMODE_TEST)
-            {   strcat(mn, "RET,NO");
+            {   strcpy(mn, "RET,NO");
             } else
-            {   sprintf(ENDOF(mn), "RET%s"  , ccstring[style][BRANCHCODE]);
+            {   sprintf(mn, "RET%s"  , ccstring[style][BRANCHCODE]);
             }
         acase STYLE_NEWCALM:
         case STYLE_IEEE:
-            sprintf(ENDOF(mn), "RET%s"  , ccstring[style][BRANCHCODE]);
+            sprintf(mn, "RET%s"  , ccstring[style][BRANCHCODE]);
         adefault:
-            sprintf(ENDOF(mn), "RETC,%s", ccstring[style][BRANCHCODE]);
+            sprintf(mn, "RETC,%s", ccstring[style][BRANCHCODE]);
         }
                                                                                        sprintf(an, "%sreturn;", cctrue[style][BRANCHCODE]);
     acase 0x17:
         if (style == STYLE_SIGNETICS1)
-        {   strcat(mn, "RETC,un");
+        {   strcpy(mn, "RETC,un");
         } else
-        {   strcat(mn, "RET");
+        {   strcpy(mn, "RET");
         }
                                                                                        strcpy(an, "return;");
     acase 0x18:
@@ -2154,25 +2146,25 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         acase STYLE_SIGNETICS1:
-            strcat(mn,                          "BCTR,eq ");
+            strcpy(mn,                          "BCTR,eq ");
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  strcat(mn, "BCTR,eq ");
-            acase CCMODE_COMPARE:    strcat(mn, "BER     "); // Branch if Equal, Relative
-            acase CCMODE_ARITHMETIC: strcat(mn, "BZR     "); // Branch if Zero, Relative
-            acase CCMODE_TEST:       strcat(mn, "BOR     "); // Branch if Ones, Relative
+            case  CCMODE_UNDEFINED:  strcpy(mn, "BCTR,eq ");
+            acase CCMODE_COMPARE:    strcpy(mn, "BER     "); // Branch if Equal, Relative
+            acase CCMODE_ARITHMETIC: strcpy(mn, "BZR     "); // Branch if Zero, Relative
+            acase CCMODE_TEST:       strcpy(mn, "BOR     "); // Branch if Ones, Relative
             }
         acase STYLE_OLDCALM:
             if (ccmode == CCMODE_TEST)
-            {   strcat(mn,                      "JUMP,AO  ");
+            {   strcpy(mn,                      "JUMP,AO  ");
             } else
-            {   strcat(mn,                      "JUMP,EQ  ");
+            {   strcpy(mn,                      "JUMP,EQ  ");
             }
         acase STYLE_NEWCALM:
-            strcat(mn,                          "JUMP,EQ  ");
+            strcpy(mn,                          "JUMP,EQ  ");
         acase STYLE_IEEE:
-            strcat(mn,                          "BEQ    ");
+            strcpy(mn,                          "BEQ    ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "%sgoto %s;", cctrue[style][BRANCHCODE], pseudostring);
@@ -2181,20 +2173,20 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         acase STYLE_SIGNETICS1:
-            strcat(mn,                          "BCTR,gt ");
+            strcpy(mn,                          "BCTR,gt ");
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  strcat(mn, "BCTR,gt ");
-            acase CCMODE_COMPARE:    strcat(mn, "BHR     "); // Branch if Higher, Relative
-            acase CCMODE_ARITHMETIC: strcat(mn, "BPR     "); // Branch if Positive, Relative
-            acase CCMODE_TEST:       strcat(mn, "BCTR,gt "); // we should warn the user about this!
+            case  CCMODE_UNDEFINED:  strcpy(mn, "BCTR,gt ");
+            acase CCMODE_COMPARE:    strcpy(mn, "BHR     "); // Branch if Higher, Relative
+            acase CCMODE_ARITHMETIC: strcpy(mn, "BPR     "); // Branch if Positive, Relative
+            acase CCMODE_TEST:       strcpy(mn, "BCTR,gt "); // we should warn the user about this!
             }
         acase STYLE_OLDCALM:
         case STYLE_NEWCALM:
-            strcat(mn,                          "JUMP,GT  ");
+            strcpy(mn,                          "JUMP,GT  ");
         acase STYLE_IEEE:
-            strcat(mn,                          "BGT    ");
+            strcpy(mn,                          "BGT    ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "%sgoto %s;", cctrue[style][BRANCHCODE], pseudostring);
@@ -2203,26 +2195,26 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         acase STYLE_SIGNETICS1:
-            strcat(mn,                          "BCTR,lt ");
+            strcpy(mn,                          "BCTR,lt ");
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  strcat(mn, "BCTR,lt ");
-            acase CCMODE_COMPARE:    strcat(mn, "BLR     "); // Branch if Lower, Relative
-            acase CCMODE_ARITHMETIC: strcat(mn, "BMR     "); // Branch if Minus, Relative
-            acase CCMODE_TEST:       strcat(mn, "BMR     "); // Branch if Mixed, Relative
+            case  CCMODE_UNDEFINED:  strcpy(mn, "BCTR,lt ");
+            acase CCMODE_COMPARE:    strcpy(mn, "BLR     "); // Branch if Lower, Relative
+            acase CCMODE_ARITHMETIC: strcpy(mn, "BMR     "); // Branch if Minus, Relative
+            acase CCMODE_TEST:       strcpy(mn, "BMR     "); // Branch if Mixed, Relative
             }
         acase STYLE_OLDCALM:
             if (ccmode == CCMODE_TEST)
-            {   strcat(mn,                      "JUMP,NO  ");
+            {   strcpy(mn,                      "JUMP,NO  ");
             } else
-            {   strcat(mn,                      "JUMP,LT  ");
+            {   strcpy(mn,                      "JUMP,LT  ");
             }
         acase STYLE_NEWCALM:
-            {   strcat(mn,                      "JUMP,LT  ");
+            {   strcpy(mn,                      "JUMP,LT  ");
             }
         acase STYLE_IEEE:
-            strcat(mn,                          "BLT    ");
+            strcpy(mn,                          "BLT    ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "%sgoto %s;", cctrue[style][BRANCHCODE], pseudostring);
@@ -2230,11 +2222,11 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      strcat(mn, "BCTR,un ");
-        acase STYLE_SIGNETICS2:      strcat(mn, "BR      ");
+        case  STYLE_SIGNETICS1:      strcpy(mn, "BCTR,un ");
+        acase STYLE_SIGNETICS2:      strcpy(mn, "BR      ");
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         strcat(mn, "JUMP     ");
-        acase STYLE_IEEE:            strcat(mn, "BR     ");
+        case  STYLE_NEWCALM:         strcpy(mn, "JUMP     ");
+        acase STYLE_IEEE:            strcpy(mn, "BR     ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "goto %s;", pseudostring);
@@ -2243,25 +2235,25 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case STYLE_SIGNETICS1:
-            strcat(mn,                          "BCTA,eq ");
+            strcpy(mn,                          "BCTA,eq ");
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  strcat(mn, "BCTA,eq ");
-            acase CCMODE_COMPARE:    strcat(mn, "BEA     "); // Branch if Equal, Absolute
-            acase CCMODE_ARITHMETIC: strcat(mn, "BZA     "); // Branch if Zero, Absolute
-            acase CCMODE_TEST:       strcat(mn, "BOA     "); // Branch if Ones, Absolute
+            case  CCMODE_UNDEFINED:  strcpy(mn, "BCTA,eq ");
+            acase CCMODE_COMPARE:    strcpy(mn, "BEA     "); // Branch if Equal, Absolute
+            acase CCMODE_ARITHMETIC: strcpy(mn, "BZA     "); // Branch if Zero, Absolute
+            acase CCMODE_TEST:       strcpy(mn, "BOA     "); // Branch if Ones, Absolute
             }
         acase STYLE_OLDCALM:
             if (ccmode == CCMODE_TEST)
-            {   strcat(mn,                      "JUMP,AO  ");
+            {   strcpy(mn,                      "JUMP,AO  ");
             } else
-            {   strcat(mn,                      "JUMP,EQ  ");
+            {   strcpy(mn,                      "JUMP,EQ  ");
             }
         acase STYLE_NEWCALM:
-            strcat(mn,                          "JUMP,EQ  ");
+            strcpy(mn,                          "JUMP,EQ  ");
         acase STYLE_IEEE:
-            strcat(mn,                          "BEQ    ");
+            strcpy(mn,                          "BEQ    ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "%sgoto %s;", cctrue[style][BRANCHCODE], pseudostring);
@@ -2270,20 +2262,20 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case STYLE_SIGNETICS1:
-            strcat(mn,                          "BCTA,gt ");
+            strcpy(mn,                          "BCTA,gt ");
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  strcat(mn, "BCTA,gt ");
-            acase CCMODE_COMPARE:    strcat(mn, "BHA     "); // Branch if Higher, Absolute
-            acase CCMODE_ARITHMETIC: strcat(mn, "BPA     "); // Branch if Positive, Absolute
-            acase CCMODE_TEST:       strcat(mn, "BCTA,gt "); // we should warn the user about this!
+            case  CCMODE_UNDEFINED:  strcpy(mn, "BCTA,gt ");
+            acase CCMODE_COMPARE:    strcpy(mn, "BHA     "); // Branch if Higher, Absolute
+            acase CCMODE_ARITHMETIC: strcpy(mn, "BPA     "); // Branch if Positive, Absolute
+            acase CCMODE_TEST:       strcpy(mn, "BCTA,gt "); // we should warn the user about this!
             }
         acase STYLE_OLDCALM:
         case  STYLE_NEWCALM:
-            strcat(mn,                          "JUMP,GT  ");
+            strcpy(mn,                          "JUMP,GT  ");
         acase STYLE_IEEE:
-            strcat(mn,                          "BGT    ");
+            strcpy(mn,                          "BGT    ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "%sgoto %s;", cctrue[style][BRANCHCODE], pseudostring);
@@ -2292,25 +2284,25 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case STYLE_SIGNETICS1:
-            strcat(mn,                          "BCTA,lt ");
+            strcpy(mn,                          "BCTA,lt ");
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  strcat(mn, "BCTA,lt ");
-            acase CCMODE_COMPARE:    strcat(mn, "BLA     "); // Branch if Lower, Absolute
-            acase CCMODE_ARITHMETIC: strcat(mn, "BMA     "); // Branch if Minus, Absolute
-            acase CCMODE_TEST:       strcat(mn, "BMA     "); // Branch if Mixed, Absolute
+            case  CCMODE_UNDEFINED:  strcpy(mn, "BCTA,lt ");
+            acase CCMODE_COMPARE:    strcpy(mn, "BLA     "); // Branch if Lower, Absolute
+            acase CCMODE_ARITHMETIC: strcpy(mn, "BMA     "); // Branch if Minus, Absolute
+            acase CCMODE_TEST:       strcpy(mn, "BMA     "); // Branch if Mixed, Absolute
             }
         acase STYLE_OLDCALM:
             if (ccmode == CCMODE_TEST)
-            {   strcat(mn,                      "JUMP,NO  ");
+            {   strcpy(mn,                      "JUMP,NO  ");
             } else
-            {   strcat(mn,                      "JUMP,LT  ");
+            {   strcpy(mn,                      "JUMP,LT  ");
             }
         acase STYLE_NEWCALM:
-            strcat(mn,                          "JUMP,LT  ");
+            strcpy(mn,                          "JUMP,LT  ");
         acase STYLE_IEEE:
-            strcat(mn,                          "BLT    ");
+            strcpy(mn,                          "BLT    ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "%sgoto %s;", cctrue[style][BRANCHCODE], pseudostring);
@@ -2318,21 +2310,21 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      strcat(mn, "BCTA,un ");
-        acase STYLE_SIGNETICS2:      strcat(mn, "BA      ");
+        case  STYLE_SIGNETICS1:      strcpy(mn, "BCTA,un ");
+        acase STYLE_SIGNETICS2:      strcpy(mn, "BA      ");
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         strcat(mn, "JUMP     ");
-        acase STYLE_IEEE:            strcat(mn, "BR     ");
+        case  STYLE_NEWCALM:         strcpy(mn, "JUMP     ");
+        acase STYLE_IEEE:            strcpy(mn, "BR     ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "goto %s;", pseudostring);
     acase 0x20:
         switch (style)
         {
-        case  STYLE_OLDCALM: strcat(       mn , "CLR      A"          );               strcpy( an, "A = 0;" );
-        acase STYLE_NEWCALM: strcat(       mn , "CLR      r0"         );               strcpy( an, "r0 = 0;");
-        acase STYLE_IEEE:    strcat(       mn , "CLR    .0"           );               strcpy( an, ".0 = 0;");
-        adefault:            strcat(       mn , "EORZ    r0"          );               strcpy( an, "r0 = 0;");
+        case  STYLE_OLDCALM: strcpy( mn, "CLR      A"          );               strcpy( an, "A = 0;" );
+        acase STYLE_NEWCALM: strcpy( mn, "CLR      r0"         );               strcpy( an, "r0 = 0;");
+        acase STYLE_IEEE:    strcpy( mn, "CLR    .0"           );               strcpy( an, ".0 = 0;");
+        adefault:            strcpy( mn, "EORZ    r0"          );               strcpy( an, "r0 = 0;");
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0x21:
@@ -2340,35 +2332,35 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0x23:
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "XOR      A,%s"  , reg);               sprintf(an, "A ^= %s;" , reg);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "XOR      %s,r0" , reg);               sprintf(an, "r0 ^= %s;", reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "XOR    .0,%s"   , reg);               sprintf(an, ".0 ^= %s;", reg);
-        adefault:            sprintf(ENDOF(mn), "EORZ    %s"     , reg);               sprintf(an, "r0 ^= %s;", reg);
+        case  STYLE_OLDCALM: sprintf(mn, "XOR      A,%s"  , reg);               sprintf(an, "A ^= %s;" , reg);
+        acase STYLE_NEWCALM: sprintf(mn, "XOR      %s,r0" , reg);               sprintf(an, "r0 ^= %s;", reg);
+        acase STYLE_IEEE:    sprintf(mn, "XOR    .0,%s"   , reg);               sprintf(an, ".0 ^= %s;", reg);
+        adefault:            sprintf(mn, "EORZ    %s"     , reg);               sprintf(an, "r0 ^= %s;", reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0x24:
     case 0x25:
     case 0x26:
     case 0x27:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
         case  STYLE_OLDCALM:
                       if (OPERAND == 0xFF)
-                          sprintf(ENDOF(mn), "NOT      %s"    , reg);
+                          sprintf(mn, "NOT      %s"    , reg);
                       else
-                          sprintf(ENDOF(mn), "XOR      %s,#%s", reg, v);
+                          sprintf(mn, "XOR      %s,#%s", reg, v);
         acase STYLE_NEWCALM:
                       if (OPERAND == 0xFF)
-                          sprintf(ENDOF(mn), "NOT      %s"    , reg);
+                          sprintf(mn, "NOT      %s"    , reg);
                       else
-                          sprintf(ENDOF(mn), "XOR      #%s,%s", v, reg);
+                          sprintf(mn, "XOR      #%s,%s", v, reg);
         acase STYLE_IEEE:
                       if (OPERAND == 0xFF)
-                          sprintf(ENDOF(mn), "NOT    %s"      , reg);
+                          sprintf(mn, "NOT    %s"      , reg);
                       else
-                          sprintf(ENDOF(mn), "XOR    %s,#%s"  , reg, v);
-        adefault:         sprintf(ENDOF(mn), "EORI,%s %s"     , reg, v);
+                          sprintf(mn, "XOR    %s,#%s"  , reg, v);
+        adefault:         sprintf(mn, "EORI,%s %s"     , reg, v);
         }                                                                              sprintf(an, "%s ^= %s;"   , reg, v_pse);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x28:
@@ -2378,10 +2370,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "XOR      %s,%s", reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "XOR      %s,%s", addressstring, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "XOR    %s,#%s" , reg, v);
-        adefault:            sprintf(ENDOF(mn), "EORR,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "XOR      %s,%s", reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "XOR      %s,%s", addressstring, reg);
+        acase STYLE_IEEE:    sprintf(mn, "XOR    %s,#%s" , reg, v);
+        adefault:            sprintf(mn, "EORR,%s %s"    , reg, addressstring);
         }                                                                              sprintf(an, "%s ^= *(%s);", reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x2C:
@@ -2391,10 +2383,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ABS_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "XOR      %s,%s", reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "XOR      %s,%s", addressstring, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "XOR    %s,%s"  , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "EORA,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "XOR      %s,%s", reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "XOR      %s,%s", addressstring, reg);
+        acase STYLE_IEEE:    sprintf(mn, "XOR    %s,%s"  , reg, addressstring);
+        adefault:            sprintf(mn, "EORA,%s %s"    , reg, addressstring);
         }                                                                              sprintf(an, "%s ^= *(%s);", reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x30:
@@ -2403,10 +2395,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0x33:
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "LOAD     %s,$CTRL", reg);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "MOVE     $CTRL,%s", reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "IN     %s,CTRL"   , reg);
-        adefault:            sprintf(ENDOF(mn), "REDC,%s"          , reg);
+        case  STYLE_OLDCALM: sprintf(mn, "LOAD     %s,$CTRL", reg);
+        acase STYLE_NEWCALM: sprintf(mn, "MOVE     $CTRL,%s", reg);
+        acase STYLE_IEEE:    sprintf(mn, "IN     %s,CTRL"   , reg);
+        adefault:            sprintf(mn, "REDC,%s"          , reg);
         }
                                                                                        sprintf(an, "%s = IOPORT(CTRL);" , reg);
         ccmode = CCMODE_ARITHMETIC;
@@ -2414,41 +2406,41 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM: if (ccmode == CCMODE_TEST)
-                             {   strcat(mn, "RETION,AO");
+                             {   strcpy(mn, "RETION,AO");
                              } else
-                             {   sprintf(ENDOF(mn), "RETION%s", ccstring[style][BRANCHCODE]);
+                             {   sprintf(mn, "RETION%s", ccstring[style][BRANCHCODE]);
                              }                                                            sprintf(an, "%s{ U &= ~U_IOF; return; }"    , cctrue[style][BRANCHCODE]);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_IOF; return; }", cctrue[style][BRANCHCODE]);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ .U &= ~.U_II; return; }"   , cctrue[style][BRANCHCODE]);
-        adefault:            sprintf(ENDOF(mn), "RETE,%s" , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_II; return; }" , cctrue[style][BRANCHCODE]);
+        acase STYLE_NEWCALM: sprintf(mn, "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_IOF; return; }", cctrue[style][BRANCHCODE]);
+        acase STYLE_IEEE:    sprintf(mn, "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ .U &= ~.U_II; return; }"   , cctrue[style][BRANCHCODE]);
+        adefault:            sprintf(mn, "RETE,%s" , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_II; return; }" , cctrue[style][BRANCHCODE]);
         }
     acase 0x35:
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "RETION%s", ccstring[style][BRANCHCODE]); sprintf(an, "%s{ U &= ~U_IOF; return; }"   ,  cctrue[style][BRANCHCODE]);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_IOF; return; }", cctrue[style][BRANCHCODE]);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ .U &= ~.U_II; return; }"  ,  cctrue[style][BRANCHCODE]);
-        adefault:            sprintf(ENDOF(mn), "RETE,%s" , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_II; return; }",  cctrue[style][BRANCHCODE]);
+        case  STYLE_OLDCALM: sprintf(mn, "RETION%s", ccstring[style][BRANCHCODE]); sprintf(an, "%s{ U &= ~U_IOF; return; }"   ,  cctrue[style][BRANCHCODE]);
+        acase STYLE_NEWCALM: sprintf(mn, "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_IOF; return; }", cctrue[style][BRANCHCODE]);
+        acase STYLE_IEEE:    sprintf(mn, "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ .U &= ~.U_II; return; }"  ,  cctrue[style][BRANCHCODE]);
+        adefault:            sprintf(mn, "RETE,%s" , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_II; return; }",  cctrue[style][BRANCHCODE]);
         }
     acase 0x36:
         switch (style)
         {
         case  STYLE_OLDCALM: if (ccmode == CCMODE_TEST)
-                             {   strcat(mn, "RETION,NO");
+                             {   strcpy(mn, "RETION,NO");
                              } else
-                             {   sprintf(ENDOF(mn), "RETION%s", ccstring[style][BRANCHCODE]);
+                             {   sprintf(mn, "RETION%s", ccstring[style][BRANCHCODE]);
                              }                                                            sprintf(an, "%s{ U &= ~U_IOF; return; }"    , cctrue[style][BRANCHCODE]);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_IOF; return; }", cctrue[style][BRANCHCODE]);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ .U &= ~.U_II; return; }"   , cctrue[style][BRANCHCODE]);
-        adefault:            sprintf(ENDOF(mn), "RETE,%s" , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_II; return; }" , cctrue[style][BRANCHCODE]);
+        acase STYLE_NEWCALM: sprintf(mn, "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_IOF; return; }", cctrue[style][BRANCHCODE]);
+        acase STYLE_IEEE:    sprintf(mn, "RETI%s"  , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ .U &= ~.U_II; return; }"   , cctrue[style][BRANCHCODE]);
+        adefault:            sprintf(mn, "RETE,%s" , ccstring[style][BRANCHCODE]); sprintf(an, "%s{ PSU &= ~PSU_II; return; }" , cctrue[style][BRANCHCODE]);
         }
     acase 0x37:
         switch (style)
         {
-        case  STYLE_OLDCALM: strcat(       mn , "RETION"                 );               strcpy( an, "U &= ~U_IOF; return;"    );
-        acase STYLE_NEWCALM: strcat(       mn , "RETI"                   );               strcpy( an, "PSU &= ~PSU_IOF; return;");
-        acase STYLE_IEEE:    strcat(       mn , "RETI"                   );               strcpy( an, ".U &= ~.U_II; return;"   );
-        adefault:            strcat(       mn , "RETE,un"                );               strcpy( an, "PSU &= ~PSU_II; return;" );
+        case  STYLE_OLDCALM: strcpy( mn , "RETION"                );               strcpy( an, "U &= ~U_IOF; return;"    );
+        acase STYLE_NEWCALM: strcpy( mn , "RETI"                  );               strcpy( an, "PSU &= ~PSU_IOF; return;");
+        acase STYLE_IEEE:    strcpy( mn , "RETI"                  );               strcpy( an, ".U &= ~.U_II; return;"   );
+        adefault:            strcpy( mn , "RETE,un"               );               strcpy( an, "PSU &= ~PSU_II; return;" );
         }
     acase 0x38:
     case 0x39:
@@ -2458,19 +2450,19 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
-        case STYLE_IEEE:  sprintf(ENDOF(mn), "CALL%s %s" , ccstring[style][BRANCHCODE], addressstring);
-        adefault:         sprintf(ENDOF(mn), "BSTR,%s %s", ccstring[style][BRANCHCODE], addressstring);
+        case STYLE_IEEE:  sprintf(mn, "CALL%s %s" , ccstring[style][BRANCHCODE], addressstring);
+        adefault:         sprintf(mn, "BSTR,%s %s", ccstring[style][BRANCHCODE], addressstring);
         }
                                                                                        sprintf(an, "%sgosub %s;"    , cctrue[style][BRANCHCODE], pseudostring);
     acase 0x3B:
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_SIGNETICS1: strcat( mn , "BSTR,un ");
-        acase STYLE_SIGNETICS2: strcat( mn , "BSR     ");
+        case  STYLE_SIGNETICS1: strcpy( mn , "BSTR,un ");
+        acase STYLE_SIGNETICS2: strcpy( mn , "BSR     ");
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:    strcat( mn , "CALL     ");
-        acase STYLE_IEEE:       strcat( mn , "CALL   ");
+        case  STYLE_NEWCALM:    strcpy( mn , "CALL     ");
+        acase STYLE_IEEE:       strcpy( mn , "CALL   ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "gosub %s;"      , pseudostring);
@@ -2482,49 +2474,49 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         {
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
-        case STYLE_IEEE:  sprintf(ENDOF(mn), "CALL%s %s" , ccstring[style][BRANCHCODE], addressstring);
-        adefault:         sprintf(ENDOF(mn), "BSTA,%s %s", ccstring[style][BRANCHCODE], addressstring);
+        case STYLE_IEEE:  sprintf(mn, "CALL%s %s" , ccstring[style][BRANCHCODE], addressstring);
+        adefault:         sprintf(mn, "BSTA,%s %s", ccstring[style][BRANCHCODE], addressstring);
         }
                                                                                        sprintf(an, "%sgosub %s;"    , cctrue[style][BRANCHCODE], pseudostring);
     acase 0x3F:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_SIGNETICS1:  strcat(mn , "BSTA,un ");
-        acase STYLE_SIGNETICS2:  strcat(mn , "BSA     ");
+        case  STYLE_SIGNETICS1:  strcpy( mn, "BSTA,un ");
+        acase STYLE_SIGNETICS2:  strcpy( mn, "BSA     ");
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:     strcat(mn , "CALL     ");
-        acase STYLE_IEEE:        strcat(mn , "CALL   ");
+        case  STYLE_NEWCALM:     strcpy( mn, "CALL     ");
+        acase STYLE_IEEE:        strcpy( mn, "CALL   ");
         }
         strcat(mn, addressstring);
                                                                                        sprintf(an, "gosub %s;"      , pseudostring);
     acase 0x40:
         if (style == STYLE_OLDCALM || style == STYLE_NEWCALM)
-                                 strcat(mn , "WAIT");
-        else                     strcat(mn , "HALT");
+                                 strcpy( mn, "WAIT");
+        else                     strcpy( mn, "HALT");
                                                                                        strcpy( an, "for (;;);");
     acase 0x41:
     case 0x42:
     case 0x43:
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "AND      A,%s", reg);                    sprintf(an, "A &= %s;"       , reg);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "AND      %s,r0", reg);                   sprintf(an, "r0 &= %s;"      , reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "AND    .0,%s" , reg);                    sprintf(an, ".0 &= %s;"      , reg);
-        adefault:            sprintf(ENDOF(mn), "ANDZ    %s"   , reg);                    sprintf(an, "r0 &= %s;"      , reg);
+        case  STYLE_OLDCALM:     sprintf(mn, "AND      A,%s", reg);                    sprintf(an, "A &= %s;"       , reg);
+        acase STYLE_NEWCALM:     sprintf(mn, "AND      %s,r0", reg);                   sprintf(an, "r0 &= %s;"      , reg);
+        acase STYLE_IEEE:        sprintf(mn, "AND    .0,%s" , reg);                    sprintf(an, ".0 &= %s;"      , reg);
+        adefault:                sprintf(mn, "ANDZ    %s"   , reg);                    sprintf(an, "r0 &= %s;"      , reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0x44:
     case 0x45:
     case 0x46:
     case 0x47:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "AND      %s,#%s", reg, v);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "AND      #%s,%s", v, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "AND    %s,#%s"  , reg, v);
-        adefault:            sprintf(ENDOF(mn), "ANDI,%s %s"     , reg, v);
+        case  STYLE_OLDCALM:     sprintf(mn, "AND      %s,#%s", reg, v);
+        acase STYLE_NEWCALM:     sprintf(mn, "AND      #%s,%s", v, reg);
+        acase STYLE_IEEE:        sprintf(mn, "AND    %s,#%s"  , reg, v);
+        adefault:                sprintf(mn, "ANDI,%s %s"     , reg, v);
         }
                                                                                        sprintf(an, "%s &= %s;"      , reg, v_pse);
         ccmode = CCMODE_ARITHMETIC;
@@ -2535,10 +2527,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "AND      %s,%s" , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "AND      %s,%s" , addressstring, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "AND    %s,%s"   , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "ANDR,%s %s"     , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "AND      %s,%s" , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "AND      %s,%s" , addressstring, reg);
+        acase STYLE_IEEE:    sprintf(mn, "AND    %s,%s"   , reg, addressstring);
+        adefault:            sprintf(mn, "ANDR,%s %s"     , reg, addressstring);
         }
                                                                                        sprintf(an, "%s &= *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
@@ -2549,10 +2541,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ABS_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "AND      %s,%s" , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "AND      %s,%s" , addressstring, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "AND    %s,%s"   , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "ANDA,%s %s"     , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "AND      %s,%s" , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "AND      %s,%s" , addressstring, reg);
+        acase STYLE_IEEE:    sprintf(mn, "AND    %s,%s"   , reg, addressstring);
+        adefault:            sprintf(mn, "ANDA,%s %s"     , reg, addressstring);
         }
                                                                                        sprintf(an, "%s &= *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
@@ -2566,25 +2558,25 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         case STYLE_NEWCALM:
             if (psl & PSL_WC)
             {   if (psl & PSL_C)
-                {         sprintf(ENDOF(mn), "RRC      %s", reg);
+                {         sprintf(mn, "RRC      %s", reg);
                 } else
-                {         sprintf(ENDOF(mn), "SR       %s", reg);
+                {         sprintf(mn, "SR       %s", reg);
             }   }
             else
-            {             sprintf(ENDOF(mn), "RR       %s", reg);
+            {             sprintf(mn, "RR       %s", reg);
             }
         acase STYLE_IEEE:
             if (psl & PSL_WC)
             {   if (psl & PSL_C)
-                {         sprintf(ENDOF(mn), "RORC   %s"  , reg);
+                {         sprintf(mn, "RORC   %s"  , reg);
                 } else
-                {         sprintf(ENDOF(mn), "SHR    %s"  , reg);
+                {         sprintf(mn, "SHR    %s"  , reg);
             }   }
             else
-            {             sprintf(ENDOF(mn), "ROR    %s"  , reg);
+            {             sprintf(mn, "ROR    %s"  , reg);
             }
         adefault:
-                          sprintf(ENDOF(mn), "RRR,%s"     , reg);
+                          sprintf(mn, "RRR,%s"     , reg);
         }
                                                                                        sprintf(an, "%s >>= 1;"      , reg);
         ccmode = CCMODE_ARITHMETIC;
@@ -2595,10 +2587,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         dec_to_hex(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "LOAD     %s,$%s", reg, v);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "MOVE     $%s,%s", v, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "IN     %s,%s"   , reg, v);
-        adefault:            sprintf(ENDOF(mn), "REDE,%s %s"     , reg, v);
+        case  STYLE_OLDCALM: sprintf(mn, "LOAD     %s,$%s", reg, v);
+        acase STYLE_NEWCALM: sprintf(mn, "MOVE     $%s,%s", v, reg);
+        acase STYLE_IEEE:    sprintf(mn, "IN     %s,%s"   , reg, v);
+        adefault:            sprintf(mn, "REDE,%s %s"     , reg, v);
         }
                                                                                        sprintf(an, "%s = IOPORT(%s);", reg, v_pse);
         ccmode = CCMODE_ARITHMETIC;
@@ -2609,10 +2601,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "JUMP,%sNE %s"  , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "JUMP,NE  %s,%s", reg, addressstring);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "BNZ    %s,%s"  , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "BRNR,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "JUMP,%sNE %s"  , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "JUMP,NE  %s,%s", reg, addressstring);
+        acase STYLE_IEEE:    sprintf(mn, "BNZ    %s,%s"  , reg, addressstring);
+        adefault:            sprintf(mn, "BRNR,%s %s"    , reg, addressstring);
         }
                                                                                        sprintf(an, "if (%s != 0) goto %s;", reg, pseudostring);
     acase 0x5C:
@@ -2622,10 +2614,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "JUMP,%sNE %s"  , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "JUMP,NE  %s,%s", reg, addressstring);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "BNZ    %s,%s"  , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "BRNA,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "JUMP,%sNE %s"  , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "JUMP,NE  %s,%s", reg, addressstring);
+        acase STYLE_IEEE:    sprintf(mn, "BNZ    %s,%s"  , reg, addressstring);
+        adefault:            sprintf(mn, "BRNA,%s %s"    , reg, addressstring);
         }
                                                                                        sprintf(an, "if (%s != 0) goto %s;", reg, pseudostring);
     acase 0x60:
@@ -2634,23 +2626,23 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0x63:
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "OR       A,%s" , reg);                sprintf(an, "A |= %s;"       , reg);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "OR       %s,r0", reg);                sprintf(an, "r0 |= %s;"      , reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "OR     .0,%s"  , reg);                sprintf(an, ".0 |= %s;"      , reg);
-        adefault:            sprintf(ENDOF(mn), "IORZ    %s"    , reg);                sprintf(an, "r0 |= %s;"      , reg);
+        case  STYLE_OLDCALM: sprintf(mn, "OR       A,%s" , reg);                       sprintf(an, "A |= %s;"       , reg);
+        acase STYLE_NEWCALM: sprintf(mn, "OR       %s,r0", reg);                       sprintf(an, "r0 |= %s;"      , reg);
+        acase STYLE_IEEE:    sprintf(mn, "OR     .0,%s"  , reg);                       sprintf(an, ".0 |= %s;"      , reg);
+        adefault:            sprintf(mn, "IORZ    %s"    , reg);                       sprintf(an, "r0 |= %s;"      , reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0x64:
     case 0x65:
     case 0x66:
     case 0x67:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "OR       %s,#%s", reg, v);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "OR       #%s,%s", v, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "OR     %s,#%s"  , reg, v);
-        adefault:            sprintf(ENDOF(mn), "IORI,%s %s"     , reg, v);
+        case  STYLE_OLDCALM: sprintf(mn, "OR       %s,#%s", reg, v);
+        acase STYLE_NEWCALM: sprintf(mn, "OR       #%s,%s", v, reg);
+        acase STYLE_IEEE:    sprintf(mn, "OR     %s,#%s"  , reg, v);
+        adefault:            sprintf(mn, "IORI,%s %s"     , reg, v);
         }                                                                              sprintf(an, "%s |= %s;"      , reg, v_pse);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x68:
@@ -2660,10 +2652,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "OR       %s,%s" , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "OR       %s,%s" , addressstring, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "OR     %s,%s"   , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "IORR,%s %s"     , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "OR       %s,%s" , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "OR       %s,%s" , addressstring, reg);
+        acase STYLE_IEEE:    sprintf(mn, "OR     %s,%s"   , reg, addressstring);
+        adefault:            sprintf(mn, "IORR,%s %s"     , reg, addressstring);
         }                                                                              sprintf(an, "%s |= *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x6C:
@@ -2673,10 +2665,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ABS_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "OR       %s,%s" , reg, addressstring);
-        case  STYLE_NEWCALM: sprintf(ENDOF(mn), "OR       %s,%s" , addressstring, reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "OR     %s,%s"   , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "IORA,%s %s"     , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "OR       %s,%s" , reg, addressstring);
+        case  STYLE_NEWCALM: sprintf(mn, "OR       %s,%s" , addressstring, reg);
+        acase STYLE_IEEE:    sprintf(mn, "OR     %s,%s"   , reg, addressstring);
+        adefault:            sprintf(mn, "IORA,%s %s"     , reg, addressstring);
         }                                                                              sprintf(an, "%s |= *(%s);", reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x70:
@@ -2685,28 +2677,28 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0x73:
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "LOAD     %s,$DATA", reg);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "MOVE     $DATA,%s", reg);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "IN     %s,DATA"   , reg);
-        adefault:            sprintf(ENDOF(mn), "REDD,%s"          , reg);
+        case  STYLE_OLDCALM: sprintf(mn, "LOAD     %s,$DATA", reg);
+        acase STYLE_NEWCALM: sprintf(mn, "MOVE     $DATA,%s", reg);
+        acase STYLE_IEEE:    sprintf(mn, "IN     %s,DATA"   , reg);
+        adefault:            sprintf(mn, "REDD,%s"          , reg);
         }                                                                              sprintf(an, "%s = IOPORT(DATA);", reg);
         ccmode = CCMODE_ARITHMETIC;
     acase 0x74:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
         case   STYLE_OLDCALM:
         case   STYLE_NEWCALM:
             switch (OPERAND)
             {
-            case  0x07:  strcat(       mn , "CLR      STACK");
-            acase 0x20:  strcat(       mn , "CLR      IOF"); // or just ION
-            acase 0x40:  strcat(       mn , "CLR      OUTPUT");
-            acase 0x80:  strcat(       mn , "CLR      INPUT");
+            case  0x07:  strcpy(       mn , "CLR      STACK");
+            acase 0x20:  strcpy(       mn , "CLR      IOF"); // or just ION
+            acase 0x40:  strcpy(       mn , "CLR      OUTPUT");
+            acase 0x80:  strcpy(       mn , "CLR      INPUT");
             adefault:    if (style == STYLE_OLDCALM)
-                         {   sprintf(ENDOF(mn), "BIC      U,#%s", v);
+                         {   sprintf(mn, "BIC      U,#%s", v);
                          } else
-                         {   sprintf(ENDOF(mn), "BIC      #%s,PSU", v);
+                         {   sprintf(mn, "BIC      #%s,PSU", v);
             }            }
             if (style == STYLE_OLDCALM)
             {   if (supercpu)                                                          sprintf(an, "U &= ~(%s & %%01111111);", v_pse);
@@ -2718,13 +2710,13 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         acase STYLE_IEEE:
             switch (OPERAND)
             {
-            case 0x20:   strcat(       mn , "EI");
-            adefault:    sprintf(ENDOF(mn), "AND    .U,#$FF-%s", v);
+            case 0x20:   strcpy(       mn , "EI");
+            adefault:    sprintf(mn, "AND    .U,#$FF-%s", v);
             }
             if (supercpu)                                                              sprintf(an, ".U &= ~(%s & %%01111111);", v_pse);
             else                                                                       sprintf(an, ".U &= ~(%s & %%01100111);", v_pse);
         adefault:
-                         strcat(       mn , "CPSU    ");
+                         strcpy(       mn , "CPSU    ");
             if ((OPERAND & 0x1F) == 0x00)
             {   started = FALSE;
                 if ((OPERAND & 0x80) == 0x80) {                               strcat(mn, "S"  ); started = TRUE; }
@@ -2757,24 +2749,24 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
                 {   sprintf(ENDOF(en), ";Clear low bit of %s (%s)!\n",    flagname[NAME_SP].shorter[style], flagname[NAME_SP].longer[style]);
         }   }   }
     acase 0x75:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
             switch (OPERAND)
             {
-            case  0x01: strcat(       mn , "CLR      CARRY"); // or just CLRC
-            acase 0x02: strcat(       mn , "CLR      LOGICOMP");
-            acase 0x04: strcat(       mn , "CLR      OVERFLOW"); // or just CLRV
-            acase 0x08: strcat(       mn , "CLR      WITHCARRY");
-            acase 0x10: strcat(       mn , "CLR      BANK"); // BANK1 is acceptable as a synonym of BANK
-            acase 0x20: strcat(       mn , "CLR      HALFCARRY");
+            case  0x01: strcpy(       mn , "CLR      CARRY"); // or just CLRC
+            acase 0x02: strcpy(       mn , "CLR      LOGICOMP");
+            acase 0x04: strcpy(       mn , "CLR      OVERFLOW"); // or just CLRV
+            acase 0x08: strcpy(       mn , "CLR      WITHCARRY");
+            acase 0x10: strcpy(       mn , "CLR      BANK"); // BANK1 is acceptable as a synonym of BANK
+            acase 0x20: strcpy(       mn , "CLR      HALFCARRY");
             adefault:
                 if (style == STYLE_OLDCALM)
-                {       sprintf(ENDOF(mn), "BIC      L,#%s", v);
+                {       sprintf(mn, "BIC      L,#%s", v);
                 } else
-                {       sprintf(ENDOF(mn), "BIC      #%s,PSL", v);
+                {       sprintf(mn, "BIC      #%s,PSL", v);
             }   }
             if (style == STYLE_OLDCALM)
             {   if (OPERAND == 0xFF)                                                   strcpy( an, "L = 0;");
@@ -2786,14 +2778,14 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         acase STYLE_IEEE:
             switch (OPERAND)
             {
-            case  0x01: strcat(       mn , "CLRC");
-            acase 0x04: strcat(       mn , "CLRV");
-            adefault:   sprintf(ENDOF(mn), "AND    .L,#$FF-%s", v);
+            case  0x01: strcpy(       mn , "CLRC");
+            acase 0x04: strcpy(       mn , "CLRV");
+            adefault:   sprintf(mn, "AND    .L,#$FF-%s", v);
             }
             if (OPERAND == 0xFF)                                                       strcpy( an, ".L = 0;");
             else                                                                       sprintf(an, ".L &= ~(%s);", v);
         adefault:
-            strcat(mn, "CPSL    ");
+            strcpy(mn, "CPSL    ");
             if ((OPERAND & 0xC0) == 0x00)
             {   started = FALSE;
                 if ((OPERAND & 0x20) == 0x20) {                               strcat(mn, "IDC"); started = TRUE; }
@@ -2829,20 +2821,20 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
 
         ccmode = CCMODE_UNDEFINED;
     acase 0x76:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
             switch (OPERAND)
             {
-            case  0x20:   strcat(       mn , "SET      IOF"); // or just IOF
-            acase 0x40:   strcat(       mn , "SET      OUTPUT");
-            acase 0x80:   strcat(       mn , "SET      INPUT");
+            case  0x20:   strcpy(       mn , "SET      IOF"); // or just IOF
+            acase 0x40:   strcpy(       mn , "SET      OUTPUT");
+            acase 0x80:   strcpy(       mn , "SET      INPUT");
             adefault:     if (style == STYLE_OLDCALM)
-                          {    sprintf(ENDOF(mn), "OR       U,#%s", v);
+                          {    sprintf(mn, "OR       U,#%s", v);
                           } else
-                          {    sprintf(ENDOF(mn), "OR       #%s,PSU", v);
+                          {    sprintf(mn, "OR       #%s,PSU", v);
             }             }
             if (style == STYLE_OLDCALM)
             {   if (supercpu)                                                          sprintf(an, "U |= %s & %%01111111;", v_pse);
@@ -2854,13 +2846,13 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         acase STYLE_IEEE:
             switch (OPERAND)
             {
-            case 0x20:    strcat(       mn , "DI");
-            adefault:     sprintf(ENDOF(mn), "OR     .U,#%s", v);
+            case 0x20:    strcpy(       mn , "DI");
+            adefault:     sprintf(mn, "OR     .U,#%s", v);
             }
             if (supercpu)                                                              sprintf(an, "PSU |= %s & %%01111111;", v);
             else                                                                       sprintf(an, "PSU |= %s & %%01100111;", v);
         adefault:
-                          strcat(       mn, "PPSU    ");
+                          strcpy(       mn, "PPSU    ");
             if ((OPERAND & 0x1F) == 0x00)
             {   started = FALSE;
                 if ((OPERAND & 0x80) == 0x80) {                               strcat(mn, "S"  ); started = TRUE; }
@@ -2893,46 +2885,46 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
                 {   sprintf(ENDOF(en), ";Set low bit of %s (%s)!\n",    flagname[NAME_SP].shorter[style], flagname[NAME_SP].longer[style]); // SP
         }   }   }
     acase 0x77:
-        dec_to_hex(OPERAND);
+        dec_to_bin(OPERAND);
         switch (style)
         {
         case  STYLE_OLDCALM:
             switch (OPERAND)
             {
-            case  0x01:   strcat(       mn , "SET      CARRY"); // or just SETC
-            acase 0x02:   strcat(       mn , "SET      LOGICOMP");
-            acase 0x04:   strcat(       mn , "SET      OVERFLOW"); // or just SETV
-            acase 0x08:   strcat(       mn , "SET      WITHCARRY");
-            acase 0x10:   strcat(       mn , "SET      BANK"); // BANK1 is acceptable as a synonym of BANK
-            acase 0x20:   strcat(       mn , "SET      HALFCARRY");
-            adefault:     sprintf(ENDOF(mn), "OR       L,#%s", v);
+            case  0x01:   strcpy(       mn , "SET      CARRY"); // or just SETC
+            acase 0x02:   strcpy(       mn , "SET      LOGICOMP");
+            acase 0x04:   strcpy(       mn , "SET      OVERFLOW"); // or just SETV
+            acase 0x08:   strcpy(       mn , "SET      WITHCARRY");
+            acase 0x10:   strcpy(       mn , "SET      BANK"); // BANK1 is acceptable as a synonym of BANK
+            acase 0x20:   strcpy(       mn , "SET      HALFCARRY");
+            adefault:     sprintf(mn, "OR       L,#%s", v);
             }
             if (OPERAND == 0xFF)                                          strcpy( an, "L = $FF;");
             else                                                          sprintf(an, "L |= %s;" , v_pse);
         acase STYLE_NEWCALM:
             switch (OPERAND)
             {
-            case  0x01:   strcat(       mn , "SET      CARRY"); // or just SETC
-            acase 0x02:   strcat(       mn , "SET      LOGICOMP");
-            acase 0x04:   strcat(       mn , "SET      OVERFLOW"); // or just SETV
-            acase 0x08:   strcat(       mn , "SET      WITHCARRY");
-            acase 0x10:   strcat(       mn , "SET      BANK"); // BANK1 is acceptable as a synonym of BANK
-            acase 0x20:   strcat(       mn , "SET      HALFCARRY");
-            adefault:     sprintf(ENDOF(mn), "OR       #%s,PSL", v);
+            case  0x01:   strcpy(       mn , "SET      CARRY"); // or just SETC
+            acase 0x02:   strcpy(       mn , "SET      LOGICOMP");
+            acase 0x04:   strcpy(       mn , "SET      OVERFLOW"); // or just SETV
+            acase 0x08:   strcpy(       mn , "SET      WITHCARRY");
+            acase 0x10:   strcpy(       mn , "SET      BANK"); // BANK1 is acceptable as a synonym of BANK
+            acase 0x20:   strcpy(       mn , "SET      HALFCARRY");
+            adefault:     sprintf(mn, "OR       #%s,PSL", v);
             }
             if (OPERAND == 0xFF)                                          strcpy( an, "PSL = $FF;");
             else                                                          sprintf(an, "PSL |= %s;" , v_pse);
         acase STYLE_IEEE:
             switch (OPERAND)
             {
-            case  0x01:   strcat(       mn , "SETC");
-            acase 0x04:   strcat(       mn , "SETV");
-            adefault:     sprintf(ENDOF(mn), "OR     .L,#%s", v);
+            case  0x01:   strcpy(       mn , "SETC");
+            acase 0x04:   strcpy(       mn , "SETV");
+            adefault:     sprintf(mn, "OR     .L,#%s", v);
             }
             if (OPERAND == 0xFF)                                          strcpy( an, ".L = $FF;");
             else                                                          sprintf(an, ".L |= %s;" , v);
         adefault:
-                          strcat(       mn , "PPSL    ");
+                          strcpy(       mn , "PPSL    ");
             if ((OPERAND & 0xC0) == 0x00)
             {   started = FALSE;
                 if ((OPERAND & 0x20) == 0x20) {                               strcat(mn, "IDC"); started = TRUE; }
@@ -2974,10 +2966,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "CALL,%sNE %s"  , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "CALL,NE  %s,%s", reg, addressstring);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "CALLNZ %s,%s"  , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "BSNR,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "CALL,%sNE %s"  , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "CALL,NE  %s,%s", reg, addressstring);
+        acase STYLE_IEEE:    sprintf(mn, "CALLNZ %s,%s"  , reg, addressstring);
+        adefault:            sprintf(mn, "BSNR,%s %s"    , reg, addressstring);
         }
                                                                                        sprintf(an, "if (%s != 0) gosub %s;", reg, pseudostring);
     acase 0x7C:
@@ -2987,26 +2979,26 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_OLDCALM: sprintf(ENDOF(mn), "CALL,%sNE %s"  , reg, addressstring);
-        acase STYLE_NEWCALM: sprintf(ENDOF(mn), "CALL,NE  %s,%s", reg, addressstring);
-        acase STYLE_IEEE:    sprintf(ENDOF(mn), "CALLNZ %s,%s"  , reg, addressstring);
-        adefault:            sprintf(ENDOF(mn), "BSNA,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM: sprintf(mn, "CALL,%sNE %s"  , reg, addressstring);
+        acase STYLE_NEWCALM: sprintf(mn, "CALL,NE  %s,%s", reg, addressstring);
+        acase STYLE_IEEE:    sprintf(mn, "CALLNZ %s,%s"  , reg, addressstring);
+        adefault:            sprintf(mn, "BSNA,%s %s"    , reg, addressstring);
         }
                                                                                        sprintf(an, "if (%s != 0) gosub %s;", reg, pseudostring);
     acase 0x80:
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC) { strcat( mn , "ADDC     A,A");                          strcpy( an, "A += A;");   }
-            else              { strcat( mn , "ADD      A,A");                          strcpy( an, "A *= 2;");   }
+            if (psl & PSL_WC) { strcpy( mn , "ADDC     A,A");                          strcpy( an, "A += A;");   }
+            else              { strcpy( mn , "ADD      A,A");                          strcpy( an, "A *= 2;");   }
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC) { strcat( mn , "ADDC     r0,r0");                        strcpy( an, "r0 += r0;"); }
-            else              { strcat( mn , "ADD      r0,r0");                        strcpy( an, "r0 *= 2;");  }
+            if (psl & PSL_WC) { strcpy( mn , "ADDC     r0,r0");                        strcpy( an, "r0 += r0;"); }
+            else              { strcpy( mn , "ADD      r0,r0");                        strcpy( an, "r0 *= 2;");  }
         acase STYLE_IEEE:
-            if (psl & PSL_WC) { strcat( mn , "ADC    .0,.0");                          strcpy( an, ".0 += .0;"); }
-            else              { strcat( mn , "ADD    .0,.0");                          strcpy( an, ".0 *= 2;");  }
+            if (psl & PSL_WC) { strcpy( mn , "ADC    .0,.0");                          strcpy( an, ".0 += .0;"); }
+            else              { strcpy( mn , "ADD    .0,.0");                          strcpy( an, ".0 *= 2;");  }
         adefault:
-                                strcat( mn , "ADDZ    r0"  );
+                                strcpy( mn , "ADDZ    r0"  );
             if (psl & PSL_WC)                                                          strcpy( an, "r0 += r0;");
             else                                                                       strcpy( an, "r0 *= 2;");
         }
@@ -3017,19 +3009,19 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     A,%s", reg);
-            else              sprintf(ENDOF(mn), "ADD      A,%s", reg);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     A,%s", reg);
+            else              sprintf(mn, "ADD      A,%s", reg);
                                                                                        sprintf(an, "A += %s;"       , reg);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     %s,r0", reg);
-            else              sprintf(ENDOF(mn), "ADD      %s,r0", reg);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     %s,r0", reg);
+            else              sprintf(mn, "ADD      %s,r0", reg);
                                                                                        sprintf(an, "r0 += %s;"      , reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC   .0,%s" , reg);
-            else              sprintf(ENDOF(mn), "ADD    .0,%s" , reg);
+            if (psl & PSL_WC) sprintf(mn, "ADDC   .0,%s" , reg);
+            else              sprintf(mn, "ADD    .0,%s" , reg);
                                                                                        sprintf(an, ".0 += %s;"      , reg);
         adefault:
-                              sprintf(ENDOF(mn), "ADDZ    %s"   , reg);                sprintf(an, "r0 += %s;"      , reg);
+                              sprintf(mn, "ADDZ    %s"   , reg);                sprintf(an, "r0 += %s;"      , reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0x84:
@@ -3040,16 +3032,16 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case STYLE_OLDCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     %s,#%s", reg, v);
-            else              sprintf(ENDOF(mn), "ADD      %s,#%s", reg, v);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     %s,#%s", reg, v);
+            else              sprintf(mn, "ADD      %s,#%s", reg, v);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     #%s,%s", v, reg);
-            else              sprintf(ENDOF(mn), "ADD      #%s,%s", v, reg);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     #%s,%s", v, reg);
+            else              sprintf(mn, "ADD      #%s,%s", v, reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC   %s,#%s"  , reg, v);
-            else              sprintf(ENDOF(mn), "ADD    %s,#%s"  , reg, v);
+            if (psl & PSL_WC) sprintf(mn, "ADDC   %s,#%s"  , reg, v);
+            else              sprintf(mn, "ADD    %s,#%s"  , reg, v);
         adefault:
-                              sprintf(ENDOF(mn), "ADDI,%s %s"     , reg, v);
+                              sprintf(mn, "ADDI,%s %s"     , reg, v);
         }
         if (OPERAND == 1)                                                              sprintf(an, "%s++;"          , reg);
         else                                                                           sprintf(an, "%s += %s;"      , reg, v_pse);
@@ -3062,16 +3054,16 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     %s,%s", reg, addressstring);
-            else              sprintf(ENDOF(mn), "ADD      %s,%s", reg, addressstring);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     %s,%s", reg, addressstring);
+            else              sprintf(mn, "ADD      %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     %s,%s", addressstring, reg);
-            else              sprintf(ENDOF(mn), "ADD      %s,%s", addressstring, reg);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     %s,%s", addressstring, reg);
+            else              sprintf(mn, "ADD      %s,%s", addressstring, reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC   %s,%s"  , reg, addressstring);
-            else              sprintf(ENDOF(mn), "ADD    %s,%s"  , reg, addressstring);
+            if (psl & PSL_WC) sprintf(mn, "ADDC   %s,%s"  , reg, addressstring);
+            else              sprintf(mn, "ADD    %s,%s"  , reg, addressstring);
         adefault:
-                              sprintf(ENDOF(mn), "ADDR,%s %s"    , reg, addressstring);
+                              sprintf(mn, "ADDR,%s %s"    , reg, addressstring);
         }
                                                                                        sprintf(an, "%s += *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
@@ -3083,16 +3075,16 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     %s,%s", reg, addressstring);
-            else              sprintf(ENDOF(mn), "ADD      %s,%s", reg, addressstring);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     %s,%s", reg, addressstring);
+            else              sprintf(mn, "ADD      %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC     %s,%s", addressstring, reg);
-            else              sprintf(ENDOF(mn), "ADD      %s,%s", addressstring, reg);
+            if (psl & PSL_WC) sprintf(mn, "ADDC     %s,%s", addressstring, reg);
+            else              sprintf(mn, "ADD      %s,%s", addressstring, reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC) sprintf(ENDOF(mn), "ADDC   %s,%s"  , reg, addressstring);
-            else              sprintf(ENDOF(mn), "ADD    %s,%s"  , reg, addressstring);
+            if (psl & PSL_WC) sprintf(mn, "ADDC   %s,%s"  , reg, addressstring);
+            else              sprintf(mn, "ADD    %s,%s"  , reg, addressstring);
         adefault:
-                              sprintf(ENDOF(mn), "ADDA,%s %s"    , reg, addressstring);
+                              sprintf(mn, "ADDA,%s %s"    , reg, addressstring);
         }
                                                                                        sprintf(an, "%s += *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
@@ -3100,19 +3092,19 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case STYLE_OLDCALM:
-                              strcat(       mn , "LOAD     U,A");
+                              strcpy(       mn , "LOAD     U,A");
             if (supercpu)                                                              strcpy(an, "U &= %10000000; U |= (A & %01111111);");
             else                                                                       strcpy(an, "U &= %10000000; U |= (A & %01100111);");
         acase STYLE_NEWCALM:
-                              strcat(       mn , "MOVE     r0,PSU");
+                              strcpy(       mn , "MOVE     r0,PSU");
             if (supercpu)                                                              strcpy(an, "PSU &= %10000000; PSU |= (r0 & %01111111);");
             else                                                                       strcpy(an, "PSU &= %10000000; PSU |= (r0 & %01100111);");
         acase STYLE_IEEE:
-                              strcat(       mn , "MOV    .U,.0");
+                              strcpy(       mn , "MOV    .U,.0");
             if (supercpu)                                                              strcpy(an, ".U &= %10000000; .U |= (.0 & %01111111);");
             else                                                                       strcpy(an, ".U &= %10000000; .U |= (.0 & %01100111);");
         adefault:
-                              strcat(       mn , "LPSU"); // or "LPSU    r0"
+                              strcpy(       mn , "LPSU"); // or "LPSU    r0"
             if (supercpu)                                                              strcpy(an, "PSU &= %10000000; PSU |= (r0 & %01111111);");
             else                                                                       strcpy(an, "PSU &= %10000000; PSU |= (r0 & %01100111);");
         }
@@ -3131,10 +3123,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     acase 0x93:
         switch (style)
         {
-        case  STYLE_OLDCALM:  strcat(       mn , "LOAD     L,A");                      strcpy(an, "L = A;"   );
-        acase STYLE_NEWCALM:  strcat(       mn , "MOVE     r0,PSL");                   strcpy(an, "PSL = r0;");
-        acase STYLE_IEEE:     strcat(       mn , "MOV    .L,.0");                      strcpy(an, ".L = .0;" );
-        adefault:             strcat(       mn , "LPSL"); /* or "LPSL    r0" */        strcpy(an, "PSL = r0;");
+        case  STYLE_OLDCALM:  strcpy(       mn , "LOAD     L,A");                      strcpy(an, "L = A;"   );
+        acase STYLE_NEWCALM:  strcpy(       mn , "MOVE     r0,PSL");                   strcpy(an, "PSL = r0;");
+        acase STYLE_IEEE:     strcpy(       mn , "MOV    .L,.0");                      strcpy(an, ".L = .0;" );
+        adefault:             strcpy(       mn , "LPSL"); /* or "LPSL    r0" */        strcpy(an, "PSL = r0;");
         }
 
         if (!disassembling)
@@ -3163,10 +3155,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0x97:
         switch (style)
         {
-        case  STYLE_OLDCALM:         sprintf(ENDOF(mn), "DA       %s", reg);
-        acase STYLE_NEWCALM:         sprintf(ENDOF(mn), "DAA      %s", reg);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "ADJ    %s"  , reg);
-        adefault:                    sprintf(ENDOF(mn), "DAR,%s"     , reg);
+        case  STYLE_OLDCALM:         sprintf(mn, "DA       %s", reg);
+        acase STYLE_NEWCALM:         sprintf(mn, "DAA      %s", reg);
+        acase STYLE_IEEE:            sprintf(mn, "ADJ    %s"  , reg);
+        adefault:                    sprintf(mn, "DAR,%s"     , reg);
         }
                                                                                        sprintf(an, "%s = BCD(%s);", reg, reg);
         ccmode = CCMODE_UNDEFINED;
@@ -3174,54 +3166,54 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      sprintf(ENDOF(mn), "BCFR,eq %s" , addressstring);
+        case  STYLE_SIGNETICS1:      sprintf(mn, "BCFR,eq %s" , addressstring);
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  sprintf(ENDOF(mn), "BCFR,eq %s" , addressstring);
-            acase CCMODE_COMPARE:    sprintf(ENDOF(mn), "BNER    %s" , addressstring); // Branch if Not Equal, Relative
-            acase CCMODE_ARITHMETIC: sprintf(ENDOF(mn), "BNZR    %s" , addressstring); // Branch if Not Zero, Relative
-            acase CCMODE_TEST:       sprintf(ENDOF(mn), "BCFR,eq %s" , addressstring);
+            case  CCMODE_UNDEFINED:  sprintf(mn, "BCFR,eq %s" , addressstring);
+            acase CCMODE_COMPARE:    sprintf(mn, "BNER    %s" , addressstring); // Branch if Not Equal, Relative
+            acase CCMODE_ARITHMETIC: sprintf(mn, "BNZR    %s" , addressstring); // Branch if Not Zero, Relative
+            acase CCMODE_TEST:       sprintf(mn, "BCFR,eq %s" , addressstring);
             }
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP,NE  %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BNE    %s"  , addressstring);
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP,NE  %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BNE    %s"  , addressstring);
         }
                                                                                        sprintf(an, "%sgoto %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0x99:
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      sprintf(ENDOF(mn), "BCFR,gt %s" , addressstring);
+        case  STYLE_SIGNETICS1:      sprintf(mn, "BCFR,gt %s" , addressstring);
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  sprintf(ENDOF(mn), "BCFR,gt %s" , addressstring);
-            acase CCMODE_COMPARE:    sprintf(ENDOF(mn), "BNHR    %s" , addressstring); // Branch if Not Higher, Relative
-            acase CCMODE_ARITHMETIC: sprintf(ENDOF(mn), "BNPR    %s" , addressstring); // Branch if Not Positive, Relative
-            acase CCMODE_TEST:       sprintf(ENDOF(mn), "BCFR,gt %s" , addressstring); // we should warn the user about this!
+            case  CCMODE_UNDEFINED:  sprintf(mn, "BCFR,gt %s" , addressstring);
+            acase CCMODE_COMPARE:    sprintf(mn, "BNHR    %s" , addressstring); // Branch if Not Higher, Relative
+            acase CCMODE_ARITHMETIC: sprintf(mn, "BNPR    %s" , addressstring); // Branch if Not Positive, Relative
+            acase CCMODE_TEST:       sprintf(mn, "BCFR,gt %s" , addressstring); // we should warn the user about this!
             }
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP,LE  %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BLE    %s"  , addressstring);
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP,LE  %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BLE    %s"  , addressstring);
         }
                                                                                        sprintf(an, "%sgoto %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0x9A:
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      sprintf(ENDOF(mn), "BCFR,lt %s" , addressstring);
+        case  STYLE_SIGNETICS1:      sprintf(mn, "BCFR,lt %s" , addressstring);
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  sprintf(ENDOF(mn), "BCFR,lt %s" , addressstring);
-            acase CCMODE_COMPARE:    sprintf(ENDOF(mn), "BNLR    %s" , addressstring); // Branch if Not Lower, Relative
-            acase CCMODE_ARITHMETIC: sprintf(ENDOF(mn), "BNMR    %s" , addressstring); // Branch if Not Minus, Relative
-            acase CCMODE_TEST:       sprintf(ENDOF(mn), "BCFR,lt %s" , addressstring);
+            case  CCMODE_UNDEFINED:  sprintf(mn, "BCFR,lt %s" , addressstring);
+            acase CCMODE_COMPARE:    sprintf(mn, "BNLR    %s" , addressstring); // Branch if Not Lower, Relative
+            acase CCMODE_ARITHMETIC: sprintf(mn, "BNMR    %s" , addressstring); // Branch if Not Minus, Relative
+            acase CCMODE_TEST:       sprintf(mn, "BCFR,lt %s" , addressstring);
             }
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP,GE  %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BGE    %s"  , addressstring);
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP,GE  %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BGE    %s"  , addressstring);
         }
                                                                                        sprintf(an, "%sgoto %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0x9B:
@@ -3229,89 +3221,89 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP     %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BR     %s"  , addressstring);
-        adefault:                    sprintf(ENDOF(mn), "ZBRR    %s" , addressstring); // or "ZBRR,un "
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP     %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BR     %s"  , addressstring);
+        adefault:                    sprintf(mn, "ZBRR    %s" , addressstring); // or "ZBRR,un "
         }
                                                                                        sprintf(an, "goto %s;"  , pseudostring);
     acase 0x9C:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      sprintf(ENDOF(mn), "BCFA,eq %s" , addressstring);
+        case  STYLE_SIGNETICS1:      sprintf(mn, "BCFA,eq %s" , addressstring);
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  sprintf(ENDOF(mn), "BCFA,eq %s" , addressstring);
-            acase CCMODE_COMPARE:    sprintf(ENDOF(mn), "BNEA    %s" , addressstring); // Branch if Not Equal, Absolute
-            acase CCMODE_ARITHMETIC: sprintf(ENDOF(mn), "BNZA    %s" , addressstring); // Branch if Not Zero, Absolute
-            acase CCMODE_TEST:       sprintf(ENDOF(mn), "BCFA,eq %s" , addressstring);
+            case  CCMODE_UNDEFINED:  sprintf(mn, "BCFA,eq %s" , addressstring);
+            acase CCMODE_COMPARE:    sprintf(mn, "BNEA    %s" , addressstring); // Branch if Not Equal, Absolute
+            acase CCMODE_ARITHMETIC: sprintf(mn, "BNZA    %s" , addressstring); // Branch if Not Zero, Absolute
+            acase CCMODE_TEST:       sprintf(mn, "BCFA,eq %s" , addressstring);
             }
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP,NE  %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BNE    %s"  , addressstring);
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP,NE  %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BNE    %s"  , addressstring);
         }
                                                                                        sprintf(an, "%sgoto %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0x9D:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      sprintf(ENDOF(mn), "BCFA,gt %s" , addressstring);
+        case  STYLE_SIGNETICS1:      sprintf(mn, "BCFA,gt %s" , addressstring);
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  sprintf(ENDOF(mn), "BCFA,gt %s" , addressstring);
-            acase CCMODE_COMPARE:    sprintf(ENDOF(mn), "BNHA    %s" , addressstring); // Branch if Not Higher, Absolute
-            acase CCMODE_ARITHMETIC: sprintf(ENDOF(mn), "BNPA    %s" , addressstring); // Branch if Not Positive, Absolute
-            acase CCMODE_TEST:       sprintf(ENDOF(mn), "BCFA,gt %s" , addressstring); // we should warn the user about this!
+            case  CCMODE_UNDEFINED:  sprintf(mn, "BCFA,gt %s" , addressstring);
+            acase CCMODE_COMPARE:    sprintf(mn, "BNHA    %s" , addressstring); // Branch if Not Higher, Absolute
+            acase CCMODE_ARITHMETIC: sprintf(mn, "BNPA    %s" , addressstring); // Branch if Not Positive, Absolute
+            acase CCMODE_TEST:       sprintf(mn, "BCFA,gt %s" , addressstring); // we should warn the user about this!
             }
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP,LE  %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BLE    %s"  , addressstring);
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP,LE  %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BLE    %s"  , addressstring);
         }
                                                                                        sprintf(an, "%sgoto %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0x9E:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
-        case  STYLE_SIGNETICS1:      sprintf(ENDOF(mn), "BCFA,lt %s" , addressstring);
+        case  STYLE_SIGNETICS1:      sprintf(mn, "BCFA,lt %s" , addressstring);
         acase STYLE_SIGNETICS2:
             switch (ccmode)
             {
-            case  CCMODE_UNDEFINED:  sprintf(ENDOF(mn), "BCFA,lt %s" , addressstring);
-            acase CCMODE_COMPARE:    sprintf(ENDOF(mn), "BNLA    %s" , addressstring); // Branch if Not Lower, Absolute
-            acase CCMODE_ARITHMETIC: sprintf(ENDOF(mn), "BNMA    %s" , addressstring); // Branch if Not Minus, Absolute
-            acase CCMODE_TEST:       sprintf(ENDOF(mn), "BCFA,lt %s" , addressstring);
+            case  CCMODE_UNDEFINED:  sprintf(mn, "BCFA,lt %s" , addressstring);
+            acase CCMODE_COMPARE:    sprintf(mn, "BNLA    %s" , addressstring); // Branch if Not Lower, Absolute
+            acase CCMODE_ARITHMETIC: sprintf(mn, "BNMA    %s" , addressstring); // Branch if Not Minus, Absolute
+            acase CCMODE_TEST:       sprintf(mn, "BCFA,lt %s" , addressstring);
             }
         acase STYLE_OLDCALM:
-        case  STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP,GE  %s", addressstring);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BGE    %s"  , addressstring);
+        case  STYLE_NEWCALM:         sprintf(mn, "JUMP,GE  %s", addressstring);
+        acase STYLE_IEEE:            sprintf(mn, "BGE    %s"  , addressstring);
         }
                                                                                        sprintf(an, "%sgoto %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0x9F:
         BRA_EA_TRACE(FALSE);
         switch (style)
         {
-        case  STYLE_OLDCALM:         sprintf(ENDOF(mn), "JUMP     (%s)+%s", reg, addressstring);
-        acase STYLE_NEWCALM:         sprintf(ENDOF(mn), "JUMP     U^{%s}+%s", reg, &addressstring[2]);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "BR     %s(%s)"   , addressstring, reg);
-        adefault:                    sprintf(ENDOF(mn), "BXA,%s  %s"      , reg, addressstring);
+        case  STYLE_OLDCALM:         sprintf(mn, "JUMP     (%s)+%s", reg, addressstring);
+        acase STYLE_NEWCALM:         sprintf(mn, "JUMP     U^{%s}+%s", reg, &addressstring[2]);
+        acase STYLE_IEEE:            sprintf(mn, "BR     %s(%s)"   , addressstring, reg);
+        adefault:                    sprintf(mn, "BXA,%s  %s"      , reg, addressstring);
         }
                                                                                        sprintf(an, "goto %s + %s;", pseudostring, reg);
     acase 0xA0:
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC)      { strcat(       mn , "SUBB     A,A");               strcpy( an, "A -= A;"  ); }
-            else                   { strcat(       mn , "SUB      A,A");               strcpy( an, "A = 0;"   ); }
+            if (psl & PSL_WC)      { strcpy(       mn , "SUBB     A,A");               strcpy( an, "A -= A;"  ); }
+            else                   { strcpy(       mn , "SUB      A,A");               strcpy( an, "A = 0;"   ); }
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC)      { strcat(       mn , "SUBC     r0,r0");             strcpy( an, "r0 -= r0;"); }
-            else                   { strcat(       mn , "SUB      r0,r0");             strcpy( an, "r0 = 0;"  ); }
+            if (psl & PSL_WC)      { strcpy(       mn , "SUBC     r0,r0");             strcpy( an, "r0 -= r0;"); }
+            else                   { strcpy(       mn , "SUB      r0,r0");             strcpy( an, "r0 = 0;"  ); }
         acase STYLE_IEEE:
-            if (psl & PSL_WC)      { strcat(       mn , "SUBC   .0,.0");               strcpy( an, ".0 -= .0;"); }
-            else                   { strcat(       mn , "SUB    .0,.0");               strcpy( an, ".0 = 0;"  ); }
+            if (psl & PSL_WC)      { strcpy(       mn , "SUBC   .0,.0");               strcpy( an, ".0 -= .0;"); }
+            else                   { strcpy(       mn , "SUB    .0,.0");               strcpy( an, ".0 = 0;"  ); }
         adefault:
-                                     strcat(       mn , "SUBZ    r0"  );
+                                     strcpy(       mn , "SUBZ    r0"  );
             if (psl & PSL_WC)                                                          strcpy( an, "r0 -= r0;");
             else                                                                       strcpy( an, "r0 = 0;"  );
         }
@@ -3322,19 +3314,19 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBB     A,%s", reg);
-            else                     sprintf(ENDOF(mn), "SUB      A,%s", reg);
+            if (psl & PSL_WC)        sprintf(mn, "SUBB     A,%s", reg);
+            else                     sprintf(mn, "SUB      A,%s", reg);
                                                                                        sprintf(an, "A -= %s;"       , reg);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC     %s.r0", reg);
-            else                     sprintf(ENDOF(mn), "SUB      %s,r0", reg);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC     %s.r0", reg);
+            else                     sprintf(mn, "SUB      %s,r0", reg);
                                                                                        sprintf(an, "r0 -= %s;"      , reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC   .0,%s" , reg);
-            else                     sprintf(ENDOF(mn), "SUB    .0,%s" , reg);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC   .0,%s" , reg);
+            else                     sprintf(mn, "SUB    .0,%s" , reg);
                                                                                        sprintf(an, ".0 -= %s;"      , reg);
         adefault:
-                                     sprintf(ENDOF(mn), "SUBZ    %s"   , reg);         sprintf(an, "r0 -= %s;"      , reg);
+                                     sprintf(mn, "SUBZ    %s"   , reg);         sprintf(an, "r0 -= %s;"      , reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0xA4:
@@ -3345,16 +3337,16 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBB     %s,#%s", reg, v);
-            else                     sprintf(ENDOF(mn), "SUB      %s,#%s", reg, v);
+            if (psl & PSL_WC)        sprintf(mn, "SUBB     %s,#%s", reg, v);
+            else                     sprintf(mn, "SUB      %s,#%s", reg, v);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC     #%s,%s", v, reg);
-            else                     sprintf(ENDOF(mn), "SUB      #%s,%s", v, reg);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC     #%s,%s", v, reg);
+            else                     sprintf(mn, "SUB      #%s,%s", v, reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC   %s,#%s"  , reg, v);
-            else                     sprintf(ENDOF(mn), "SUB    %s,#%s"  , reg, v);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC   %s,#%s"  , reg, v);
+            else                     sprintf(mn, "SUB    %s,#%s"  , reg, v);
         adefault:
-                                     sprintf(ENDOF(mn), "SUBI,%s %s"     , reg, v);
+                                     sprintf(mn, "SUBI,%s %s"     , reg, v);
         }
         if (OPERAND == 1)                                                              sprintf(an, "%s--;"          , reg);
         else                                                                           sprintf(an, "%s -= %s;"      , reg, v_pse);
@@ -3367,16 +3359,16 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBB     %s,%s", reg, addressstring);
-            else                     sprintf(ENDOF(mn), "SUB      %s,%s", reg, addressstring);
+            if (psl & PSL_WC)        sprintf(mn, "SUBB     %s,%s", reg, addressstring);
+            else                     sprintf(mn, "SUB      %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC     %s,%s", addressstring, reg);
-            else                     sprintf(ENDOF(mn), "SUB      %s,%s", addressstring, reg);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC     %s,%s", addressstring, reg);
+            else                     sprintf(mn, "SUB      %s,%s", addressstring, reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC   %s,%s"  , reg, addressstring);
-            else                     sprintf(ENDOF(mn), "SUB    %s,%s"  , reg, addressstring);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC   %s,%s"  , reg, addressstring);
+            else                     sprintf(mn, "SUB    %s,%s"  , reg, addressstring);
         adefault:
-                                     sprintf(ENDOF(mn), "SUBR,%s %s"    , reg, addressstring);
+                                     sprintf(mn, "SUBR,%s %s"    , reg, addressstring);
         }                                                                              sprintf(an, "%s -= *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
     acase 0xAC:
@@ -3387,16 +3379,16 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_NEWCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBB     %s,%s", reg, addressstring);
-            else                     sprintf(ENDOF(mn), "SUB      %s,%s", reg, addressstring);
+            if (psl & PSL_WC)        sprintf(mn, "SUBB     %s,%s", reg, addressstring);
+            else                     sprintf(mn, "SUB      %s,%s", reg, addressstring);
         acase STYLE_OLDCALM:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC     %s,%s", addressstring, reg);
-            else                     sprintf(ENDOF(mn), "SUB      %s,%s", addressstring, reg);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC     %s,%s", addressstring, reg);
+            else                     sprintf(mn, "SUB      %s,%s", addressstring, reg);
         acase STYLE_IEEE:
-            if (psl & PSL_WC)        sprintf(ENDOF(mn), "SUBC   %s,%s"  , reg, addressstring);
-            else                     sprintf(ENDOF(mn), "SUB    %s,%s"  , reg, addressstring);
+            if (psl & PSL_WC)        sprintf(mn, "SUBC   %s,%s"  , reg, addressstring);
+            else                     sprintf(mn, "SUB    %s,%s"  , reg, addressstring);
         adefault:
-                                     sprintf(ENDOF(mn), "SUBA,%s %s"    , reg, addressstring);
+                                     sprintf(mn, "SUBA,%s %s"    , reg, addressstring);
         }                                                                              sprintf(an, "%s -= *(%s);"   , reg, pseudostring);
         ccmode = CCMODE_ARITHMETIC;
     acase 0xB0:
@@ -3405,33 +3397,32 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0xB3:
         switch (style)
         {
-        case  STYLE_OLDCALM:         sprintf(ENDOF(mn), "LOAD     $CTRL,%s", reg);
-        acase STYLE_NEWCALM:         sprintf(ENDOF(mn), "MOVE     %s,$CTRL", reg);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "OUT    %s,CTRL"   , reg);
-        adefault:                    sprintf(ENDOF(mn), "WRTC,%s"          , reg);
+        case  STYLE_OLDCALM:         sprintf(mn, "LOAD     $CTRL,%s", reg);
+        acase STYLE_NEWCALM:         sprintf(mn, "MOVE     %s,$CTRL", reg);
+        acase STYLE_IEEE:            sprintf(mn, "OUT    %s,CTRL"   , reg);
+        adefault:                    sprintf(mn, "WRTC,%s"          , reg);
         }                                                                              sprintf(an, "IOPORT(CTRL) = %s;", reg);
     acase 0xB4:
         dec_to_bin(OPERAND);
-        dec_to_hex(OPERAND);
         switch (style)
         {
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
             switch (OPERAND)
             {
-            case  0x20:              strcat(       mn , "TEST     IOF");
-            acase 0x40:              strcat(       mn , "TEST     OUTPUT");
-            acase 0x80:              strcat(       mn , "TEST     INPUT");
+            case  0x20:              strcpy( mn, "TEST     IOF");
+            acase 0x40:              strcpy( mn, "TEST     OUTPUT");
+            acase 0x80:              strcpy( mn, "TEST     INPUT");
             adefault:                if (style == STYLE_OLDCALM)
-                                     {   sprintf(ENDOF(mn), "TEST     U,#%s", v);
+                                     {   sprintf(mn, "TEST     U,#%s", v);
                                      } else
-                                     {   sprintf(ENDOF(mn), "TEST     PSU:#%s", v);
+                                     {   sprintf(mn, "TEST     PSU:#%s", v);
             }                        }
-            if (style == STYLE_OLDCALM)                                                sprintf(an, "CC = (U & %s == %s) ? EQ : LT;", v_bin, v_bin);
-            else                                                                       sprintf(an, "CC = (PSU & %s == %s) ? EQ : LT;", v_bin, v_bin);
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "TEST   .U,#%s", v);           sprintf(an, ".CC = (.U & %s == %s) ? EQ : LT;", v_bin, v_bin);
+            if (style == STYLE_OLDCALM)                                                sprintf(an, "CC = (U & %s == %s) ? EQ : LT;"  , v_pse, v_pse);
+            else                                                                       sprintf(an, "CC = (PSU & %s == %s) ? EQ : LT;", v_pse, v_pse);
+        acase STYLE_IEEE:            sprintf(mn, "TEST   .U,#%s", v);                  sprintf(an, ".CC = (.U & %s == %s) ? EQ : LT;", v_pse, v_pse);
         adefault:
-            strcat(mn, "TPSU    ");
+            strcpy(mn, "TPSU    ");
             if ((OPERAND & 0x1F) == 0x00)
             {   started = FALSE;
                 if ((OPERAND & 0x80) == 0x80) {                               strcat(mn, "S"  ); started = TRUE; }
@@ -3439,7 +3430,7 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
                 if ((OPERAND & 0x20) == 0x20) { if (started) strcat(mn, "+"); strcat(mn, "II" );                 }
             } else
             {                        strcat(       mn , v);
-            }                                                                          sprintf(an, "CC = (PSU & %s == %s) ? EQ : LT;", v_bin, v_bin);
+            }                                                                          sprintf(an, "CC = (PSU & %s == %s) ? EQ : LT;", v_pse, v_pse);
         }
 
         if (OPERAND & 0x80) sprintf(ENDOF(en), ";Test %s (%s) bit\n", flagname[NAME_S ].shorter[style], flagname[NAME_S ].longer[style]);
@@ -3466,33 +3457,32 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ccmode = CCMODE_TEST;
     acase 0xB5:
         dec_to_bin(OPERAND);
-        dec_to_hex(OPERAND);
         switch (style)
         {
         case STYLE_OLDCALM:
         case STYLE_NEWCALM:
             switch (OPERAND)
             {
-            case  0x01:                     strcat(mn , "TEST     CARRY");
-            acase 0x02:                     strcat(mn , "TEST     LOGICOMP");
-            acase 0x04:                     strcat(mn , "TEST     OVERFLOW");
-            acase 0x08:                     strcat(mn , "TEST     WITHCARRY");
-            acase 0x10:                     strcat(mn , "TEST     BANK"); // BANK1 is acceptable as a synonym of BANK
-            acase 0x20:                     strcat(mn , "TEST     HALFCARRY");
+            case  0x01:              strcpy( mn, "TEST     CARRY");
+            acase 0x02:              strcpy( mn, "TEST     LOGICOMP");
+            acase 0x04:              strcpy( mn, "TEST     OVERFLOW");
+            acase 0x08:              strcpy( mn, "TEST     WITHCARRY");
+            acase 0x10:              strcpy( mn, "TEST     BANK"); // BANK1 is acceptable as a synonym of BANK
+            acase 0x20:              strcpy( mn, "TEST     HALFCARRY");
             adefault:
                 if (style == STYLE_OLDCALM)
-                {                    sprintf(ENDOF(mn), "TEST     L,#%s", v);
+                {                    sprintf(mn, "TEST     L,#%s", v);
                 } else
-                {                    sprintf(ENDOF(mn), "TEST     PSL:#%s", v);
+                {                    sprintf(mn, "TEST     PSL:#%s", v);
             }   }
             if (style == STYLE_OLDCALM)
-            {                                                                                  sprintf(an, "CC = (L & %s == %s) ? EQ : LT;", v_bin, v_bin);
+            {                                                                                  sprintf(an, "CC = (L & %s == %s) ? EQ : LT;", v_pse, v_pse);
             } else
-            {                                                                                  sprintf(an, "CC = (PSL & %s == %s) ? EQ : LT;", v_bin, v_bin);
+            {                                                                                  sprintf(an, "CC = (PSL & %s == %s) ? EQ : LT;", v_pse, v_pse);
             }
-        acase STYLE_IEEE:            sprintf(ENDOF(mn), "TEST   .U,#%s", v);                   sprintf(an, ".CC = (.U & %s == %s) ? EQ : LT;", v_bin, v_bin);
+        acase STYLE_IEEE:            sprintf(mn, "TEST   .U,#%s", v);                          sprintf(an, ".CC = (.U & %s == %s) ? EQ : LT;", v_pse, v_pse);
         adefault:
-            strcat(mn, "TPSL    ");
+            strcpy(mn, "TPSL    ");
             if ((OPERAND & 0xC0) == 0x00)
             {   started = FALSE;
                 if ((OPERAND & 0x20) == 0x20) {                               strcat(mn, "IDC"); started = TRUE; }
@@ -3502,8 +3492,8 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
                 if ((OPERAND & 0x02) == 0x02) { if (started) strcat(mn, "+"); strcat(mn, "COM"); started = TRUE; }
                 if ((OPERAND & 0x01) == 0x01) { if (started) strcat(mn, "+"); strcat(mn, "C"  );                 }
             } else
-            {                               strcat(mn , v);
-            }                                                                                  sprintf(an, "CC = (PSL & %s == %s) ? EQ : LT;", v_bin, v_bin);
+            {                        strcat(mn , v);
+            }                                                                                  sprintf(an, "CC = (PSL & %s == %s) ? EQ : LT;", v_pse, v_pse);
         }
 
         if (OPERAND & 0xC0)
@@ -3524,83 +3514,83 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL,NE  %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALLNE %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "BSFR,EQ %s" , addressstring);
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL,NE  %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALLNE %s"  , addressstring);
+        adefault:             sprintf(mn, "BSFR,EQ %s" , addressstring);
         }                                                                                 sprintf(an, "%sgosub %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0xB9:
         REL_EA_TRACE();
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL,LE  %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALLLE %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "BSFR,GT %s" , addressstring);
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL,LE  %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALLLE %s"  , addressstring);
+        adefault:             sprintf(mn, "BSFR,GT %s" , addressstring);
         }                                                                                 sprintf(an, "%sgosub %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0xBA:
         REL_EA_TRACE();
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL,GE  %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALLGE %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "BSFR,LT %s" , addressstring);
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL,GE  %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALLGE %s"  , addressstring);
+        adefault:             sprintf(mn, "BSFR,LT %s" , addressstring);
         }                                                                                 sprintf(an, "%sgosub %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0xBB:
         ZERO_EA_TRACE(TRUE);
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL     %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALL   %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "ZBSR    %s" , addressstring); // or "ZBSR,un "
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL     %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALL   %s"  , addressstring);
+        adefault:             sprintf(mn, "ZBSR    %s" , addressstring); // or "ZBSR,un "
         }                                                                                 sprintf(an, "gosub %s;"  , pseudostring);
     acase 0xBC:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL,NE  %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALLNE %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "BSFA,EQ %s" , addressstring);
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL,NE  %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALLNE %s"  , addressstring);
+        adefault:             sprintf(mn, "BSFA,EQ %s" , addressstring);
         }                                                                                 sprintf(an, "%sgosub %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0xBD:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL,LE  %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALLLE %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "BSFA,GT %s" , addressstring);
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL,LE  %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALLLE %s"  , addressstring);
+        adefault:             sprintf(mn, "BSFA,GT %s" , addressstring);
         }                                                                                 sprintf(an, "%sgosub %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0xBE:
         BRA_EA_TRACE(TRUE);
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL,GE  %s", addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALLGE %s"  , addressstring);
-        adefault:             sprintf(ENDOF(mn), "BSFA,LT %s" , addressstring);
+        case  STYLE_NEWCALM:  sprintf(mn, "CALL,GE  %s", addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "CALLGE %s"  , addressstring);
+        adefault:             sprintf(mn, "BSFA,LT %s" , addressstring);
         }                                                                                 sprintf(an, "%sgosub %s;", ccfalse[style][BRANCHCODE], pseudostring);
     acase 0xBF:
         BRA_EA_TRACE(FALSE);
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "CALL     (%s)+%s", reg, addressstring);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "CALL     U^{%s}+%s", reg, &addressstring[2]);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CALL   %s(%s)"   , addressstring, reg);
-        adefault:             sprintf(ENDOF(mn), "BSXA,%s %s"      , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "CALL     (%s)+%s", reg, addressstring);
+        acase STYLE_NEWCALM:  sprintf(mn, "CALL     U^{%s}+%s", reg, &addressstring[2]);
+        acase STYLE_IEEE:     sprintf(mn, "CALL   %s(%s)"   , addressstring, reg);
+        adefault:             sprintf(mn, "BSXA,%s %s"      , reg, addressstring);
         }                                                                                 sprintf(an, "gosub %s + %s;", pseudostring, reg);
-    acase 0xC0:               strcat(       mn , "NOP");                                  strcpy( an, ";");
+    acase 0xC0:               strcpy( mn, "NOP");                                         strcpy( an, ";");
     acase 0xC1:
     case 0xC2:
     case 0xC3:
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     %s,A" , reg);                  sprintf(an, "%s = A;" , reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     r0,%s", reg);                  sprintf(an, "%s = r0;", reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "MOV    %s,.0"  , reg);                  sprintf(an, "%s = .0;", reg);
-        adefault:             sprintf(ENDOF(mn), "STRZ    %s"    , reg);                  sprintf(an, "%s = r0;", reg);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     %s,A" , reg);                  sprintf(an, "%s = A;" , reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     r0,%s", reg);                  sprintf(an, "%s = r0;", reg);
+        acase STYLE_IEEE:     sprintf(mn, "MOV    %s,.0"  , reg);                  sprintf(an, "%s = .0;", reg);
+        adefault:             sprintf(mn, "STRZ    %s"    , reg);                  sprintf(an, "%s = r0;", reg);
         }
         ccmode = CCMODE_ARITHMETIC;
     acase 0xC8:
@@ -3610,10 +3600,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     %s,%s", addressstring, reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,%s", reg, addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "ST     %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "STRR,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     %s,%s", addressstring, reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,%s", reg, addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "ST     %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "STRR,%s %s"    , reg, addressstring);
         }                                                                                 sprintf(an, "*(%s) = %s;", pseudostring, reg);
     acase 0xCC:
     case 0xCD:
@@ -3622,10 +3612,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ABS_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     %s,%s", addressstring, reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,%s", reg, addressstring);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "ST     %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "STRA,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     %s,%s", addressstring, reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,%s", reg, addressstring);
+        acase STYLE_IEEE:     sprintf(mn, "ST     %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "STRA,%s %s"    , reg, addressstring);
         }                                                                                 sprintf(an, "*(%s) = %s;", pseudostring, reg);
     acase 0xD0:
     case 0xD1:
@@ -3637,20 +3627,20 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         case STYLE_NEWCALM:
             if (psl & PSL_WC)
             {   if (psl & PSL_C)
-                {             sprintf(ENDOF(mn), "RLC      %s", reg);
+                {             sprintf(mn, "RLC      %s", reg);
                 } else
-                {             sprintf(ENDOF(mn), "SL       %s", reg); // or ASL
+                {             sprintf(mn, "SL       %s", reg); // or ASL
             }   }
-            else              sprintf(ENDOF(mn), "RL       %s", reg);
+            else              sprintf(mn, "RL       %s", reg);
         acase STYLE_IEEE:
             if (psl & PSL_WC)
             {   if (psl & PSL_C)
-                {             sprintf(ENDOF(mn), "ROLC   %s"  , reg);
+                {             sprintf(mn, "ROLC   %s"  , reg);
                 } else
-                {             sprintf(ENDOF(mn), "SHL    %s"  , reg); // or SHLA
+                {             sprintf(mn, "SHL    %s"  , reg); // or SHLA
             }   }
-            else              sprintf(ENDOF(mn), "ROL    %s"  , reg);
-        adefault:             sprintf(ENDOF(mn), "RRL,%s"     , reg);
+            else              sprintf(mn, "ROL    %s"  , reg);
+        adefault:             sprintf(mn, "RRL,%s"     , reg);
         }                                                                                 sprintf(an, "%s <<= 1;", reg);
         ccmode = CCMODE_ARITHMETIC;
     acase 0xD4:
@@ -3660,10 +3650,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         dec_to_hex(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     $%s,%s", v, reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,$%s", reg, v);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "OUT    %s,%s"   , reg, v);
-        adefault:             sprintf(ENDOF(mn), "WRTE,%s %s"     , reg, v);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     $%s,%s", v, reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,$%s", reg, v);
+        acase STYLE_IEEE:     sprintf(mn, "OUT    %s,%s"   , reg, v);
+        adefault:             sprintf(mn, "WRTE,%s %s"     , reg, v);
         }                                                                                 sprintf(an, "IOPORT(%s) = %s;", v_pse, reg);
     acase 0xD8:
     case 0xD9:
@@ -3673,15 +3663,15 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (OPERAND == 0) sprintf(ENDOF(mn), "INC      %s"   , reg);
-            else              sprintf(ENDOF(mn), "INCJ,NE  %s,%s", reg, addressstring);
+            if (OPERAND == 0) sprintf(mn, "INC      %s"   , reg);
+            else              sprintf(mn, "INCJ,NE  %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-            if (OPERAND == 0) sprintf(ENDOF(mn), "INC      %s"   , reg);
-            else              sprintf(ENDOF(mn), "IJ,NE    %s,%s", reg, addressstring);
+            if (OPERAND == 0) sprintf(mn, "INC      %s"   , reg);
+            else              sprintf(mn, "IJ,NE    %s,%s", reg, addressstring);
         acase STYLE_IEEE:
-            if (OPERAND == 0) sprintf(ENDOF(mn), "INC    %s"     , reg);
-            else              sprintf(ENDOF(mn), "IBNZ   %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "BIRR,%s %s"    , reg, addressstring);
+            if (OPERAND == 0) sprintf(mn, "INC    %s"     , reg);
+            else              sprintf(mn, "IBNZ   %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "BIRR,%s %s"    , reg, addressstring);
         }
         if (OPERAND == 0)                                                                 sprintf(an, "%s++;", reg);
         else                                                                              sprintf(an, "if (++%s != 0) goto %s;", reg, pseudostring);
@@ -3693,15 +3683,15 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case STYLE_OLDCALM:
-         /* if (OPERAND == 0) sprintf(ENDOF(mn), "INC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
-            else */           sprintf(ENDOF(mn), "INCJ,NE  %s,%s", reg, addressstring);
+         /* if (OPERAND == 0) sprintf(mn, "INC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
+            else */           sprintf(mn, "INCJ,NE  %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-         /* if (OPERAND == 0) sprintf(ENDOF(mn), "INC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
-            else */           sprintf(ENDOF(mn), "IJ,NE    %s,%s", reg, addressstring);
+         /* if (OPERAND == 0) sprintf(mn, "INC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
+            else */           sprintf(mn, "IJ,NE    %s,%s", reg, addressstring);
         acase STYLE_IEEE:
-         /* if (OPERAND == 0) sprintf(ENDOF(mn), "INC    %s"     , reg); commented out so our disassemblies can be equivalently reassembled
-            else */           sprintf(ENDOF(mn), "IBNZ   %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "BIRA,%s %s"    , reg, addressstring);
+         /* if (OPERAND == 0) sprintf(mn, "INC    %s"     , reg); commented out so our disassemblies can be equivalently reassembled
+            else */           sprintf(mn, "IBNZ   %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "BIRA,%s %s"    , reg, addressstring);
         }
         if (OPERAND == 0)                                                                 sprintf(an, "%s++;"                  , reg);
         else                                                                              sprintf(an, "if (++%s != 0) goto %s;", reg, pseudostring);
@@ -3711,10 +3701,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0xE3:
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "COMP     A,%s", reg);                   sprintf(an, "compare A against %s;" , reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "COMP     %s,r0", reg);                  sprintf(an, "compare r0 against %s;", reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CMP    .0,%s" , reg);                   sprintf(an, "compare .0 against %s;", reg);
-        adefault:             sprintf(ENDOF(mn), "COMZ    %s"   , reg);                   sprintf(an, "compare r0 against %s;", reg);
+        case  STYLE_OLDCALM:  sprintf(mn, "COMP     A,%s", reg);                          sprintf(an, "compare A against %s;" , reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "COMP     %s,r0", reg);                         sprintf(an, "compare r0 against %s;", reg);
+        acase STYLE_IEEE:     sprintf(mn, "CMP    .0,%s" , reg);                          sprintf(an, "compare .0 against %s;", reg);
+        adefault:             sprintf(mn, "COMZ    %s"   , reg);                          sprintf(an, "compare r0 against %s;", reg);
         }
         ccmode = CCMODE_COMPARE;
     acase 0xE4:
@@ -3724,11 +3714,11 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         dec_to_hex(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "COMP     %s,#%s", reg, v);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "COMP     #%s,%s", v, reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CMP    %s,#%s"  , reg, v);
-        adefault:             sprintf(ENDOF(mn), "COMI,%s %s"     , reg, v);
-        }                                                                                 sprintf(an, "compare %s against %s", reg, v_pse);
+        case  STYLE_OLDCALM:  sprintf(mn, "COMP     %s,#%s", reg, v);
+        acase STYLE_NEWCALM:  sprintf(mn, "COMP     #%s,%s", v, reg);
+        acase STYLE_IEEE:     sprintf(mn, "CMP    %s,#%s"  , reg, v);
+        adefault:             sprintf(mn, "COMI,%s %s"     , reg, v);
+        }                                                                                 sprintf(an, "compare %s against %s;", reg, v_pse);
                                                                                           if (ISQWERTY)
                                                                                           {   sprintf(ENDOF(an), " [%s]", asciiname_short[OPERAND]);
                                                                                           } elif (machine != INTERTON)
@@ -3742,10 +3732,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         REL_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "COMP     %s,%s", reg, addressstring);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "COMP     %s,%s", addressstring, reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CMP    %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "COMR,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "COMP     %s,%s", reg, addressstring);
+        acase STYLE_NEWCALM:  sprintf(mn, "COMP     %s,%s", addressstring, reg);
+        acase STYLE_IEEE:     sprintf(mn, "CMP    %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "COMR,%s %s"    , reg, addressstring);
         }                                                                                 sprintf(an, "compare %s against *(%s)", reg, pseudostring);
         ccmode = CCMODE_COMPARE;
     acase 0xEC:
@@ -3755,10 +3745,10 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         ABS_EA_TRACE();
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "COMP     %s,%s", reg, addressstring);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "COMP     %s,%s", addressstring, reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "CMP    %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "COMA,%s %s"    , reg, addressstring);
+        case  STYLE_OLDCALM:  sprintf(mn, "COMP     %s,%s", reg, addressstring);
+        acase STYLE_NEWCALM:  sprintf(mn, "COMP     %s,%s", addressstring, reg);
+        acase STYLE_IEEE:     sprintf(mn, "CMP    %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "COMA,%s %s"    , reg, addressstring);
         }                                                                                 sprintf(an, "compare %s against *(%s)", reg, pseudostring);
         ccmode = CCMODE_COMPARE;
     acase 0xF0:
@@ -3767,23 +3757,22 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     case 0xF3:
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "LOAD     $DATA,%s", reg);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "MOVE     %s,$DATA", reg);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "OUT    %s,DATA"   , reg);
-        adefault:             sprintf(ENDOF(mn), "WRTD,%s"          , reg);
+        case  STYLE_OLDCALM:  sprintf(mn, "LOAD     $DATA,%s", reg);
+        acase STYLE_NEWCALM:  sprintf(mn, "MOVE     %s,$DATA", reg);
+        acase STYLE_IEEE:     sprintf(mn, "OUT    %s,DATA"   , reg);
+        adefault:             sprintf(mn, "WRTD,%s"          , reg);
         }                                                                                 sprintf(an, "IOPORT(DATA) = %s;", reg);
     acase 0xF4:
     case 0xF5:
     case 0xF6:
     case 0xF7:
-        dec_to_hex(OPERAND);
         dec_to_bin(OPERAND);
         switch (style)
         {
-        case  STYLE_OLDCALM:  sprintf(ENDOF(mn), "TEST     %s,#%s", reg, v);              sprintf(an, "CC = (%s & %s == %s) ? EQ : LT;" , reg, v_bin, v_bin);
-        acase STYLE_NEWCALM:  sprintf(ENDOF(mn), "TEST     %s:#%s", reg, v);              sprintf(an, "CC = (%s & %s == %s) ? EQ : LT;" , reg, v_bin, v_bin);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "TEST   %s,#%s"  , reg, v);              sprintf(an, ".CC = (%s & %s == %s) ? EQ : LT;", reg, v_bin, v_bin);
-        adefault:             sprintf(ENDOF(mn), "TMI,%s %s"      , reg, v);              sprintf(an, "CC = (%s & %s == %s) ? EQ : LT;" , reg, v_bin, v_bin);
+        case  STYLE_OLDCALM:  sprintf(mn, "TEST     %s,#%s", reg, v);              sprintf(an, "CC = (%s & %s == %s) ? EQ : LT;" , reg, v_pse, v_pse);
+        acase STYLE_NEWCALM:  sprintf(mn, "TEST     %s:#%s", reg, v);              sprintf(an, "CC = (%s & %s == %s) ? EQ : LT;" , reg, v_pse, v_pse);
+        acase STYLE_IEEE:     sprintf(mn, "TEST   %s,#%s"  , reg, v);              sprintf(an, ".CC = (%s & %s == %s) ? EQ : LT;", reg, v_pse, v_pse);
+        adefault:             sprintf(mn, "TMI,%s  %s"     , reg, v);              sprintf(an, "CC = (%s & %s == %s) ? EQ : LT;" , reg, v_pse, v_pse);
         }
         ccmode = CCMODE_TEST;
     acase 0xF8:
@@ -3794,15 +3783,15 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-            if (OPERAND == 0) sprintf(ENDOF(mn), "DEC      %s"   , reg);
-            else              sprintf(ENDOF(mn), "DECJ,NE  %s,%s", reg, addressstring);
+            if (OPERAND == 0) sprintf(mn, "DEC      %s"   , reg);
+            else              sprintf(mn, "DECJ,NE  %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-            if (OPERAND == 0) sprintf(ENDOF(mn), "DEC      %s"   , reg);
-            else              sprintf(ENDOF(mn), "DJ,NE    %s,%s", reg, addressstring);
+            if (OPERAND == 0) sprintf(mn, "DEC      %s"   , reg);
+            else              sprintf(mn, "DJ,NE    %s,%s", reg, addressstring);
         acase STYLE_IEEE:
-            if (OPERAND == 0) sprintf(ENDOF(mn), "DEC    %s"     , reg);
-            else              sprintf(ENDOF(mn), "DBNZ   %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "BDRR,%s %s"    , reg, addressstring);
+            if (OPERAND == 0) sprintf(mn, "DEC    %s"     , reg);
+            else              sprintf(mn, "DBNZ   %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "BDRR,%s %s"    , reg, addressstring);
         }
         if (OPERAND == 0)                                                                 sprintf(an, "%s--;"                  , reg);
         else                                                                              sprintf(an, "if (--%s != 0) goto %s;", reg, pseudostring);
@@ -3814,15 +3803,15 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-         /* if (OPERAND == 0) sprintf(ENDOF(mn), "DEC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
-            else */           sprintf(ENDOF(mn), "DECJ,NE  %s,%s", reg, addressstring);
+         /* if (OPERAND == 0) sprintf(mn, "DEC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
+            else */           sprintf(mn, "DECJ,NE  %s,%s", reg, addressstring);
         acase STYLE_NEWCALM:
-         /* if (OPERAND == 0) sprintf(ENDOF(mn), "DEC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
-            else */           sprintf(ENDOF(mn), "DJ,NE    %s,%s", reg, addressstring);
+         /* if (OPERAND == 0) sprintf(mn, "DEC      %s"   , reg); commented out so our disassemblies can be equivalently reassembled
+            else */           sprintf(mn, "DJ,NE    %s,%s", reg, addressstring);
         acase STYLE_IEEE:
-         /* if (OPERAND == 0) sprintf(ENDOF(mn), "DEC    %s"     , reg); commented out so our disassemblies can be equivalently reassembled
-            else */           sprintf(ENDOF(mn), "DBNZ   %s,%s"  , reg, addressstring);
-        adefault:             sprintf(ENDOF(mn), "BDRA,%s %s"    , reg, addressstring);
+         /* if (OPERAND == 0) sprintf(mn, "DEC    %s"     , reg); commented out so our disassemblies can be equivalently reassembled
+            else */           sprintf(mn, "DBNZ   %s,%s"  , reg, addressstring);
+        adefault:             sprintf(mn, "BDRA,%s %s"    , reg, addressstring);
         }
         if (OPERAND == 0)                                                                 sprintf(an, "%s--;"                  , reg);
         else                                                                              sprintf(an, "if (--%s != 0) goto %s;", reg, pseudostring);
@@ -3830,9 +3819,9 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
         switch (style)
         {
         case  STYLE_OLDCALM:
-        case  STYLE_NEWCALM:  sprintf(ENDOF(mn), "DATA     16'%02X", opcode);
-        acase STYLE_IEEE:     sprintf(ENDOF(mn), "DATA   H'%02X"  , opcode);
-        adefault:             sprintf(ENDOF(mn), "DB      $%02X" , opcode);
+        case  STYLE_NEWCALM:  sprintf(mn, "DATA     16'%02X", opcode);
+        acase STYLE_IEEE:     sprintf(mn, "DATA   H'%02X"  , opcode);
+        adefault:             sprintf(mn, "DB      $%02X" , opcode);
         }                                                                                 strcpy( an, "?");
         ccmode = CCMODE_UNDEFINED;
     }
@@ -3864,61 +3853,61 @@ EXPORT void tracecpu_2650(FLAG full, FLAG quiet)
     }   }
 
     length = strlen(mn);
-    if (disassembling || verbosity == 0)
-    {   for (i = length; i <= 56; i++)
-        {   mn2[i - length] = ' ';
+    if (disassembling || verbosity == VERBOSITY_MINIMUM) // don't show total cycle count
+    {   for (i = length; i <= 48; i++)
+        {   mn[i] = ' ';
         }
-        mn2[57 - length] = ';';
-        mn2[58 - length] = EOS;
-    } else
-    {   for (i = length; i <= 42; i++)
-        {   mn2[i - length] = ' ';
+        mn[49] = ';';
+        mn[50] = EOS;
+    } else // do show total cycle count
+    {   for (i = length; i <= 34; i++)
+        {   mn[i] = ' ';
         }
-        mn2[43 - length] = ';';
-        longcomma(scale_time(cycles_2650), &mn2[44 - length]);
-        mn2[57 - length] = ' ';
-        mn2[58 - length] = EOS;
+        mn[35] = ';';
+        longcomma(scale_time(cycles_2650), &mn[36]);
+        mn[49] = ' ';
+        mn[50] = EOS;
     }
 
     switch (timeunit)
     {
     case TIMEUNIT_CYCLES:
         if (maybe)
-        {   sprintf(ENDOF(mn2), "2+%d,%d $%04X ",  duration / 3                    , table_size_2650[opcode], iar);
+        {   sprintf(ENDOF(mn), "2+%d,%d $%04X ",  duration / 3                    , table_size_2650[opcode], iar);
         } else
-        {   sprintf(ENDOF(mn2), "  %d,%d $%04X ",  duration / 3                    , table_size_2650[opcode], iar);
+        {   sprintf(ENDOF(mn), "  %d,%d $%04X ",  duration / 3                    , table_size_2650[opcode], iar);
         }
     acase TIMEUNIT_CLOCKS:
         if (maybe)
-        {   sprintf(ENDOF(mn2), "6+%d,%d $%04X ",  duration                        , table_size_2650[opcode], iar); // there are no 6+12 cycle instructions
+        {   sprintf(ENDOF(mn), "6+%d,%d $%04X ",  duration                        , table_size_2650[opcode], iar); // there are no 6+12 cycle instructions
         } else
-        {   sprintf(ENDOF(mn2), " %2d,%d $%04X ",  duration                        , table_size_2650[opcode], iar);
+        {   sprintf(ENDOF(mn), " %2d,%d $%04X ",  duration                        , table_size_2650[opcode], iar);
         }
     acase TIMEUNIT_PIXELS:
         if (machine == CD2650)
         {   if (maybe)
-            {   sprintf(ENDOF(mn2), "%2d+%3d,%d $%04X ", 6 * ppc, duration * ppc, table_size_2650[opcode], iar);
+            {   sprintf(ENDOF(mn), "%2d+%3d,%d $%04X ", 6 * ppc, duration * ppc, table_size_2650[opcode], iar);
             } else
-            {   sprintf(ENDOF(mn2),  "   %3d,%d $%04X ",          duration * ppc, table_size_2650[opcode], iar);
+            {   sprintf(ENDOF(mn),  "   %3d,%d $%04X ",          duration * ppc, table_size_2650[opcode], iar);
         }   }
         else
         {   if (maybe)
-            {   sprintf(ENDOF(mn2), "%2d+%2d,%d $%04X ", 6 * ppc, duration * ppc, table_size_2650[opcode], iar);
+            {   sprintf(ENDOF(mn), "%2d+%2d,%d $%04X ", 6 * ppc, duration * ppc, table_size_2650[opcode], iar);
             } else
-            {   sprintf(ENDOF(mn2),  "   %2d,%d $%04X ",          duration * ppc, table_size_2650[opcode], iar);
+            {   sprintf(ENDOF(mn),  "   %2d,%d $%04X ",          duration * ppc, table_size_2650[opcode], iar);
     }   }   }
 
     hex1(byte1, opcode);
     if (table_size_2650[opcode] == 3)
     {   hex1(byte2, OPERAND);
         hex1(byte3, memory[WRAPMEM(2)]);
-        sprintf(ENDOF(mn2), "%s %s %s", byte1, byte2, byte3);
+        sprintf(ENDOF(mn), "%s %s %s", byte1, byte2, byte3);
     } elif (table_size_2650[opcode] == 2)
     {   hex1(byte2, OPERAND);
-        sprintf(ENDOF(mn2), "%s %s   ", byte1, byte2);
+        sprintf(ENDOF(mn), "%s %s   ", byte1, byte2);
     } else
     {   // assert(table_size_2650[opcode] == 1);
-        sprintf(ENDOF(mn2), "%s      ", byte1);
+        sprintf(ENDOF(mn), "%s      ", byte1);
 }   }
 
 MODULE void ABS_EA_TRACE(void)
@@ -3929,9 +3918,7 @@ MODULE void ABS_EA_TRACE(void)
     } else
     {   pseudostring[0] = EOS;
     }
-    forcedollar = TRUE;
-    number_to_friendly(tea, ENDOF(pseudostring), FALSE, 0);
-    forcedollar = FALSE;
+    number_to_friendly(tea, ENDOF(pseudostring), FALSE, 0, 15, TRUE);
     switch (OPERAND & 0x60)
     {
     case  0x20: sprintf(ENDOF(pseudostring), " + ++%s", reg);
@@ -3952,7 +3939,7 @@ MODULE void ABS_EA_TRACE(void)
         if (OPERAND & 0x80)
         {   strcat(addressstring, "@");
         }
-        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0);
+        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0, 15, FALSE);
     acase STYLE_NEWCALM: // eg. U^{-r1}+{1234}
         switch (OPERAND & 0x60)
         {
@@ -3964,7 +3951,7 @@ MODULE void ABS_EA_TRACE(void)
         if (OPERAND & 0x80)
         {   strcat(addressstring, "{");
         }
-        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0);
+        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0, 15, FALSE);
         if (OPERAND & 0x80)
         {   strcat(addressstring, "}");
         }
@@ -3974,7 +3961,7 @@ MODULE void ABS_EA_TRACE(void)
         } else
         {   strcpy(addressstring, "/");
         }
-        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0);
+        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0, 15, FALSE);
         switch (OPERAND & 0x60)
         {
         case  0x20: sprintf(ENDOF(addressstring), "(+%s)" , reg);
@@ -3987,7 +3974,7 @@ MODULE void ABS_EA_TRACE(void)
         } else
         {   addressstring[0] = EOS;
         }
-        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0);
+        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0, 15, FALSE);
         switch (OPERAND & 0x60)
         {
         case  0x20: sprintf(ENDOF(addressstring), ",%s+", reg);
@@ -4011,12 +3998,10 @@ MODULE void ABS_EA_TRACE(void)
     }
 
     if (!disassembling && (OPERAND & 0xE0)) // indirect and/or indexed
-    {   number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
+    {   number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, FALSE);
         sprintf(ENDOF(addressstring), " [%s]", friendly);
 
-        forcedollar = TRUE;
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, TRUE);
         sprintf(ENDOF(pseudostring ), " [%s]", friendly);
     }
 
@@ -4040,16 +4025,14 @@ MODULE void REL_EA_TRACE(void)
         acase STYLE_IEEE:    strcpy(addressstring, "$@" );
         adefault:            strcpy(addressstring, "*"  );
         }
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, FALSE);
         strcat(addressstring, friendly);
         if (style == STYLE_NEWCALM)
         {   strcat(addressstring, "}");
         }
 
         strcpy(pseudostring, "*");
-        forcedollar = TRUE;
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, TRUE);
         strcat(pseudostring, friendly);
 
         addr = (int) tea;
@@ -4059,12 +4042,10 @@ MODULE void REL_EA_TRACE(void)
         }
         tea = (tea + memory[addr]) & AMSK;
 
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, FALSE);
         sprintf(ENDOF(addressstring), " [%s]", friendly);
 
-        forcedollar = TRUE;
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, TRUE);
         sprintf(ENDOF(pseudostring ), " [%s]", friendly);
     } else
     {   switch (style)
@@ -4075,12 +4056,10 @@ MODULE void REL_EA_TRACE(void)
         adefault:            addressstring[0] = EOS;
         }
 
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, FALSE);
         strcat(addressstring, friendly);
 
-        forcedollar = TRUE;
-        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, TRUE);
         strcpy(pseudostring, friendly);
 }   }
 
@@ -4095,16 +4074,14 @@ MODULE void BRA_EA_TRACE(FLAG full)
         acase STYLE_IEEE:    strcpy(addressstring, "/@" );
         adefault:            strcpy(addressstring, "*"  );
         }
-        number_to_friendly(tea, friendly, FALSE, 0);
+        number_to_friendly(tea, friendly, FALSE, 0, 15, FALSE);
         strcat(addressstring, friendly);
         if (style == STYLE_NEWCALM)
         {   strcat(addressstring, "}");
         }
 
         strcpy(pseudostring, "*");
-        forcedollar = TRUE;
-        number_to_friendly(tea, friendly, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, friendly, FALSE, 0, 15, TRUE);
         strcat(pseudostring, friendly);
 
         addr = (int) tea;
@@ -4115,12 +4092,10 @@ MODULE void BRA_EA_TRACE(FLAG full)
         tea = (tea + memory[addr]) & AMSK;
 
         if (full)
-        {   number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
+        {   number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, FALSE);
             sprintf(ENDOF(addressstring), " [%s]", friendly);
 
-            forcedollar = TRUE;
-            number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
-            forcedollar = FALSE;
+            number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, TRUE);
             sprintf(ENDOF(pseudostring ), " [%s]", friendly);
     }   }
     else
@@ -4130,12 +4105,10 @@ MODULE void BRA_EA_TRACE(FLAG full)
         acase STYLE_IEEE:    strcpy(addressstring, "/" );
         adefault:            addressstring[0] = EOS;
         }
-        number_to_friendly(tea, friendly, FALSE, 0);
+        number_to_friendly(tea, friendly, FALSE, 0, 15, FALSE);
         strcat(addressstring, friendly);
 
-        forcedollar = TRUE;
-        number_to_friendly(tea, friendly, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, friendly, FALSE, 0, 15, TRUE);
         strcpy(pseudostring, friendly);
 }   }
 
@@ -4152,15 +4125,13 @@ MODULE void ZERO_EA_TRACE(FLAG full)
         acase STYLE_IEEE:    strcpy(addressstring, "!@" );
         adefault:            strcpy(addressstring, "*"  );
         }
-        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0);
+        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0, 15, FALSE);
         if (style == STYLE_NEWCALM)
         {   strcat(addressstring, "}");
         }
 
         strcpy(pseudostring, "*");
-        forcedollar = TRUE;
-        number_to_friendly(tea, ENDOF(pseudostring), FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, ENDOF(pseudostring), FALSE, 0, 15, TRUE);
 
         addr = (int) tea;
         tea = memory[addr] << 8;
@@ -4170,12 +4141,10 @@ MODULE void ZERO_EA_TRACE(FLAG full)
         tea = (tea + memory[addr]) & AMSK;
 
         if (full)
-        {   number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
+        {   number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, FALSE);
             sprintf(ENDOF(addressstring), " [%s]", friendly);
 
-            forcedollar = TRUE;
-            number_to_friendly(tea, (STRPTR) friendly, FALSE, 0);
-            forcedollar = FALSE;
+            number_to_friendly(tea, (STRPTR) friendly, FALSE, 0, 15, TRUE);
             sprintf(ENDOF(pseudostring ), " [%s]", friendly);
     }   }
     else
@@ -4186,28 +4155,19 @@ MODULE void ZERO_EA_TRACE(FLAG full)
         acase STYLE_IEEE:    strcpy(addressstring, "!" );
         adefault:            addressstring[0] = EOS;
         }
-        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0);
+        number_to_friendly(tea, ENDOF(addressstring), FALSE, 0, 15, FALSE);
 
-        forcedollar = TRUE;
-        number_to_friendly(tea, pseudostring, FALSE, 0);
-        forcedollar = FALSE;
+        number_to_friendly(tea, pseudostring, FALSE, 0, 15, TRUE);
 }   }
 
 EXPORT void cpu_setup(void)
-{   int i;
-
-    for (i = 0; i < 8; i++)
-    {   mn[i] = ' ';
-    }
-    mn[8] = EOS;
-
-    byte1[2] =
+{   byte1[2] =
     byte2[2] =
     byte3[2] = EOS;
 }
 
 EXPORT void view_next_2650(void)
-{   DISCARD getfriendly(iar);
+{   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
     zprintf
     (   TEXTPEN_TRACE,
         LLL
@@ -4220,21 +4180,20 @@ EXPORT void view_next_2650(void)
 }
 
 EXPORT void saytrace(void)
-{   if (verbosity == 1)
-    {   zprintf(TEXTPEN_TRACE, "%s", tn);
+{   switch (verbosity)
+    {
+    case VERBOSITY_MINIMUM:
+        zprintf(TEXTPEN_TRACE, "        %s\n", mn);
+    acase VERBOSITY_TABLE:
+        zprintf(TEXTPEN_TRACE, "%s", tn);
         if (disassembling)
         {   zprintf(TEXTPEN_TRACE, "\n");
-    }   }
-    else
-    {   zprintf(TEXTPEN_TRACE, "%s", mn);
-        if (verbosity == 0)
-        {   zprintf(TEXTPEN_TRACE2, "%s\n", mn2);
-            return;
         }
+    acase VERBOSITY_MAXIMUM:
         if (DisHandle)
-        {   zprintf(TEXTPEN_TRACE2, "%s ", mn2);
+        {   zprintf(TEXTPEN_TRACE, "        %s ", mn);
         } else
-        {   zprintf(TEXTPEN_TRACE2, "%s\n;", mn2);
+        {   zprintf(TEXTPEN_TRACE2, "        %s\n;", mn);
         }
         if (tea == OUTOFRANGE)
         {   zprintf(TEXTPEN_PSEUDOCODE, "%s\n", an);
@@ -4262,7 +4221,8 @@ EXPORT void saytrace(void)
         if (en[0])
         {   zprintf(TEXTPEN_PSEUDOCODE, "%s", en);
     }   }
-    if (verbosity == 2 && (memflags[iar] & COMMENTED))
+
+    if (verbosity == VERBOSITY_MAXIMUM && (memflags[iar] & COMMENTED))
     {   show_comments(iar);
     }
 
@@ -4274,10 +4234,10 @@ EXPORT void disassemble_2650(int address1, int address2, FLAG quiet)
     UWORD savediar    = iar;
     UBYTE savedpsl    = psl;
 
-    if (verbosity == 1 && !quiet)
+    if (verbosity == VERBOSITY_TABLE && !quiet)
     {   zprintf
         (   TEXTPEN_TRACE,
-            "Loca InOpAd Mnemoni XRU IAdd  IV EAdd\n" \
+            "Loca InOpAd Mnemoni XRU  IAdd IV EAdd\n" \
             "---- ------ ------- --- ----- -- ----\n"
         );
     }
@@ -4590,7 +4550,7 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
     for (i = 0; i <= 32767; i++)
     {   if (disflag[i] & DISFLAG_CODELABEL)
         {   // assert(disflag[i] & DISFLAG_OPCODE);
-            if (number_to_friendly(i, (STRPTR) friendly, FALSE, 0) == EOS)
+            if (number_to_friendly(i, (STRPTR) friendly, FALSE, 0, 15, FALSE) == EOS)
             {   if (machine != INSTRUCTOR && i == 0)
                 {   adduserlabel("BOOT", (UWORD) i, CODE);
                 } elif (i == intaddr)
@@ -4602,12 +4562,12 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
                     adduserlabel((STRPTR) friendly, (UWORD) i, CODE);
         }   }   }
         elif (disflag[i] & DISFLAG_DATA)
-        {   if (number_to_friendly(i, (STRPTR) friendly, FALSE, 0) == EOS)
+        {   if (number_to_friendly(i, (STRPTR) friendly, FALSE, 0, 15, FALSE) == EOS)
             {   {   sprintf((char*) friendly, "X%04X", i);
                     adduserlabel((STRPTR) friendly, (UWORD) i, DATA);
         }   }   }
         elif (disflag[i] & DISFLAG_POINTER)
-        {   if (number_to_friendly(i, (STRPTR) friendly, FALSE, 0) == EOS)
+        {   if (number_to_friendly(i, (STRPTR) friendly, FALSE, 0, 15, FALSE) == EOS)
             {   {   sprintf((char*) friendly, "P%04X", i);
                     adduserlabel((STRPTR) friendly, (UWORD) i, POINTER);
     }   }   }   }
@@ -4622,7 +4582,7 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
     }
     for (i = address1; i <= address2; i++)
     {   if (disflag[i] & (DISFLAG_CODELABEL | DISFLAG_DATA))
-        {   DISCARD number_to_friendly(i, (STRPTR) friendly, FALSE, 0);
+        {   DISCARD number_to_friendly(i, (STRPTR) friendly, FALSE, 0, 15, FALSE);
             if (foundequiv >= ONE_MILLION)
             {   symlabel[foundequiv - ONE_MILLION].listed = TRUE;
             } elif (foundequiv != -1)
@@ -4675,7 +4635,7 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
             }
             iar += table_size_2650[memory[iar]];
         } else
-        {   if (number_to_friendly(iar, (STRPTR) friendly, FALSE, 0) != EOS)
+        {   if (number_to_friendly(iar, (STRPTR) friendly, FALSE, 0, 15, FALSE) != EOS)
             {   zprintf(TEXTPEN_LABEL, "%s: ;$%X\n", friendly, iar);
             }
             /* if
@@ -4693,7 +4653,7 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
                         "        DB      $%02X",
                         memory[iar]
                     );
-                    if (verbosity == 2)
+                    if (verbosity == VERBOSITY_MAXIMUM)
                     {   zprintf
                         (   TEXTPEN_TRACE2,
                             "                                      ;  0,1 $%04X %02X\n",
@@ -4701,17 +4661,17 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
                             memory[iar]
                         );
                     }
-                case STYLE_OLDCALM:
+                acase STYLE_OLDCALM:
                 case STYLE_NEWCALM:
                     zprintf
                     (   TEXTPEN_TRACE,
                         "        .DATA    16'%02X",
                         memory[iar]
                     );
-                    if (verbosity == 2)
+                    if (verbosity == VERBOSITY_MAXIMUM)
                     {   zprintf
                         (   TEXTPEN_TRACE2,
-                            "                                     ;  0,1 $%04X %02X\n",
+                            "                                   ;  0,1 $%04X %02X\n",
                             iar,
                             memory[iar]
                         );
@@ -4722,16 +4682,16 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
                         "        DATA   H'%02X",
                         memory[iar]
                     );
-                    if (verbosity == 2)
+                    if (verbosity == VERBOSITY_MAXIMUM)
                     {   zprintf
                         (   TEXTPEN_TRACE2,
-                            "                                       ;  0,1 $%04X %02X\n",
+                            "                                      ;  0,1 $%04X %02X\n",
                             iar,
                             memory[iar]
                         );
                     }
                 }
-                if (verbosity == 2)
+                if (verbosity == VERBOSITY_MAXIMUM)
                 {   show_comments(iar);
                 }
                 if (disflag[iar] & DISFLAG_ILLEGAL)
@@ -4754,7 +4714,7 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
                         memory[iar + 1]
                     );
                 }
-                if (verbosity)
+                if (verbosity == VERBOSITY_MAXIMUM)
                 {   zprintf
                     (   TEXTPEN_TRACE2,
                         "                                    ;  0,2 $%04X %02X %02X\n",
@@ -5271,15 +5231,27 @@ MODULE void extracomment(int whichcomment, int address, STRPTR stringptr)
 }   }
 
 EXPORT void dec_to_bin(UBYTE number)
-{   int i,
-        length;
+{   FAST int i,
+             length;
 
-    length = strlen(binchars[style]);
-    strcpy(v_bin, binchars[style]);
-    for (i = 0; i < 8; i++)
-    {   v_bin[length + i] = (number & (0x80 >> i)) ? '1' : '0';
+    if (style == STYLE_SIGNETICS1 || style == STYLE_SIGNETICS2)
+    {   v[0] = '%';
+        // v[1] = EOS;
+        length = 1;
+    } else
+    {   strcpy(v, binchars[style]);
+        length = strlen(v);
     }
-    v_bin[length + 8] = EOS;
+    for (i = 0; i < 8; i++)
+    {   v[length + i] = (number & (0x80 >> i)) ? '1' : '0';
+    }
+    v[length + 8] = EOS;
+
+    v_pse[0] = '%';
+    for (i = 0; i < 8; i++)
+    {   v_pse[1  + i] = (number & (0x80 >> i)) ? '1' : '0';
+    }
+    v_pse[     9] = EOS;
 }
 
 EXPORT void dec_to_hex(UBYTE number)

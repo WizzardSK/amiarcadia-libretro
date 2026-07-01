@@ -141,6 +141,7 @@ IMPORT       UBYTE*                IOBuffer;
 IMPORT       FILE*                 MacroHandle;
 IMPORT       TEXT                  friendly[FRIENDLYLENGTH + 1],
                                    imgbits[8 + 1],
+                                   interpretstr[1024 + 1],
                                    netmsg_out[80 + 1],
                                    stringchar[19 + 1]; // enough for "%1,1,1,1,1,1,1,1"
 IMPORT       int                   absxmin, absxmax,
@@ -173,10 +174,6 @@ IMPORT       int                   absxmin, absxmax,
                                    p2bgcol[6],
                                    p1sprcol[6],
                                    p2sprcol[6],
-                                   paddleup,
-                                   paddledown,
-                                   paddleleft,
-                                   paddleright,
                                    ppc,
                                    pvibase,
                                    machine,
@@ -198,6 +195,7 @@ IMPORT       int                   absxmin, absxmax,
                                    watchreads,
                                    watchwrites,
                                    whichgame;
+IMPORT       float                 dividend;
 IMPORT       UBYTE                 cc,
                                    aw_dips1,
                                    ga_dips,
@@ -205,8 +203,7 @@ IMPORT       UBYTE                 cc,
                                    opcode,
                                    psu,
                                    memory[32768],
-                                   OutputBuffer[18],
-                                   sx[2], sy[2];
+                                   OutputBuffer[18];
 IMPORT       UWORD                 console[4],
                                    iar,
                                    keypads[2][NUMKEYS],
@@ -219,7 +216,7 @@ IMPORT       ULONG                 autofire[2],
                                    demultiplex,
                                    downframes,
                                    frames,
-                                   jff[2],
+                                   jf[2],
                                    oldcycles,
                                    region,
                                    swapped,
@@ -236,7 +233,7 @@ IMPORT const int                   from_astrowars_spr[8],
                                    from_galaxia_spr[8],
                                    from_malzak_spr[8],
                                    guest_to_ansi_colour[8];
-IMPORT const struct KeyTableStruct keytable[16];
+IMPORT const struct KeyTableStruct keytable[NUMKEYS];
 IMPORT const struct KnownStruct    known[KNOWNGAMES];
 
 #ifdef WIN32
@@ -1116,7 +1113,7 @@ SCORE:
      && pvix <  newsprite[3].endx
      && (newsprite[3].imagery & (128 >> ((pvix - newsprite[3].startx) >> sizeshift3)))
     )
-    {   colltable[pviy][pvix] |= 0x80 | newsprite[3].colour;
+    {   colltable[pviy][pvix] |= 0x80 | newsprite[3].colour;\
         if (whichgame == SUPERSPACEPOS && undither)
         {   pixelcolour = multicolour_superspace[pviy - newsprite[3].starty][pvix - newsprite[3].startx];
         } else
@@ -1210,7 +1207,7 @@ EXPORT void pviwrite(signed int address, UBYTE data, FLAG ispvi)
         } else
         {   stringchar[0] = EOS;
         }
-        DISCARD getfriendly(address);
+        DISCARD number_to_friendly(address, (STRPTR) friendly, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_DEBUG,
             LLL(MSG_PVI_HITWP, "PVI is writing $%X%s to %s at raster %ld!\n\n"),
@@ -1259,7 +1256,7 @@ MODULE UBYTE pviread(int address)
      && (memflags[address] & WATCHPOINT)
      && conditional(&wp[address], machines[machine].readonce, FALSE)
     )
-    {   DISCARD getfriendly(address);
+    {   DISCARD number_to_friendly(address, (STRPTR) friendly, TRUE, 0, 15);
         zprintf
         (   TEXTPEN_DEBUG,
             LLL(MSG_PVIREADING, "PVI is reading $%02X from address %s at raster %ld!\n"),
@@ -1285,9 +1282,9 @@ MODULE void ie_playerinput(int source, int dest)
         t = IOBuffer[offset++];
         pviwrite(PVI_P1PADDLE + dest, t, TRUE);
         if (psu & PSU_F) // paddle interpolation bit
-        {   ay[dest] = sy[dest] = t;
+        {   ay[dest] = t;
         } else
-        {   ax[dest] = sx[dest] = t;
+        {   ax[dest] = t;
         }
         t = IOBuffer[offset++];
         pviwrite(IE_P1LEFTKEYS   + (dest * 4), (UBYTE) ( (t & 0xF0)       | 0x0F), FALSE); // bits 7..4 -> bits  7..4 (masking is indeed necessary)
@@ -1310,14 +1307,14 @@ MODULE void ie_playerinput(int source, int dest)
       // || hostcontroller[source] == CONTROLLER_1STAJOY
          || hostcontroller[source] == CONTROLLER_1STAPAD
         )
-        {   jg = jff[0];
+        {   jg = jf[0];
         } elif
         (   hostcontroller[source] == CONTROLLER_2NDDJOY
          || hostcontroller[source] == CONTROLLER_2NDDPAD
          || hostcontroller[source] == CONTROLLER_2NDAJOY
          || hostcontroller[source] == CONTROLLER_2NDAPAD
         )
-        {   jg = jff[1];
+        {   jg = jf[1];
         } else
         {   jg = 0;
         }
@@ -1373,37 +1370,37 @@ MODULE void ie_playerinput(int source, int dest)
 
         // left column
         t =  memory[IE_P1LEFTKEYS + (dest * 4)];
-        t |= (UBYTE) (0x80 * KeyDown(keypads[source][ 1])); // "1"  key (Interton) or "RCAS"  key (Elektor)
-        t |= (UBYTE) (0x40 * KeyDown(keypads[source][ 4])); // "4"  key (Interton) or "BP1/2" key (Elektor)
-        t |= (UBYTE) (0x20 * KeyDown(keypads[source][ 7])); // "7"  key (Interton) or "PC"    key (Elektor)
-        t |= (UBYTE) (0x10 * KeyDown(keypads[source][10])); // "Cl" key (Interton) or "-"     key (Elektor)
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_1) && (jff[source] & DAPTER_1)) t |= 8;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_4) && (jff[source] & DAPTER_4)) t |= 4;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_7) && (jff[source] & DAPTER_7)) t |= 2;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_C) && (jff[source] & DAPTER_C)) t |= 1;
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    ==  1) t |= 0x80;
-            elif (paddleup    ==  4) t |= 0x40;
-            elif (paddleup    ==  7) t |= 0x20;
-            elif (paddleup    == 10) t |= 0x10;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  ==  1) t |= 0x80;
-            elif (paddledown  ==  4) t |= 0x40;
-            elif (paddledown  ==  7) t |= 0x20;
-            elif (paddledown  == 10) t |= 0x10;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  ==  1) t |= 0x80;
-            elif (paddleleft  ==  4) t |= 0x40;
-            elif (paddleleft  ==  7) t |= 0x20;
-            elif (paddleleft  == 10) t |= 0x10;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright ==  1) t |= 0x80;
-            elif (paddleright ==  4) t |= 0x40;
-            elif (paddleright ==  7) t |= 0x20;
-            elif (paddleright == 10) t |= 0x10;
-        }
+        t |= (UBYTE) (0x80 * KeyDown(keypads[source][GUESTKEY_1 ])); // "1"  key (Interton) or "RCAS"  key (Elektor)
+        t |= (UBYTE) (0x40 * KeyDown(keypads[source][GUESTKEY_4 ])); // "4"  key (Interton) or "BP1/2" key (Elektor)
+        t |= (UBYTE) (0x20 * KeyDown(keypads[source][GUESTKEY_7 ])); // "7"  key (Interton) or "PC"    key (Elektor)
+        t |= (UBYTE) (0x10 * KeyDown(keypads[source][GUESTKEY_CL])); // "Cl" key (Interton) or "-"     key (Elektor)
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_1) && (jf[source] & DAPTER_1)) t |= 8;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_4) && (jf[source] & DAPTER_4)) t |= 4;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_7) && (jf[source] & DAPTER_7)) t |= 2;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_C) && (jf[source] & DAPTER_C)) t |= 1;
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_1 ) t |= 0x80;
+                elif (known[whichgame].paddleup    == GUESTKEY_4 ) t |= 0x40;
+                elif (known[whichgame].paddleup    == GUESTKEY_7 ) t |= 0x20;
+                elif (known[whichgame].paddleup    == GUESTKEY_CL) t |= 0x10;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_1 ) t |= 0x80;
+                elif (known[whichgame].paddledown  == GUESTKEY_4 ) t |= 0x40;
+                elif (known[whichgame].paddledown  == GUESTKEY_7 ) t |= 0x20;
+                elif (known[whichgame].paddledown  == GUESTKEY_CL) t |= 0x10;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_1 ) t |= 0x80;
+                elif (known[whichgame].paddleleft  == GUESTKEY_4 ) t |= 0x40;
+                elif (known[whichgame].paddleleft  == GUESTKEY_7 ) t |= 0x20;
+                elif (known[whichgame].paddleleft  == GUESTKEY_CL) t |= 0x10;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_1 ) t |= 0x80;
+                elif (known[whichgame].paddleright == GUESTKEY_4 ) t |= 0x40;
+                elif (known[whichgame].paddleright == GUESTKEY_7 ) t |= 0x20;
+                elif (known[whichgame].paddleright == GUESTKEY_CL) t |= 0x10;
+        }   }
         pviwrite(IE_P1LEFTKEYS    + (dest * 4), t, FALSE);
 
         // middle column
@@ -1412,33 +1409,33 @@ MODULE void ie_playerinput(int source, int dest)
         t |= (UBYTE) (0x40 * KeyDown(keypads[source][ 5])); // "5"  key (Interton) or "REG"  key (Elektor)
         t |= (UBYTE) (0x20 * KeyDown(keypads[source][ 8])); // "8"  key (Interton) or "MEM"  key (Elektor)
         t |= (UBYTE) (0x10 * KeyDown(keypads[source][11])); // "0"  key (Interton) or "+"    key (Elektor)
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_2) && (jff[source] & DAPTER_2)) t |= 8;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_5) && (jff[source] & DAPTER_5)) t |= 4;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_8) && (jff[source] & DAPTER_8)) t |= 2;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_0) && (jff[source] & DAPTER_0)) t |= 1;
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    ==  2) t |= 0x80;
-            elif (paddleup    ==  5) t |= 0x40;
-            elif (paddleup    ==  8) t |= 0x20;
-            elif (paddleup    ==  0) t |= 0x10;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  ==  2) t |= 0x80;
-            elif (paddledown  ==  5) t |= 0x40;
-            elif (paddledown  ==  8) t |= 0x20;
-            elif (paddledown  ==  0) t |= 0x10;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  ==  2) t |= 0x80;
-            elif (paddleleft  ==  5) t |= 0x40;
-            elif (paddleleft  ==  8) t |= 0x20;
-            elif (paddleleft  ==  0) t |= 0x10;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright ==  2) t |= 0x80;
-            elif (paddleright ==  5) t |= 0x40;
-            elif (paddleright ==  8) t |= 0x20;
-            elif (paddleright ==  0) t |= 0x10;
-        }
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_2) && (jf[source] & DAPTER_2)) t |= 8;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_5) && (jf[source] & DAPTER_5)) t |= 4;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_8) && (jf[source] & DAPTER_8)) t |= 2;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_0) && (jf[source] & DAPTER_0)) t |= 1;
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_2 ) t |= 0x80;
+                elif (known[whichgame].paddleup    == GUESTKEY_5 ) t |= 0x40;
+                elif (known[whichgame].paddleup    == GUESTKEY_8 ) t |= 0x20;
+                elif (known[whichgame].paddleup    == GUESTKEY_0 ) t |= 0x10;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_2 ) t |= 0x80;
+                elif (known[whichgame].paddledown  == GUESTKEY_5 ) t |= 0x40;
+                elif (known[whichgame].paddledown  == GUESTKEY_8 ) t |= 0x20;
+                elif (known[whichgame].paddledown  == GUESTKEY_0 ) t |= 0x10;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_2 ) t |= 0x80;
+                elif (known[whichgame].paddleleft  == GUESTKEY_5 ) t |= 0x40;
+                elif (known[whichgame].paddleleft  == GUESTKEY_8 ) t |= 0x20;
+                elif (known[whichgame].paddleleft  == GUESTKEY_0 ) t |= 0x10;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_2 ) t |= 0x80;
+                elif (known[whichgame].paddleright == GUESTKEY_5 ) t |= 0x40;
+                elif (known[whichgame].paddleright == GUESTKEY_8 ) t |= 0x20;
+                elif (known[whichgame].paddleright == GUESTKEY_0 ) t |= 0x10;
+        }   }
         pviwrite(IE_P1MIDDLEKEYS  + (dest * 4), t, FALSE);
 
         // right column
@@ -1447,43 +1444,41 @@ MODULE void ie_playerinput(int source, int dest)
         t |= (UBYTE) (0x40 * KeyDown(keypads[source][ 6])); // "6"  key (Interton) or "8" key (Elektor)
         t |= (UBYTE) (0x20 * KeyDown(keypads[source][ 9])); // "9"  key (Interton) or "4" key (Elektor)
         t |= (UBYTE) (0x10 * KeyDown(keypads[source][12])); // "En" key (Interton) or "0" key (Elektor)
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_3) && (jff[source] & DAPTER_3)) t |= 8;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_6) && (jff[source] & DAPTER_6)) t |= 4;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_9) && (jff[source] & DAPTER_9)) t |= 2;
-        if ((!autofire[source] || keytable[key1].dapter != DAPTER_E) && (jff[source] & DAPTER_E)) t |= 1;
-
-        if (ay[dest] <=  64)
-        {   if   (paddleup    ==  3) t |= 0x80;
-            elif (paddleup    ==  6) t |= 0x40;
-            elif (paddleup    ==  9) t |= 0x20;
-            elif (paddleup    == 11) t |= 0x10;
-        } elif (ay[dest] >= 192)
-        {   if   (paddledown  ==  3) t |= 0x80;
-            elif (paddledown  ==  6) t |= 0x40;
-            elif (paddledown  ==  9) t |= 0x20;
-            elif (paddledown  == 11) t |= 0x10;
-        }
-        if (ax[dest] <=  64)
-        {   if   (paddleleft  ==  3) t |= 0x80;
-            elif (paddleleft  ==  6) t |= 0x40;
-            elif (paddleleft  ==  9) t |= 0x20;
-            elif (paddleleft  == 11) t |= 0x10;
-        } elif (ax[dest] >= 192)
-        {   if   (paddleright ==  3) t |= 0x80;
-            elif (paddleright ==  6) t |= 0x40;
-            elif (paddleright ==  9) t |= 0x20;
-            elif (paddleright == 11) t |= 0x10;
-        }
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_3) && (jf[source] & DAPTER_3)) t |= 8;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_6) && (jf[source] & DAPTER_6)) t |= 4;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_9) && (jf[source] & DAPTER_9)) t |= 2;
+        if ((!autofire[source] || keytable[key1].dapter != DAPTER_E) && (jf[source] & DAPTER_E)) t |= 1;
+        if (whichgame != -1)
+        {   if (ay[dest] <= 64)
+            {   if   (known[whichgame].paddleup    == GUESTKEY_3 ) t |= 0x80;
+                elif (known[whichgame].paddleup    == GUESTKEY_6 ) t |= 0x40;
+                elif (known[whichgame].paddleup    == GUESTKEY_9 ) t |= 0x20;
+                elif (known[whichgame].paddleup    == GUESTKEY_EN) t |= 0x10;
+            } elif (ay[dest] >= 192)
+            {   if   (known[whichgame].paddledown  == GUESTKEY_3 ) t |= 0x80;
+                elif (known[whichgame].paddledown  == GUESTKEY_6 ) t |= 0x40;
+                elif (known[whichgame].paddledown  == GUESTKEY_9 ) t |= 0x20;
+                elif (known[whichgame].paddledown  == GUESTKEY_EN) t |= 0x10;
+            }
+            if (ax[dest] <= 64)
+            {   if   (known[whichgame].paddleleft  == GUESTKEY_3 ) t |= 0x80;
+                elif (known[whichgame].paddleleft  == GUESTKEY_6 ) t |= 0x40;
+                elif (known[whichgame].paddleleft  == GUESTKEY_9 ) t |= 0x20;
+                elif (known[whichgame].paddleleft  == GUESTKEY_EN) t |= 0x10;
+            } elif (ax[dest] >= 192)
+            {   if   (known[whichgame].paddleright == GUESTKEY_3 ) t |= 0x80;
+                elif (known[whichgame].paddleright == GUESTKEY_6 ) t |= 0x40;
+                elif (known[whichgame].paddleright == GUESTKEY_9 ) t |= 0x20;
+                elif (known[whichgame].paddleright == GUESTKEY_EN) t |= 0x10;
+        }   }
         pviwrite(IE_P1RIGHTKEYS   + (dest * 4), t, FALSE);
 
         engine_dopaddle(source, dest);
 
         if (psu & PSU_F) // paddle interpolation bit
         {   pviwrite(PVI_P1PADDLE + dest, (UBYTE) ay[dest], TRUE);
-            sy[dest] = (UBYTE) ay[dest];
         } else
         {   pviwrite(PVI_P1PADDLE + dest, (UBYTE) ax[dest], TRUE);
-            sx[dest] = (UBYTE) ax[dest];
 }   }   }
 
 MODULE void ie_emuinput(void)
@@ -1514,16 +1509,19 @@ MODULE void ie_emuinput(void)
     p2rumble = 0;
 
     if (recmode != RECMODE_PLAY)
-    {   if (KeyDown(console[0]) || (jff[0] & JOYSTART) || (jff[1] & JOYSTART) || console_start) // START /START
+    {   if (KeyDown(console[0]) || (jf[0] & JOYSTART) || (jf[1] & JOYSTART) || console_start) // START /START
         {   t = 0x4F;
-        } else
+            if (whichgame != -1 && known[whichgame].startkey != -1)
+            {   memory[keytable[known[whichgame].startkey].ie_address + (known[whichgame].startkeyplayer * 4)] |= keytable[known[whichgame].startkey].ie_mask;
+        }   }
+        else
         {   t = 0x0F;
         }
-        if (KeyDown(console[1]) || (jff[0] & JOYA    ) || (jff[1] & JOYA    ) || console_a    ) // SELECT/UC
+        if (KeyDown(console[1]) || (jf[0] & JOYA    ) || (jf[1] & JOYA    ) || console_a    ) // SELECT/UC
         {   t |= 0x80;
         }
         if (machine == ELEKTOR)
-        {   if (KeyDown(console[2]) || (jff[0] & JOYB) || (jff[1] & JOYB    ) || console_b    ) // -/LC
+        {   if (KeyDown(console[2]) || (jf[0] & JOYB) || (jf[1] & JOYB    ) || console_b    ) // -/LC
             {   t |= 0x20;
             }
             if (KeyDown(console[3]) || console_reset) // -/RESET (soft)
@@ -2270,7 +2268,7 @@ PERSIST const int consolecolours[8] =
 #endif
 
     for (whichsprite = 0; whichsprite < 4; whichsprite++)
-    {   if (pviy == newsprite[whichsprite].starty && (pviy < 253 || whichgame == MOONLANDING1POS || whichgame == MOONLANDING2POS))
+    {   if (pviy == newsprite[whichsprite].starty && (pviy <= 252 || whichgame == MOONLANDING1POS || whichgame == MOONLANDING2POS))
         {   newsprite[whichsprite].majory =  0;
             newsprite[whichsprite].minory = -1;
             newsprite[whichsprite].active = TRUE;
@@ -2283,8 +2281,8 @@ PERSIST const int consolecolours[8] =
         // These need to be refreshed every line for Leapfrog
         switch (whichsprite)
         {
-        case  0: sizeshift0          =       pviread(PVI_SIZES       )       & 3;
-                 newsprite[0].size   = 1 << sizeshift0;
+        case  0: sizeshift0          =       pviread(PVI_SIZES       )       & 3; // 0..3
+                 newsprite[0].size   = 1 << sizeshift0;                           // 1/2/4/8
                  newsprite[0].colour =      (pviread(PVI_SPR01COLOURS) >> 3) & 7;
         acase 1: sizeshift1          =      (pviread(PVI_SIZES       ) >> 2) & 3;
                  newsprite[1].size   = 1 << sizeshift1;
@@ -2737,3 +2735,185 @@ MODULE void run_cpu(int until)
     if (nextinst >= 227)
     {   nextinst -= cpl;
 }   }
+
+EXPORT FLAG interpret_pvis(int address)
+{   FAST          int    whichpvi;
+    PERSIST const STRPTR spritesizes[4] = { "single", "double", "quadruple", "octuple" };
+
+    if (address < pvibase || address >= pvibase + (0x100 * machines[machine].pvis))
+    {   return FALSE;
+    }
+
+    whichpvi = (address - pvibase) / 0x100;
+    switch ((address - pvibase) & 0xFF)
+    {
+    case PVI_PITCH:
+        sprintf
+        (   interpretstr,
+            "%s %4.3f %s (note %s)",
+            LLL(MSG_PITCH, "Pitch:"),
+            (float) (dividend / (memory[pvibase + (0x100 * whichpvi) + PVI_PITCH] + 1)),
+            LLL(MSG_HERTZ, "Hz"),
+            (region == REGION_NTSC) ? (notes[idealfreq_ntsc[memory[pvibase + (0x100 * whichpvi) + PVI_PITCH]].whichnote].name) : (notes[idealfreq_pal[memory[pvibase + (0x100 * whichpvi) + PVI_PITCH]].whichnote].name)
+        );
+    acase PVI_SCORECTRL:
+        if (memory[address] & 0x02)
+        {   sprintf
+            (   interpretstr,
+                "%s 1 %s 4 %s\n",
+                LLL(MSG_SCOREFORMAT, "Score format:"),
+                LLL(MSG_GROUPSOF, "group(s) of"),
+                LLL(MSG_DIGITS, "digits")
+            );
+        } else
+        {   sprintf
+            (   interpretstr,
+                "%s 2 %s 2 %s\n",
+                LLL(MSG_SCOREFORMAT, "Score format:"),
+                LLL(MSG_GROUPSOF, "group(s) of"),
+                LLL(MSG_DIGITS, "digits")
+            );
+        }
+        if (memory[address] & 0x01)
+        {   sprintf
+            (   ENDOF(interpretstr),
+                "%s %s",
+                LLL(MSG_SCOREPOS, "Score position:"),
+                LLL(MSG_BOTTOMPOS, "bottom of screen")
+            );
+        } else
+        {   sprintf
+            (   ENDOF(interpretstr),
+                "%s %s",
+                LLL(MSG_SCOREPOS, "Score position:"),
+                LLL(MSG_TOPPOS, "top of screen")
+            );
+        }
+    acase PVI_BGCOLOUR:
+        sprintf
+        (   interpretstr,
+            "%s %s\n",
+            LLL(MSG_GRIDBG, "Grid/background:"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLOUR] & 0x08) ? LLL(MSG_ENABLED, "enabled") : LLL(MSG_DISABLED, "disabled")
+        );
+        // grid and background colours are probably wrong for coin-ops
+        // (unimportant as they don't make use of this anyway)
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s\n" \
+            "%s %s\n" \
+            "%s %s",
+            LLL(MSG_COLOURS, "Colours:"),
+            LLL(MSG_BGCOLOUR, "Background:"),
+            colourname[memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLOUR] & 0x07],
+            LLL(MSG_GRIDCOLOUR, "Grid:"),
+            colourname[(memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLOUR] & 0x70) >> 4]
+        );
+    acase PVI_SPR01COLOURS:
+        sprintf
+        (   interpretstr,
+            "%s %s, %s",
+            LLL(MSG_COLOURS, "Colours:"), // ideally "Sprite colours:" or similar
+            colourname[calcspritecolour(0)],
+            colourname[calcspritecolour(1)]
+        );
+    acase PVI_SPR23COLOURS:
+        sprintf
+        (   interpretstr,
+            "%s %s, %s",
+            LLL(MSG_COLOURS, "Colours:"), // ideally "Sprite colours:" or similar
+            colourname[calcspritecolour(2)],
+            colourname[calcspritecolour(3)]
+        );
+    acase PVI_SIZES:
+        sprintf
+        (   interpretstr,
+            "%s %s, %s, %s, %s",
+            LLL(MSG_SPRITESIZES, "Sprite sizes:"),
+            spritesizes[ memory[pvibase + (0x100 * whichpvi) + PVI_SIZES] & 0x03      ],
+            spritesizes[(memory[pvibase + (0x100 * whichpvi) + PVI_SIZES] & 0x0C) >> 2],
+            spritesizes[(memory[pvibase + (0x100 * whichpvi) + PVI_SIZES] & 0x30) >> 4],
+            spritesizes[(memory[pvibase + (0x100 * whichpvi) + PVI_SIZES] & 0xC0) >> 6]
+        );
+    acase PVI_BGCOLLIDE:
+        sprintf
+        (   interpretstr,
+            "%s\n" \
+            "%s %s, %s, %s, %s\n",
+            LLL(MSG_COLLISIONS, "Collisions:"),
+            LLL(MSG_SPRVSBG, "Sprites vs. background:"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x80) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x40) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x20) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x10) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s %s, %s, %s, %s",
+            LLL(MSG_SPRITESDRAWN, "Sprites drawn?"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x08) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x04) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x02) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_BGCOLLIDE] & 0x01) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no")
+        );
+    acase PVI_SPRITECOLLIDE:
+        sprintf
+        (   interpretstr,
+            "%s\n" \
+            "%s #%d %s #%d/#%d/#%d: %s, %s, %s\n",
+            LLL(MSG_COLLISIONS, "Collisions:"),
+            LLL(MSG_SPRITE2, "Sprite"),
+            (4 * whichpvi),
+            LLL(MSG_VERSUS, "vs."),
+            (4 * whichpvi) + 1,
+            (4 * whichpvi) + 2,
+            (4 * whichpvi) + 3,
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x20) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x10) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x08) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s #%d %s #%d/#%d/#%d: %s, %s, %s\n",
+            LLL(MSG_SPRITE2, "Sprite"),
+            (4 * whichpvi) + 1,
+            LLL(MSG_VERSUS, "vs."),
+            (4 * whichpvi),
+            (4 * whichpvi) + 2,
+            (4 * whichpvi) + 3,
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x20) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x04) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x02) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s #%d %s #%d/#%d/#%d: %s, %s, %s\n",
+            LLL(MSG_SPRITE2, "Sprite"),
+            (4 * whichpvi) + 2,
+            LLL(MSG_VERSUS, "vs."),
+            (4 * whichpvi),
+            (4 * whichpvi) + 1,
+            (4 * whichpvi) + 3,
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x10) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x04) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x01) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no")
+        );
+        sprintf
+        (   ENDOF(interpretstr),
+            "%s #%d %s #%d/#%d/#%d: %s, %s, %s",
+            LLL(MSG_SPRITE2, "Sprite"),
+            (4 * whichpvi) + 3,
+            LLL(MSG_VERSUS, "vs."),
+            (4 * whichpvi),
+            (4 * whichpvi) + 1,
+            (4 * whichpvi) + 2,
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x08) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x02) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no"),
+            (memory[pvibase + (0x100 * whichpvi) + PVI_SPRITECOLLIDE] & 0x01) ? LLL(MSG_ENGINE_YES2, "yes") : LLL(MSG_ENGINE_NO2, "no")
+        );
+    adefault:
+        return FALSE;
+    }
+
+    return TRUE;
+}

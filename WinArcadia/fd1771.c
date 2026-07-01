@@ -36,9 +36,10 @@ EXPORT int                  drive_idmode,
 
 // IMPORTED VARIABLES-----------------------------------------------------
 
-IMPORT FLAG                 outofrange,
-                            sectordone;
-IMPORT TEXT                 asciiname_short[259][3 + 1];
+IMPORT FLAG                 sectordone;
+IMPORT TEXT                 asciiname_short[259][3 + 1],
+                            friendly[FRIENDLYLENGTH + 1],
+                            friendly2[FRIENDLYLENGTH + 1];
 IMPORT UWORD                iar,
                             oldiar;
 IMPORT ULONG                cycles_2650,
@@ -48,7 +49,6 @@ IMPORT ULONG                cycles_2650,
 IMPORT int                  ambient,
                             cd2650_dosver,
                             cpuy,
-                            diskbyte,
                             drive_mode,
                             log_illegal,
                             machine,
@@ -239,7 +239,9 @@ EXPORT void fd1771_step_out(UBYTE data) // aka step down (once)
 // Type II Commands-------------------------------------------------------
 
 EXPORT void fd1771_read_sector(UBYTE data)
-{   RESETTIMEOUT;
+{   FAST int diskbyte;
+
+    RESETTIMEOUT;
 
     if (verbosedisk)
     {   zprintf(TEXTPEN_LOG, "Read Sector command:\n");
@@ -258,8 +260,8 @@ EXPORT void fd1771_read_sector(UBYTE data)
     drive[curdrive].blockoffset = 0;
     drive[curdrive].sector      = reqsector;
     if (drive[curdrive].inserted)
-    {   get_disk_byte(curdrive, TRUE);
-        if (outofrange)
+    {   get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+        if (diskbyte == -1)
         {   setdrivestatus(0x10, 2, 1); // ready, record not found, no DRQ, not busy
         } else
         {   if (ambient)
@@ -272,7 +274,9 @@ EXPORT void fd1771_read_sector(UBYTE data)
 }   }
 
 EXPORT void fd1771_write_sector(UBYTE data)
-{   RESETTIMEOUT;
+{   FAST int diskbyte;
+
+    RESETTIMEOUT;
 
     if (verbosedisk)
     {   zprintf(TEXTPEN_LOG, "Write Sector command:\n");
@@ -291,8 +295,8 @@ EXPORT void fd1771_write_sector(UBYTE data)
     drive[curdrive].blockoffset = 0;
     drive[curdrive].sector      = reqsector;
     if (drive[curdrive].inserted)
-    {   get_disk_byte(curdrive, TRUE);
-        if (outofrange)
+    {   get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+        if (diskbyte == -1)
         {   setdrivestatus(0x10, 2, 2); // ready, record not found, no DRQ, not busy
         } else
         {   if (ambient)
@@ -309,6 +313,7 @@ EXPORT void fd1771_write_sector(UBYTE data)
 
 EXPORT UBYTE fd1771_read_datareg(void)
 {   FAST UBYTE t;
+    FAST int   diskbyte;
 
     if
     (   drive_idmode
@@ -344,13 +349,13 @@ EXPORT UBYTE fd1771_read_datareg(void)
 
     RESETTIMEOUT;
 
-    get_disk_byte(curdrive, TRUE);
+    get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
     if
     (   drive[curdrive].inserted
      && drive[curdrive].spinning
      && drive[curdrive].headloaded
      && drive_mode == DRIVEMODE_READING
-     && !outofrange
+     && diskbyte   != -1
     )
     {   t = drive[curdrive].contents[diskbyte];
         if
@@ -363,18 +368,20 @@ EXPORT UBYTE fd1771_read_datareg(void)
              && watchreads
           // && conditional(&fp[address], data, TRUE)
         )   )
-        {   zprintf
+        {   DISCARD number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL
                 (   MSG_READFLOPPY,
-                    "Instruction at $%X (raster %d) read $%02X [%s] from floppy byte $%X. Previous IAR/PC was $%X.\n\n"
+                    "Instruction at %s (raster %d) read $%02X [%s] from floppy byte $%X. Previous IAR/PC was %s.\n\n"
                 ),
-                (int) iar,
+                friendly,
                 (int) cpuy,
                 (int) t,
-                      asciiname_short[t],
-                      diskbyte,
-                (int) oldiar
+                asciiname_short[t],
+                diskbyte,
+                friendly2
             );
             if
             (   (drive[curdrive].flags[diskbyte / 8] & (1 << (diskbyte % 8)))
@@ -405,16 +412,18 @@ EXPORT UBYTE fd1771_read_datareg(void)
             sectordone = FALSE; // only important for CD2650
             setdrivestatus(0x03, 2, 1); // ready, record found, DRQ, busy
         }
-        get_disk_byte(curdrive, FALSE);
-        drive[curdrive].viewstart = diskbyte;
-        update_floppydrive(1, curdrive);
+        get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+        if (diskbyte != -1)
+        {   drive[curdrive].viewstart = diskbyte - drive[curdrive].blockoffset;
+        }
+        update_floppydrive(FALSE, curdrive);
     } elif (drive_mode != DRIVEMODE_READING)
     {   if (verbosedisk)
         {   zprintf(TEXTPEN_ERROR, "Reading data register in wrong mode!\n");
         }
         t = 0; // really should return whatever was the last byte read/written
         // don't update status bits
-    } elif (outofrange)
+    } elif (diskbyte == -1)
     {   t = 0;
         setdrivestatus(0x10, 2, 1); // ready, record not found, no DRQ
         if (verbosedisk)
@@ -438,7 +447,9 @@ EXPORT UBYTE fd1771_read_datareg(void)
 }
 
 EXPORT void fd1771_write_datareg(UBYTE data)
-{   RESETTIMEOUT;
+{   FAST int diskbyte;
+
+    RESETTIMEOUT;
 
     drivedata = data;
     if (drive_mode != DRIVEMODE_WRITING)
@@ -448,11 +459,12 @@ EXPORT void fd1771_write_datareg(UBYTE data)
         return;
     }
 
-    get_disk_byte(curdrive, TRUE);
+    get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
     if
     (   drive[curdrive].inserted
      && drive[curdrive].spinning
      && drive[curdrive].headloaded
+     && diskbyte != -1
     )
     {   if
         (
@@ -465,18 +477,20 @@ EXPORT void fd1771_write_datareg(UBYTE data)
             && (watchwrites == WATCH_ALL || (!drive[curdrive].writeprotect && data != drive[curdrive].contents[diskbyte]))
          // && conditional(&fp[address], data, TRUE)
         )   )
-        {   zprintf
+        {   DISCARD number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL
                 (   MSG_WROTEFLOPPY,
-                    "Instruction at $%X (raster %d) wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was $%X.\n\n"
+                    "Instruction at %s (raster %d) wrote $%02X [%s] to floppy byte $%X. Previous IAR/PC was %s.\n\n"
                 ),
-                (int) iar,
+                friendly,
                 (int) cpuy,
                 (int) data,
-                      asciiname_short[data],
-                      diskbyte,
-                (int) oldiar
+                asciiname_short[data],
+                diskbyte,
+                friendly2
             );
             if
             (   (drive[curdrive].flags[diskbyte / 8] & (1 << (diskbyte % 8)))
@@ -511,10 +525,12 @@ EXPORT void fd1771_write_datareg(UBYTE data)
             sectordone = FALSE; // only important for CD2650
             setdrivestatus(0x03, 2, 1); // ready, record found, DRQ, busy
         }
-        get_disk_byte(curdrive, FALSE);
-        drive[curdrive].viewstart = diskbyte;
-        update_floppydrive(1, curdrive);
-    } elif (outofrange)
+        get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+        if (diskbyte != -1)
+        {   drive[curdrive].viewstart = diskbyte - drive[curdrive].blockoffset;
+        }
+        update_floppydrive(FALSE, curdrive);
+    } elif (diskbyte == -1)
     {   setdrivestatus(0x10, 2, 1); // ready, record not found, no DRQ
         if (verbosedisk)
         {   zprintf(TEXTPEN_ERROR, "Writing to invalid track %d and/or sector %d!\n", drive[curdrive].track, drive[curdrive].sector);
@@ -616,7 +632,7 @@ EXPORT void fd1771_force_interrupt(UBYTE data)
     } else
     {   drive_mode = DRIVEMODE_IDLE;
         setdrivestatus((UBYTE) (drivestatus & 0xFE), 1, 1);
-        update_floppydrive(2, curdrive);
+        update_floppydrive(FALSE, curdrive);
 }   }
 
 EXPORT void fd1771_write_trackreg(UBYTE data)
@@ -793,7 +809,7 @@ EXPORT void fd1771_spindown(void)
         sound_stop(GUESTCHANNELS + SAMPLE_GRIND);
         sound_stop(GUESTCHANNELS + SAMPLE_SPIN);
         drive[curdrive].headloaded = drive[curdrive].spinning = FALSE;
-        update_floppydrive(1, curdrive);
+        update_floppydrive(FALSE, curdrive);
         if (verbosedisk)
         {   zprintf(TEXTPEN_LOG, "Floppy drive #%d has unloaded head and spun down due to inactivity.\n", curdrive);
 }   }   }
