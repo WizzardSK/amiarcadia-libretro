@@ -77,16 +77,15 @@ IMPORT const TEXT                     led_chars[128 + 1];
 IMPORT       struct HostMachineStruct hostmachines[MACHINES];
 IMPORT       struct IOPortStruct      ioport[258];
 IMPORT       struct MachineStruct     machines[MACHINES];
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 IMPORT const struct CodeCommentStruct codecomment[];
 
 #ifdef AMIGA
     IMPORT   struct Catalog*          CatalogPtr;
-    IMPORT   struct Window*           SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef WIN32
     IMPORT   int                      CatalogPtr; // APTR doesn't work
     IMPORT   ULONG                    pencolours[COLOURSETS][PENS];
-    IMPORT   HWND                     SubWindowPtr[SUBWINDOWS];
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
@@ -969,7 +968,7 @@ EXPORT void instructor_biosdetails(int ea)
 EXPORT void si50_update_miniglows(void)
 {   int i;
 
-    if (machine != INSTRUCTOR || !SubWindowPtr[SUBWINDOW_CONTROLS])
+    if (machine != INSTRUCTOR || !subwin[SUBWINDOW_CONTROLS].hwnd)
     {   return;
     }
 
@@ -1016,7 +1015,7 @@ EXPORT void si50_updatedips(FLAG force)
                 old_s_is,
                 old_s_io;
 
-    if (machine != INSTRUCTOR || !SubWindowPtr[SUBWINDOW_DIPS])
+    if (machine != INSTRUCTOR || !subwin[SUBWINDOW_DIPS].hwnd)
     {   return;
     }
 

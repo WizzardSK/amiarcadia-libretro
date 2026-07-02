@@ -11,6 +11,7 @@
 
 #ifdef AMIGA
     #include <intuition/intuition.h> // struct Window*
+    #include <intuition/classusr.h>
     #include <proto/locale.h>        // GetCatalogStr()
 #endif
 
@@ -62,7 +63,6 @@
 // EXPORTED VARIABLES-----------------------------------------------------
 
 EXPORT UBYTE                digitleds[DIGITLEDS],
-                            sx[2], sy[2],
                             vdu_fgc, vdu_bgc,
                             vdu[MAX_VDUCOLUMNS][MAX_VDUROWS];
 EXPORT TEXT                 coords[128 + 1];
@@ -72,11 +72,12 @@ EXPORT int                  absxmin, absxmax,
                             absymin, absymax,
                             colourset = PURECOLOURS,
                             fastsize,
+                            guideray_x,
+                            guideray_y   = -1,
                             hidetop,
                             kx           = 0,
                             ky           = 0,
                             minidestx, minidesty,
-                            miniwidth, miniheight,
                             rotating,
                             scrnaddr     = 0,
                             speakoffset,
@@ -194,22 +195,22 @@ EXPORT const ULONG defpencolours[COLOURSETS][GUESTCOLOURS] = {
     0x00FF8080, // pink
 },
 { // PVI colours
-    0x00FFFFFF, // white  (UVI #0, PVI #0) 255 255 255
-    0x00B4B408, // yellow (UVI #1, PVI #1) 180 180   8
-    0x00B408B4, // purple (UVI #4, PVI #2) 180   8 180
-    0x00F11C00, // red    (UVI #5, PVI #3) 241  28   0
-    0x0008BABA, // cyan   (UVI #2, PVI #4)   8 186 186
-    0x0014B414, // green  (UVI #3, PVI #5)  20 180  20
-    0x003F4EFB, // blue   (UVI #6, PVI #6)  63  78 251
-    0x00000000, // black  (UVI #7, PVI #7)   0   0   0
-    0x00B4B4AC, // grey #1                 180 180 172
-    0x00AAAD52, // dark yellow             170 173  82
-    0x00A838A4, // dark purple             168  56 164
-    0x00822E24, // dark red                130  46  36
-    0x00409898, // dark cyan                64 152 152
-    0x00019000, // dark green                1 144   0
-    0x002E2E8C, // dark blue                30  30 140
-    0x00000000, // dark black                0   0   0
+    0x00D2E9EC, // white          (PVI #0) 210 233 236
+    0x00D7E300, // yellow         (PVI #1) 215 227   0
+    0x00FF22FE, // purple         (PVI #2) 255  34 254
+    0x00F81500, // red            (PVI #3) 248  21   0
+    0x0004DBFF, // cyan           (PVI #4)   4 219 255
+    0x0000C600, // green          (PVI #5)   0 198   0
+    0x00000DFF, // blue           (PVI #6)   0  13 255
+    0x0010121A, // black          (PVI #7)  16  18  26
+    0x00D7EEEF, // grey #1                 215 238 219
+    0x00A4A73D, // dark yellow             164 167  61
+    0x00D61FD4, // dark purple             214  31 212
+    0x00852111, // dark red                133  33  17
+    0x002C9B9F, // dark cyan                44 155 159
+    0x00248D27, // dark green               36 141  39
+    0x0006107B, // dark blue                 6  16 123
+    0x0010121A, // dark black               16  18  26
     0x00252525, // grey #2 (grey)
     0x00494949, // grey #3 (grey)
     0x006D6D6D, // grey #4 (grey)
@@ -311,11 +312,12 @@ IMPORT       ULONG                arcadia_bigctrls,
                                   sound,
                                   swapped;
 IMPORT       ULONG*               display;
-IMPORT       ASCREEN              screen[BOXWIDTH][BOXHEIGHT],
-                                  miniscreen[MINIWIDTH][MINIHEIGHT];
+IMPORT       ASCREEN              screen[BOXWIDTH][BOXHEIGHT];
+IMPORT       struct CanvasStruct  canvas[CANVASES];
 IMPORT       struct KeyNameStruct keyname[SCANCODES];
 IMPORT       struct MachineStruct machines[MACHINES];
 IMPORT       struct MemMapInfoStruct memmapinfo[MEMMAPS];
+IMPORT       struct SubWindowStruct  subwin[SUBWINDOWS];
 IMPORT const int                  gridline[220];
 #ifdef VERBOSE
     IMPORT   TEXT                 asciiname_long[259][9 + 1];
@@ -325,22 +327,17 @@ IMPORT const int                  gridline[220];
     IMPORT   int                  scanlines;
     IMPORT   UBYTE                bytepens[GUESTCOLOURS];
     IMPORT   UWORD                wordpens[GUESTCOLOURS];
-    IMPORT   UBYTE               *byteptr[MAXBOXHEIGHT],
-                                 *canvasbyteptr[CANVASES][CANVASHEIGHT],
-                                 *canvasdisplay[CANVASES];
+    IMPORT   UBYTE*               byteptr[MAXBOXHEIGHT];
     IMPORT   UWORD*               wordptr[MAXBOXHEIGHT];
     IMPORT   ULONG*               longptr[MAXBOXHEIGHT];
     IMPORT   struct Catalog*      CatalogPtr;
-    IMPORT   struct Window*       SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef WIN32
     IMPORT   int                  CatalogPtr; // APTR doesn't work
     IMPORT   UBYTE                fgtable[BOXHEIGHT][BOXWIDTH];
     IMPORT   ULONG                pencolours[COLOURSETS][PENS];
-    IMPORT   ULONG               *canvasdisplay[CANVASES],
-                                 *pixelulong,
+    IMPORT   ULONG               *pixelulong,
                                  *stars;
-    IMPORT   HWND                 SubWindowPtr[SUBWINDOWS];
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
@@ -416,7 +413,6 @@ EXPORT void (* drawrawpixel) (int x, int y, ULONG colour);
 
 // MODULE FUNCTIONS-------------------------------------------------------
 
-MODULE void drawcontrolspixel2(int x, int y, int colour);
 MODULE void draw_line(int x1, int y1, int x2, int y2, FLAG erasing);
 MODULE void scroll_vdu(void);
 MODULE __inline void segment_drawpixel(int x, int y, int colour);
@@ -425,15 +421,14 @@ MODULE STRPTR suffix(int number);
 // CODE-------------------------------------------------------------------
 
 EXPORT void draw_guide_ray(FLAG erasing)
-{   PERSIST int guideray_x,
-                guideray_y = -1;
-
-    if
-    (   ( erasing && guideray_y == -1)
-     || (!erasing && guideray_y != -1)
-    )
-    {   return;
-    }
+{   if (erasing)
+    {   if (guideray_y == -1) // if trying to erase a nonexistent guide ray
+        {   return;
+    }   }
+    else
+    {   if (guideray_y != -1) // trying to draw a guide ray when one already exists
+        {   draw_guide_ray(TRUE); // erase the old one first
+    }   }
 
     if (!erasing)
     {   switch (machine)
@@ -1731,7 +1726,8 @@ EXPORT void edit_screen_sanitize(void)
 }   }   }
 
 EXPORT void thecout(UBYTE value)
-{   TRANSIENT int   x, y;
+{   TRANSIENT FLAG  wrapped = FALSE;
+    TRANSIENT int   x, y;
     PERSIST   UBYTE SpeakBuffer[80 + 1]; // PERSISTent so as not to blow the stack
 
 #ifdef VERBOSE
@@ -1778,16 +1774,6 @@ EXPORT void thecout(UBYTE value)
 
         if (whichgame == PIPBUG_LIFEMCPOS)
         {   value &= 0x7F;
-        }
-
-        if (echoconsole)
-        {   zprintf(TEXTPEN_PIPBUG, "%c", value);
-            if (value == 8) // backspace
-            {   zprintf(TEXTPEN_PIPBUG, " \b");
-            }
-#ifdef AMIGA
-            DISCARD fflush(NULL); // it would be better to only flush stdout?
-#endif
         }
 
         if (machine == TWIN)
@@ -1948,11 +1934,25 @@ EXPORT void thecout(UBYTE value)
             {   vdu[vdu_x++][vdu_y] = value;
                 if (vdu_x == vdu_columns)
                 {   vdu_x = 0;
+                    wrapped = TRUE;
                     if (vdu_y == vdu_rows_total - 1)
                     {   scroll_vdu();
                     } else
                     {   vdu_y++;
         }   }   }   }
+
+        if (echoconsole)
+        {   zprintf(TEXTPEN_PIPBUG, "%c", value);
+            if (value == 8) // backspace
+            {   zprintf(TEXTPEN_PIPBUG, " \b");
+            }
+            if (wrapped)
+            {   zprintf(TEXTPEN_PIPBUG, "\n"); // helps with Funny Farm Races
+            }
+#ifdef AMIGA
+            DISCARD fflush(NULL); // it would be better to only flush stdout?
+#endif
+        }
 
         if (usespeech)
         {   if (value == LF)
@@ -2482,7 +2482,7 @@ EXPORT void fixupcolours(void)
 
 #ifdef AMIGA
     changecolours();
-    if (SubWindowPtr[SUBWINDOW_PALETTE])
+    if (subwin[SUBWINDOW_PALETTE].hwnd)
     {   update_sliders();
         updatewheel();
         updatebrightness();
@@ -2490,7 +2490,7 @@ EXPORT void fixupcolours(void)
     fixdebuggercolour();
 #endif
 #ifdef WIN32
-    if (SubWindowPtr[SUBWINDOW_PALETTE])
+    if (subwin[SUBWINDOW_PALETTE].hwnd)
     {   update_palette(TRUE);
     }
 #endif
@@ -2840,7 +2840,6 @@ EXPORT void drawsegment(int position, int segment, int colour)
             segment_drawpixel(x + xx,  y +  1, colour);
             segment_drawpixel(x + xx,  y +  2, colour);
         }
-
         drawcontrolspixel(controlsx + 1, 0, colour);
         drawcontrolspixel(controlsx + 2, 0, colour);
         drawcontrolspixel(controlsx + 3, 0, colour);
@@ -2855,7 +2854,6 @@ EXPORT void drawsegment(int position, int segment, int colour)
             segment_drawpixel(x + 12 + xxx,  y + yy, colour);
             segment_drawpixel(x + 13 + xxx,  y + yy, colour);
         }
-
         drawcontrolspixel(controlsx + 5, 1, colour);
         drawcontrolspixel(controlsx + 5, 2, colour);
         drawcontrolspixel(controlsx + 5, 3, colour);
@@ -3042,10 +3040,10 @@ EXPORT void drawcontrolspixel(int x, int y, int colour)
 #else
             x1 = x2 = 0;
 #endif
-            drawcontrolspixel2(x1 + (x * 2)    ,  y * 2     , colour);
-            drawcontrolspixel2(x1 + (x * 2) + 1,  y * 2     , colour);
-            drawcontrolspixel2(x2 + (x * 2)    , (y * 2) + 1, colour);
-            drawcontrolspixel2(x2 + (x * 2) + 1, (y * 2) + 1, colour);
+            DRAWMINI(x1 + (x * 2)    ,  y * 2     , colour);
+            DRAWMINI(x1 + (x * 2) + 1,  y * 2     , colour);
+            DRAWMINI(x2 + (x * 2)    , (y * 2) + 1, colour);
+            DRAWMINI(x2 + (x * 2) + 1, (y * 2) + 1, colour);
         } else
         {
 #ifdef WIDEINSTRUCTOR
@@ -3053,47 +3051,27 @@ EXPORT void drawcontrolspixel(int x, int y, int colour)
 #else
             x1 = 0;
 #endif
-            drawcontrolspixel2(x1 + x          ,  y         , colour);
+            DRAWMINI(x1 +  x         ,  y         , colour);
         }
     acase SELBST:
     case MIKIT:
-        drawcontrolspixel2(         x * 2     ,  y * 2     , colour);
-        drawcontrolspixel2(        (x * 2) + 1,  y * 2     , colour);
-        drawcontrolspixel2(         x * 2     , (y * 2) + 1, colour);
-        drawcontrolspixel2(        (x * 2) + 1, (y * 2) + 1, colour);
+        if (((x * 2) + 1) % SPLITDISTANCE < SPLITWIDTH)
+        {   DRAWSPLIT(( x * 2     ) / SPLITDISTANCE, ( x * 2     ) % SPLITDISTANCE,  y * 2     , colour);
+            DRAWSPLIT(((x * 2) + 1) / SPLITDISTANCE, ((x * 2) + 1) % SPLITDISTANCE,  y * 2     , colour);
+            DRAWSPLIT(( x * 2     ) / SPLITDISTANCE, ( x * 2     ) % SPLITDISTANCE, (y * 2) + 1, colour);
+            DRAWSPLIT(((x * 2) + 1) / SPLITDISTANCE, ((x * 2) + 1) % SPLITDISTANCE, (y * 2) + 1, colour);
+        }
     acase PHUNSY:
-        drawcontrolspixel2(        (x * 2) + 5,  y * 2     , colour);
-        drawcontrolspixel2(        (x * 2) + 6,  y * 2     , colour);
-        drawcontrolspixel2(        (x * 2) + 5, (y * 2) + 1, colour);
-        drawcontrolspixel2(        (x * 2) + 6, (y * 2) + 1, colour);
+        DRAWMINI(         (x * 2) + 5,  y * 2     , colour);
+        DRAWMINI(         (x * 2) + 6,  y * 2     , colour);
+        DRAWMINI(         (x * 2) + 5, (y * 2) + 1, colour);
+        DRAWMINI(         (x * 2) + 6, (y * 2) + 1, colour);
     acase TYPERIGHT:
-        drawcontrolspixel2(         x         ,  y         , colour);
+        DRAWMINI(          x         ,  y         , colour);
 }   }
 
-MODULE void drawcontrolspixel2(int x, int y, int colour)
-{   miniscreen[x][y] = (ASCREEN) colour;
-
-#ifdef WIN32
-    canvasdisplay[CANVAS_MINI][x + (y * MINIWIDTH)] = pencolours[PURECOLOURS][colour];
-#endif
-#ifdef AMIGA
-    if (SubWindowPtr[SUBWINDOW_CONTROLS])
-    {   switch (machine)
-        {
-        case INSTRUCTOR:
-        case PHUNSY:
-        case TYPERIGHT:
-            *(canvasbyteptr[CANVAS_MINI][y] + x) = bytepens[colour];
-        acase MIKIT:
-        case SELBST:
-            if (x % SPLITDISTANCE < SPLITWIDTH)
-            {   *(canvasbyteptr[CANVAS_SPLIT1 + (x / SPLITDISTANCE)][y] + (x % SPLITDISTANCE)) = bytepens[colour];
-    }   }   }
-#endif
-}
-
 EXPORT void drawctrlglow(int leftx, int topy, FLAG lit) // Note that there are also global variables with the same names as these parameters.
-{   // assert(SubWindowPtr[SUBWINDOW_CONTROLS]);
+{   // assert(subwin[SUBWINDOW_CONTROLS].hwnd);
     // assert(machine == PIPBUG || machine == BINBUG || machine == INSTRUCTOR);
 
     if (machine == PIPBUG || machine == BINBUG)
@@ -3135,21 +3113,17 @@ EXPORT void drawctrlglow(int leftx, int topy, FLAG lit) // Note that there are a
 }
 
 EXPORT void view_controls_engine(void)
-{   int i;
+{   int i,
+        y;
 #ifdef WIN32
     int fillcolour,
-        x, y;
+        x;
 #endif
 
     for (i = 0; i < KEYS; i++)
     {   oldkeys[i] =
         newkeys[i] = 0;
     }
-
-    sx[0] =
-    sx[1] =
-    sy[0] =
-    sy[1] = 128; // so we don't have any permanently lit paddles
 
     switch (machine)
     {
@@ -3165,48 +3139,52 @@ EXPORT void view_controls_engine(void)
         }
     acase INSTRUCTOR:
         if (si50_bigctrls)
-        {   miniwidth  = SI50_MINIWIDTH_BIG;
-            miniheight = SI50_MINIHEIGHT_BIG;
+        {   canvas[CANVAS_MINI].nowwidth  = SI50_MINIWIDTH_BIG;
+            canvas[CANVAS_MINI].nowheight = SI50_MINIHEIGHT_BIG;
             minidestx  = 524;
             minidesty  =  69;
         } else
-        {   miniwidth  = SI50_MINIWIDTH_SML;
-            miniheight = SI50_MINIHEIGHT_SML;
+        {   canvas[CANVAS_MINI].nowwidth  = SI50_MINIWIDTH_SML;
+            canvas[CANVAS_MINI].nowheight = SI50_MINIHEIGHT_SML;
             minidestx  = 301;
             minidesty  = 111;
         }
     acase PHUNSY:
-        miniwidth  = PHUNSY_MINIWIDTH;
-        miniheight = PHUNSY_MINIHEIGHT;
+        canvas[CANVAS_MINI].nowwidth  = PHUNSY_MINIWIDTH;
+        canvas[CANVAS_MINI].nowheight = PHUNSY_MINIHEIGHT;
         minidestx  =  81;
         minidesty  =  17;
     acase SELBST:
-        miniwidth  = SELBST_MINIWIDTH;
-        miniheight = SELBST_MINIHEIGHT;
+        canvas[CANVAS_MINI].nowwidth  = SELBST_MINIWIDTH;
+        canvas[CANVAS_MINI].nowheight = SELBST_MINIHEIGHT;
         // minidestx and minidesty will change for every digit
     acase MIKIT:
-        miniwidth  = MIKIT_MINIWIDTH;
-        miniheight = MIKIT_MINIHEIGHT;
+        canvas[CANVAS_MINI].nowwidth  = MIKIT_MINIWIDTH;
+        canvas[CANVAS_MINI].nowheight = MIKIT_MINIHEIGHT;
         // minidestx and minidesty will change for every digit
     acase TYPERIGHT:
-        miniwidth  = TYPERIGHT_MINIWIDTH;
-        miniheight = TYPERIGHT_MINIHEIGHT;
+        canvas[CANVAS_MINI].nowwidth  = TYPERIGHT_MINIWIDTH;
+        canvas[CANVAS_MINI].nowheight = TYPERIGHT_MINIHEIGHT;
         minidestx  = 230;
         minidesty  =  41;
     adefault:
-        miniwidth  =
-        miniheight =
+        canvas[CANVAS_MINI].nowwidth  =
+        canvas[CANVAS_MINI].nowheight = 0;
         minidestx  =
         minidesty  = 0;
     }
 
 #ifdef WIN32 // AmiArcadia does this in view_controls()
     fillcolour = (machine == TYPERIGHT) ? GREY1 : BLACK;
-    for (y = 0; y < MINIHEIGHT; y++)
-    {   for (x = 0; x < MINIWIDTH; x++)
-        {   miniscreen[x][y] = fillcolour;
-            canvasdisplay[CANVAS_MINI][x + (y * MINIWIDTH)] = pencolours[PURECOLOURS][fillcolour];
+    for (y = 0; y < canvas[CANVAS_MINI].nowheight; y++)
+    {   for (x = 0; x < canvas[CANVAS_MINI].nowwidth; x++)
+        {   DRAWMINI(x, y, fillcolour);
     }   }
+#endif
+#ifdef AMIGA
+    for (y = 0; y < canvas[CANVAS_MINI].nowheight; y++)
+    {   canvas[CANVAS_MINI].byteptr[y] = &(canvas[CANVAS_MINI].display[GFXACCESS(0, y, canvas[CANVAS_MINI].nowwidth)]);
+    }
 #endif
 
     wheremouse = -1;

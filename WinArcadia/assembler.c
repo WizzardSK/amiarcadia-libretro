@@ -558,7 +558,7 @@ MODULE FLAG asmline(void)
         fwrite("\n", 1, 1, ListFileHandle);
     }
 
-    return rc;
+    return rc; // whether to continue assembling
 }
 
 MODULE FLAG asm_signetics(void)
@@ -613,7 +613,10 @@ START:
             sprintf(&GraphBuffer[length + graphnesting], "$%04X %s\n", ocursor, fn_inc);
             graphnesting--;
     }   }
-    elif (compareit("INCLUDE", TRUE)) // INCLUDE (Japanese homebrews, et al.)
+    elif
+    (   compareit("INCLUDE", TRUE) // Japanese homebrews, et al.
+     || compareit("INCL"   , TRUE) // AS2650
+    )
     {   if (pass == 2 && GraphBuffer[0] == EOS)
         {   sprintf(GraphBuffer, "$0000 %s\n", fn_asm);
         }
@@ -629,17 +632,21 @@ START:
             sprintf(&GraphBuffer[length + graphnesting], "$%04X %s\n", ocursor, fn_inc);
     }   }
     elif
-    (   compareit("DATA",  TRUE) // Signetics
-     || compareit("DB",    TRUE)
+    (   compareit("DATA" , TRUE) // Signetics
+     || compareit("DB"   , TRUE)
      || compareit(".BYTE", TRUE) // X2650 cross-asm
+     || compareit("BYTE" , TRUE) // AS2650
+     || compareit("FCB"  , TRUE) // AS2650
     )
     {   getimmediatebytes();
     } elif (compareit("DBX", TRUE)) // VACS 1.24f
     {   getdbx();
     } elif
-    (   compareit("ACON",   TRUE) // Signetics
-     || compareit("DW",     TRUE)
+    (   compareit("ACON"  , TRUE) // Signetics
+     || compareit("DW"    , TRUE)
      || compareit(".DBYTE", TRUE) // X2650 cross-asm
+     || compareit("WORD"  , TRUE) // AS2650
+     || compareit("FDB"   , TRUE) // AS2650
     )
     {   getimmediatewords(FALSE);
     } elif (compareit(".ADDR", TRUE)) // X2650 cross-asm
@@ -665,7 +672,7 @@ START:
             specified = TRUE;
         }
         ended = TRUE;
-        return TRUE;
+        return FALSE;
     } elif (compareit(".OCT", TRUE)) // X2650 cross-asm
     {   defasmbase = BASE_OCTAL;
     } elif (compareit(".HEX", TRUE)) // X2650 cross-asm
@@ -703,8 +710,10 @@ START:
         orgy = TRUE;
         ocursor = value1;
     } elif
-    (   compareit("RES",  TRUE) // Signetics
-     || compareit("DS",   TRUE)
+    (   compareit("RES"    , TRUE) // Signetics
+     || compareit("DS"     , TRUE)
+     || compareit("RESERVE", TRUE) // AS2650
+     || compareit("RMB"    , TRUE) // AS2650
     )
     {   skipblanks(TRUE);
         ocursor += parsenumber(&LineBuffer[linecursor]);
@@ -723,6 +732,7 @@ START:
     } elif
     (   compareit("ASCI"  , TRUE) // PIPLA
      || compareit("STRING", TRUE)
+     || compareit("FCC"   , TRUE) // AS2650
     )
     {   skipblanks(TRUE);
         delimiter[0] = LineBuffer[linecursor];
@@ -1865,7 +1875,7 @@ MODULE FLAG asm_calmdirective(void)
             specified = TRUE;
         }
         ended = TRUE;
-        return TRUE;
+        return FALSE;
     } elif (compareit(".EVEN", TRUE))
     {   if (ocursor % 2 == 1)
         {   ocursor++;
@@ -3449,6 +3459,9 @@ MODULE void emit(int data)
     {   asmerror("attempted to emit code/data beyond 32K");
         return;
     }
+    if ((ocursor & 0x6000) != ((ocursor + 1) & 0x6000))
+    {   asmwarning("about to cross 8K page boundary");
+    }
 
     if
     (   (   machine == ARCADIA
@@ -4720,7 +4733,7 @@ START:
             specified = TRUE;
         }
         ended = TRUE;
-        return TRUE;
+        return FALSE;
     } elif (compareit("ORG", TRUE))
     {   skipblanks(TRUE);
         value1 = parsenumber(&LineBuffer[linecursor]);

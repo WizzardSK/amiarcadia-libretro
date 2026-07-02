@@ -96,9 +96,7 @@ EXPORT       int                  fastpipbug   = FALSE,
                                   pipbug_charheight2,
                                   pipbug_periph = PERIPH_PRINTER,
                                   printerwidth_full,
-                                  printerwidth_view,
                                   printerheight_full,
-                                  printerheight_view,
                                   printerrows_full,
                                   vdu_columns,
                                   vdu_rows_total,
@@ -123,7 +121,6 @@ IMPORT       UBYTE                blank,
                                   psu,
                                   r[7],
                                   startaddr_h, startaddr_l,
-                                  sx[2], sy[2],
                                   tt_scrncode,
                                   vdu[MAX_VDUCOLUMNS][MAX_VDUROWS],
                                   vdu_fgc, vdu_bgc;
@@ -174,13 +171,15 @@ IMPORT       int                  absxmin, absymin,
                                   usespeech,
                                   whichgame,
                                   whichkeyrect;
+IMPORT       struct CanvasStruct  canvas[CANVASES];
+IMPORT const struct CodeCommentStruct codecomment[];
 IMPORT       struct DriveStruct   drive[DRIVES_MAX];
 IMPORT       struct IOPortStruct  ioport[258];
 IMPORT       struct KindStruct    filekind[KINDS];
+IMPORT const struct KnownStruct   known[KNOWNGAMES];
 IMPORT       struct MachineStruct machines[MACHINES];
 IMPORT       struct PrinterStruct printer[2];
-IMPORT const struct KnownStruct   known[KNOWNGAMES];
-IMPORT const struct CodeCommentStruct codecomment[];
+IMPORT       struct SubWindowStruct subwin[SUBWINDOWS];
 IMPORT       TEXT                 asciiname_long[259][9 + 1],
                                   asciiname_short[259][3 + 1],
                                   fn_game[MAX_PATH + 1],
@@ -195,23 +194,13 @@ IMPORT       MEMFLAG              memflags[ALLTOKENS];
 #ifdef AMIGA
     IMPORT   struct Catalog*      CatalogPtr;
     IMPORT   struct Gadget*       gadgets[GIDS + 1];
-    IMPORT   struct Window*       SubWindowPtr[SUBWINDOWS];
     IMPORT   struct PaletteStruct pencolours[COLOURSETS][PENS];
-    IMPORT   struct RastPort      wpa8canvasrastport[CANVASES];
     IMPORT   UBYTE                bytepens[PENS];
     IMPORT   LONG                 emupens[EMUBRUSHES];
-    IMPORT   UBYTE               *canvasdisplay[CANVASES],
-                                 *canvasbyteptr[CANVASES][CANVASHEIGHT];
 #endif
 #ifdef WIN32
-    IMPORT   int                  CatalogPtr; // APTR doesn't work
-    IMPORT   HWND                 SubWindowPtr[SUBWINDOWS];
-    IMPORT   ULONG                pencolours[COLOURSETS][PENS];
-    IMPORT   ULONG*               canvasdisplay[CANVASES];
-IMPORT       struct
-{   BITMAPINFOHEADER Header;
-    DWORD            Colours[3];
-} CanvasBitMapInfo[CANVASES];
+    IMPORT       int              CatalogPtr; // APTR doesn't work
+    IMPORT       ULONG            pencolours[COLOURSETS][PENS];
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
@@ -2815,7 +2804,7 @@ MODULE void getdosname(void)
 EXPORT void pipbug_update_miniglows(void)
 {   int i;
 
-    if (machine != PIPBUG || !SubWindowPtr[SUBWINDOW_CONTROLS])
+    if (machine != PIPBUG || !subwin[SUBWINDOW_CONTROLS].hwnd)
     {   return;
     }
 
@@ -3219,19 +3208,13 @@ EXPORT void printer_changepixel(int whichprinter, int x, int y, int colour)
 
     if
     (   x - prtscrollx >= 0
-     && x - prtscrolly <  printerwidth_view
+     && x - prtscrollx <  canvas[CANVAS_PRINTER].nowwidth
      && y - prtscrolly >= 0
-     && y - prtscrolly <  printerheight_view
+     && y - prtscrolly <  canvas[CANVAS_PRINTER].nowheight
     )
-    {
-#ifdef WIN32
-        canvasdisplay[CANVAS_PRINTER][( (y - prtscrolly) * PRINTERWIDTH_VIEW) + x - prtscrollx] = pencolours[colourset][colour];
-#endif
-#ifdef AMIGA
-        *(canvasbyteptr[CANVAS_PRINTER][(y - prtscrolly)]                     + x - prtscrollx) = bytepens[             colour];
-#endif
+    {   DRAWPRINTER(x - prtscrollx, y - prtscrolly, colour);
     }
-    printer[whichprinter].scrn[                       y ]                     [ x]              =                       colour ;
+    printer[whichprinter].scrn[y][x] = colour;
 }
 
 EXPORT void printer_eject(int whichprinter)
@@ -3483,21 +3466,21 @@ EXPORT void printers_reset(void)
     prtscrollx             = 0;
     if (machine == TWIN)
     {   printerwidth_full  = C306WIDTH_FULL;
-        printerwidth_view  = C306WIDTH_VIEW;
         printerheight_full = C306HEIGHT_FULL;
-        printerheight_view = C306HEIGHT_VIEW;
         printercolumns     = C306COLUMNS;
         printerrows_full   = C306ROWS;
         prtscrolly         = C306HEIGHT_FULL - C306HEIGHT_VIEW;
+        canvas[CANVAS_PRINTER].nowwidth  = C306WIDTH_VIEW;
+        canvas[CANVAS_PRINTER].nowheight = C306HEIGHT_VIEW;
     } else
-    {   printerwidth_full  =
-        printerwidth_view  = EUYWIDTH;
-        printerheight_full =
-        printerheight_view = EUYHEIGHT;
+    {   printerwidth_full  = EUYWIDTH;
+        printerheight_full = EUYHEIGHT;
         printercolumns     = EUYCOLUMNS;
         printerrows_full   = EUYROWS;
         prtscrolly         =
         prtunit            = 0;
+        canvas[CANVAS_PRINTER].nowwidth  = EUYWIDTH;
+        canvas[CANVAS_PRINTER].nowheight = EUYHEIGHT;
     }
 
     for (i = 0; i < 2; i++)
@@ -3515,8 +3498,8 @@ EXPORT void printers_reset(void)
     }
 
 #ifdef AMIGA
-    for (y = 0; y < PRINTERHEIGHT_VIEW; y++)
-    {   canvasbyteptr[CANVAS_PRINTER][y] = &canvasdisplay[CANVAS_PRINTER][GFXACCESS(0, y, printerwidth_view)];
+    for (y = 0; y < canvas[CANVAS_PRINTER].nowheight; y++)
+    {   canvas[CANVAS_PRINTER].byteptr[y] = &(canvas[CANVAS_PRINTER].display[GFXACCESS(0, y, canvas[CANVAS_PRINTER].nowwidth)]);
     }
 #endif
 
@@ -3632,7 +3615,7 @@ EXPORT void update_industrial(FLAG force)
                    latitude_deg,
                    latitude_rad;
 
-    if (!SubWindowPtr[SUBWINDOW_INDUSTRIAL])
+    if (!subwin[SUBWINDOW_INDUSTRIAL].hwnd)
     {   return;
     }
 
@@ -3980,7 +3963,7 @@ PERSIST const TEXT captions[5][5][29 + 1] = { {
     case PERIPH_FURNACE:
         for (y1 = 0; y1 < INDUSTRIALHEIGHT; y1++)
         {   for (x1 = 0; x1 < INDUSTRIALWIDTH; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_BLACK);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_BLACK);
         }   }
 
         // Hub------------------------------------------------------------
@@ -4122,52 +4105,52 @@ PERSIST const TEXT captions[5][5][29 + 1] = { {
     acase PERIPH_LINEARISATIE:
         for (y1 = 0; y1 < INDUSTRIALHEIGHT; y1++)
         {   for (x1 = 0; x1 < INDUSTRIALWIDTH; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_BLACK);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_BLACK);
         }   }
 
         for (y1 = -2; y1 <= 2; y1++)
         {   for (x1 = -2; x1 <= 2; x1++)
             {   x2 = LINEARCENTREX + x1 + (int) ((linearx - 2048.0) / (4096 / (INDUSTRIALWIDTH  - 6)));
                 y2 = LINEARCENTREY + y1 - (int) ((lineary - 2048.0) / (4096 / (INDUSTRIALHEIGHT - 6)));
-                DRAWINDUSTRIALPIXEL(x2, y2, EMURGBPEN_RED);
+                DRAWINDUSTRIAL(x2, y2, EMURGBPEN_RED);
         }   }
         for (y1 = -2; y1 <= 2; y1++)
         {   for (x1 = -2; x1 <= 2; x1++)
             {   x2 = LINEARCENTREX + x1 + (int) ((linearu - 2048.0) / (4096 / (INDUSTRIALWIDTH  - 6)));
                 y2 = LINEARCENTREY + y1 - (int) ((linearv - 2048.0) / (4096 / (INDUSTRIALHEIGHT - 6)));
-                DRAWINDUSTRIALPIXEL(x2, y2, EMURGBPEN_BLUE);
+                DRAWINDUSTRIAL(x2, y2, EMURGBPEN_BLUE);
         }   }
     acase PERIPH_MAGNETOMETER:
         for (y1 = 0; y1 < INDUSTRIALHEIGHT * 2 / 3; y1++)
         {   for (x1 = 0; x1 < INDUSTRIALWIDTH; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_BLACK);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_BLACK);
         }   }
         for (y1 = INDUSTRIALHEIGHT * 2 / 3; y1 < INDUSTRIALHEIGHT * 5 / 6; y1++)
         {   for (x1 = 0; x1 < INDUSTRIALHEIGHT / 3; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_DARKBLUE);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_DARKBLUE);
         }   }
         for (y1 = INDUSTRIALHEIGHT * 5 / 6; y1 < INDUSTRIALHEIGHT; y1++)
         {   for (x1 = 0; x1 < INDUSTRIALHEIGHT / 3; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_DARKORANGE);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_DARKORANGE);
         }   }
         for (y1 = INDUSTRIALHEIGHT * 2 / 3; y1 < INDUSTRIALHEIGHT; y1++)
         {   for (x1 = INDUSTRIALWIDTH / 3; x1 < INDUSTRIALWIDTH * 2 / 3; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_DARKORANGE);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_DARKORANGE);
         }   }
         for (y1 = INDUSTRIALHEIGHT * 2 / 3; y1 < INDUSTRIALHEIGHT * 5 / 6; y1++)
         {   for (x1 = INDUSTRIALWIDTH * 2 / 3; x1 < INDUSTRIALWIDTH; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_DARKBLUE);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_DARKBLUE);
         }   }
         for (y1 = INDUSTRIALHEIGHT * 5 / 6; y1 < INDUSTRIALHEIGHT; y1++)
         {   for (x1 = INDUSTRIALWIDTH * 2 / 3; x1 < INDUSTRIALWIDTH; x1++)
-            {   DRAWINDUSTRIALPIXEL(x1, y1, EMURGBPEN_DARKORANGE);
+            {   DRAWINDUSTRIAL(x1, y1, EMURGBPEN_DARKORANGE);
         }   }
 
         for (i = 0; i < 3; i++)
         {   for (y1 = 0; y1 < 5; y1++)
             {   for (x1 = 0; x1 < 29; x1++)
                 {   if (captions[i][y1][x1] == '#')
-                    {   DRAWINDUSTRIALPIXEL
+                    {   DRAWINDUSTRIAL
                         (   (i * (INDUSTRIALWIDTH / 3)) + (INDUSTRIALWIDTH / 6) - 15 + x1,
                             INDUSTRIALHEIGHT - 6 + y1,
                             EMURGBPEN_BLACK
@@ -4177,33 +4160,33 @@ PERSIST const TEXT captions[5][5][29 + 1] = { {
         {   for (y1 = 0; y1 < 5; y1++)
             {   for (x1 = 0; x1 < 29; x1++)
                 {   if (captions[i][y1][x1] == '#')
-                    {   DRAWINDUSTRIALPIXEL
+                    {   DRAWINDUSTRIAL
                         (   ((i - 3) * (INDUSTRIALWIDTH / 2)) + (INDUSTRIALWIDTH / 4) - 15 + x1,
                             1 + y1,
                             EMURGBPEN_WHITE
                         );
         }   }   }   }
         for (y1 = 0; y1 < INDUSTRIALHEIGHT * 2 / 3; y1++)
-        {   DRAWINDUSTRIALPIXEL
+        {   DRAWINDUSTRIAL
             (   INDUSTRIALWIDTH / 2,
                 y1,
                 EMURGBPEN_WHITE
             );
         }
         for (x1 = 0; x1 < INDUSTRIALWIDTH; x1++)
-        {   DRAWINDUSTRIALPIXEL
+        {   DRAWINDUSTRIAL
             (   x1,
                 INDUSTRIALHEIGHT * 2 / 3,
                 EMURGBPEN_WHITE
             );
         }
         for (y1 = INDUSTRIALHEIGHT * 2 / 3; y1 < INDUSTRIALHEIGHT; y1++)
-        {   DRAWINDUSTRIALPIXEL
+        {   DRAWINDUSTRIAL
             (   INDUSTRIALWIDTH / 3,
                 y1,
                 EMURGBPEN_WHITE
             );
-            DRAWINDUSTRIALPIXEL
+            DRAWINDUSTRIAL
             (   INDUSTRIALWIDTH * 2 / 3,
                 y1,
                 EMURGBPEN_WHITE
@@ -4340,36 +4323,7 @@ PERSIST const TEXT captions[5][5][29 + 1] = { {
         {   draw_line(EARTHCENTREX, EARTHCENTREY, EARTHCENTREX - x1, EARTHCENTREY - y1, EMURGBPEN_DARKBLUE);
     }   }
 
-#ifdef WIN32
-    IndustrialRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_INDUSTRIAL], IDC_WFC));
-    DISCARD StretchDIBits
-    (   IndustrialRastPtr,
-        0,              // dest leftx
-        0,              // dest topy
-        INDUSTRIALWIDTH,   // dest width
-        INDUSTRIALHEIGHT,  // dest height
-        0,              // source leftx
-        0,              // source topy
-        INDUSTRIALWIDTH,   // source width
-        INDUSTRIALHEIGHT,  // source height
-        canvasdisplay[CANVAS_INDUSTRIAL], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_INDUSTRIAL], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS, // format of data
-        SRCCOPY         // blit mode
-    );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_INDUSTRIAL], IDC_WFC), IndustrialRastPtr);
-#endif
-#ifdef AMIGA
-    DISCARD WritePixelArray8
-    (   SubWindowPtr[SUBWINDOW_INDUSTRIAL]->RPort,
-        (ULONG) (gadgets[GID_IN_SP1]->LeftEdge                       ), // dest leftx
-        (ULONG) (gadgets[GID_IN_SP1]->TopEdge                        ), // dest topy
-        (ULONG) (gadgets[GID_IN_SP1]->LeftEdge + INDUSTRIALWIDTH  - 1), // dest rightx
-        (ULONG) (gadgets[GID_IN_SP1]->TopEdge  + INDUSTRIALHEIGHT - 1), // dest bottomy
-        canvasdisplay[CANVAS_INDUSTRIAL],
-        &wpa8canvasrastport[CANVAS_INDUSTRIAL]
-    );
-#endif
+    wpa8(CANVAS_INDUSTRIAL, 0, 0);
 }
 
 MODULE void draw_line(int x1, int y1, int x2, int y2, ULONG colour)
@@ -4387,7 +4341,7 @@ MODULE void draw_line(int x1, int y1, int x2, int y2, ULONG colour)
     err = dx - dy;
 
     for (;;)
-    {   DRAWINDUSTRIALPIXEL(x1, y1, colour);
+    {   DRAWINDUSTRIAL(x1, y1, colour);
 
         if (x1 == x2 && y1 == y2)
         {   break;

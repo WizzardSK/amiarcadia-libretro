@@ -84,17 +84,16 @@ IMPORT FILE*   MacroHandle;
 #endif
 #ifdef AMIGA
     IMPORT UBYTE          bytepens[PENS];
-    IMPORT struct Window* SubWindowPtr[SUBWINDOWS];
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
 
-MODULE int   tr_game,
-             tr_lives,
-             tr_score,
-             tr_screencursor,
-             tr_usergame;
-MODULE FLAG  tr_arrow[4];
+MODULE int                tr_game,
+                          tr_lives,
+                          tr_score,
+                          tr_screencursor,
+                          tr_usergame;
+MODULE FLAG               tr_arrow[4];
 
 // MODULE FUNCTIONS-------------------------------------------------------
 

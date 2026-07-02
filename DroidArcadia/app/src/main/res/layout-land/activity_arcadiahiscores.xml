@@ -914,6 +914,12 @@
                     android:layout_width="16sp"
                     android:layout_height="0dp"
                     android:layout_weight="1"
+                    android:src="@drawable/kotonoha"
+                />
+                <ImageView
+                    android:layout_width="16sp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:src="@drawable/macross"
                 />
                 <ImageView
@@ -1070,6 +1076,15 @@
                 android:gravity="left|fill_vertical"
                 android:layout_weight="1"
                 android:layout_marginLeft="10dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:textColor="#ffffff"
+                    android:textSize="15sp"
+                    android:text="Kotonoha Tower"
+                    android:gravity="left"
+                />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
@@ -1554,6 +1569,16 @@
                     android:text="-"
                     android:gravity="right"
                 />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:id="@+id/hs_52"
+                    android:textColor="#ffffff"
+                    android:textSize="15sp"
+                    android:text="-"
+                    android:gravity="right"
+                />
             </LinearLayout>
 
             <LinearLayout
@@ -1808,6 +1833,16 @@
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:id="@+id/hsd_51"
+                    android:textColor="#ffffff"
+                    android:textSize="15sp"
+                    android:text="-"
+                    android:gravity="right"
+                />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:id="@+id/hsd_52"
                     android:textColor="#ffffff"
                     android:textSize="15sp"
                     android:text="-"

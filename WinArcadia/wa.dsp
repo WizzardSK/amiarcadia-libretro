@@ -620,6 +620,10 @@ SOURCE=".\box-mg318.bmp"
 # End Source File
 # Begin Source File
 
+SOURCE=".\box-mg319.bmp"
+# End Source File
+# Begin Source File
+
 SOURCE=".\box-mg320.bmp"
 # End Source File
 # Begin Source File
@@ -936,6 +940,10 @@ SOURCE=.\candy4.bmp
 # End Source File
 # Begin Source File
 
+SOURCE=.\candy5.bmp
+# End Source File
+# Begin Source File
+
 SOURCE=.\capture.ico
 # End Source File
 # Begin Source File
@@ -1064,6 +1072,234 @@ SOURCE=.\dsound.h
 # End Source File
 # Begin Source File
 
+SOURCE=".\e-aggressor.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-amazone.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-animateds.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-asteroids.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-attackfromspace.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-basketball.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-burstingballoons.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-cardtrick.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-cargoship.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-carrace.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-catapult.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-chicken.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-christmastree.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-circledrive.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-cosmic.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-destroyer.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-enterprise.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-enterprise2.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-enterprise3.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-explodingman.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-flyingpc.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-hamish.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-helicopter.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-horseraces.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-hunting.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-invaders.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-jackpot.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-labyrinth.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-launchingenterprise.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-mazes.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-memory.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-molebasher.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-moonlanding.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-multipleobjects.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-newton.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-nim.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-offshorefishing.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-omegalanding.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-painting.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-penalty.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-piano.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-pilot.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-pinball.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-pviart.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-queen.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-raster.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-rockethunting.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-seawar.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-snakesandladders.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-snap.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-spacebattle.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-spacescene.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-steamengine.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-submarines.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-survival.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-tinytim.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\e-ufoshooting.ico"
+# End Source File
+# Begin Source File
+
 SOURCE=.\eject.ico
 # End Source File
 # Begin Source File
@@ -1160,6 +1396,10 @@ SOURCE=.\games.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\gameware.bmp
+# End Source File
+# Begin Source File
+
 SOURCE=.\gfx.c
 # End Source File
 # Begin Source File
@@ -1213,6 +1453,170 @@ SOURCE=.\horserac.ico
 # Begin Source File
 
 SOURCE=.\hqx.c
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-37bytes.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-airsea.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-bowling.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-boxing.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-canabalt.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-capture.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-casino.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-circus.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-cockpit.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-combat.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-comecome.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-comefrutas.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-cowboy.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-crazycrab.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-flappybird.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-flappybirds.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-golf.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-grandprix.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-hangman.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-headon.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-horseracing.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-hunting.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-hyperspace.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-invaders.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-kaboom.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-labyrinth.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-laserattack.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-leapfrog.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-monsterman.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-monstermunchers.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-munchandcrunch.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-musicalgames.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-pinball.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-shootout.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-soccer.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-spacewar.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-spacezap.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-superinvaders.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-superspace.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-treasurehunt.ico"
+# End Source File
+# Begin Source File
+
+SOURCE=".\i-wintersports.ico"
 # End Source File
 # Begin Source File
 
@@ -1276,6 +1680,10 @@ SOURCE=.\jungler.ico
 # End Source File
 # Begin Source File
 
+SOURCE=.\kotonoha.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\labels.h
 # End Source File
 # Begin Source File
@@ -1289,6 +1697,10 @@ SOURCE=.\laserbat.ico
 # Begin Source File
 
 SOURCE=.\lint.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\logitech.bmp
 # End Source File
 # Begin Source File
 

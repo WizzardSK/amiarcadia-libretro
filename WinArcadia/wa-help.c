@@ -26,52 +26,11 @@
 
 // EXPORTED VARIABLES-----------------------------------------------------
 
+EXPORT       int                   viewpadsas2[2] = { 0, 0 };
 EXPORT       HDC                   ControlsRastPtr1,
                                    ControlsRastPtr2;
-EXPORT const struct KeyTableStruct keytable[16];
-
-EXPORT const struct KeyHelpStruct keyhelp[40] = {
-{  0,  2,  2, IDC_LT_2         }, //  0
-{  1,  2,  2, IDC_RT_2         },
-{  0, 13, 12, IDC_LT_X1        },
-{  0, 14, 13, IDC_LT_X2        },
-{  0, 15, 14, IDC_LT_X3        },
-{  1, 13, 12, IDC_RT_X1        },
-{  1, 14, 13, IDC_RT_X2        },
-{  1, 15, 14, IDC_RT_X3        },
-{  0,  1,  1, IDC_LT_1         },
-{  0, 16, 15, IDC_LT_X4        },
-{  0,  3,  3, IDC_LT_3         }, // 10
-{  1,  1,  1, IDC_RT_1         },
-{  1, 16, 15, IDC_RT_X4        },
-{  1,  3,  3, IDC_RT_3         },
-{  0,  4,  4, IDC_LT_4         },
-{  0,  5,  5, IDC_LT_5         },
-{  0,  6,  6, IDC_LT_6         },
-{  1,  4,  4, IDC_RT_4         },
-{  1,  5,  5, IDC_RT_5         },
-{  1,  6,  6, IDC_RT_6         },
-{  0,  7,  7, IDC_LT_7         }, // 20
-{  0,  8,  8, IDC_LT_8         },
-{  0,  9,  9, IDC_LT_9         },
-{  1,  7,  7, IDC_RT_7         },
-{  1,  8,  8, IDC_RT_8         },
-{  1,  9,  9, IDC_RT_9         },
-{  0, 10, 10, IDC_LT_CL        },
-{  0, 11,  0, IDC_LT_0         },
-{  0, 12, 11, IDC_LT_EN        },
-{  1, 10, 10, IDC_RT_CL        },
-{  1, 11,  0, IDC_RT_0         }, // 30
-{  1, 12, 11, IDC_RT_EN        },
-{  0,  0,  0, IDL_GAMEINFO_1ST },
-{  0,  0,  0, IDL_GAMEINFO_2ND },
-{  0,  0,  0, IDL_GAMEINFO_3RD },
-{  0,  0,  0, IDL_GAMEINFO_4TH }, // 35
-{  0,  2,  2, IDC_LT_EXTRAFIRE1}, // 36
-{  0,  2,  2, IDC_LT_EXTRAFIRE2},
-{  1,  2,  2, IDC_RT_EXTRAFIRE1},
-{  1,  2,  2, IDC_RT_EXTRAFIRE2}, // 39
-};
+EXPORT const DWORD                 joyfires[8] = { JOYFIRE1, JOYFIRE2, JOYFIRE3, JOYFIRE4, JOYA, JOYB, JOYAUTOFIRE, JOYPAUSE };
+EXPORT const struct KeyTableStruct keytable[NUMKEYS];
 
 /* Keys we don't hear: both Windows keys, both Alt keys, F10.
 Also Power, Sleep, Wake, Fn, PrtSc.
@@ -118,7 +77,7 @@ EXPORT struct KeyNameStruct keyname[SCANCODES] = {
 { "H",     { 'h' , 'h' ,  'h' }, { 'H' , 'H' , 'H' }, { 'H', 'H' , 'H' }, 0x08, 0x08, 'h' , 'H' , FALSE, IDC_KYBD_H        , TRUE , TRUE , 32 }, // $23
 { "J",     { 'j' , 'j' ,  'j' }, { 'J' , 'J' , 'J' }, { 'J', 'J' , 'J' }, 0x0A, 0x0A, 'j' , 'J' , FALSE, IDC_KYBD_J        , TRUE , TRUE , 33 }, // $24
 { "K",     { 'k' , 'k' ,  'k' }, { 'K' , 'K' , 'K' }, { 'K', 'K' , 'K' }, 0x0B, 0x0B, 'k' , 'K' , FALSE, IDC_KYBD_K        , TRUE , TRUE , 34 }, // $25
-{ "L",     { 'l' , 'l' ,  'l' }, { 'L' , 'L' , 'L' }, { 'L', 'L' , 'L' }, 0x0C, 0x0C, 'l' , 'L' , FALSE, IDC_KYBD_L        , TRUE , TRUE , 35 }, // $26
+{ "L",     { 'l' , 'l' ,  'l' }, { 'L' , 'L' , 'L' }, { 'L', 'L', 'L' }, 0x0C, 0x0C, 'l' , 'L' , FALSE, IDC_KYBD_L        , TRUE , TRUE , 35 }, // $26
 { ";",     { ';' , ';' ,  ';' }, { ';' , ';' , ';' }, { ':', '+' , '+' },   NC,   NC, ';' , ':' , FALSE, IDC_KYBD_SEMICOLON, TRUE , TRUE , 36 }, // $27
 { "'",     {QUOTE, ':' , QUOTE}, {QUOTE, ':' , BS  }, { '"', '*' , BS  },   NC,   NC, BS  , '"' , FALSE, IDC_KYBD_QUOTE    , TRUE , TRUE , 37 }, // $28
 { "`",     { '`' , DEL ,  NC  }, { '`' , DEL , '`' }, { '~', DEL , '~' },   NC, 0x1A, '`' , NC  , FALSE, IDC_KYBD_BACKTICK , TRUE , TRUE , -1 }, // $29 ctrl-shift code assumes guest layout
@@ -601,42 +560,46 @@ IMPORT       FLAG                      lmb, mmb, rmb,
 IMPORT       UBYTE                     button[2][8],
                                        jx[2], jy[2],
                                        KeyMatrix[SCANCODES / 8],
-                                       newkeys[KEYS],
-                                       sx[2], sy[2];
+                                       newkeys[KEYS];
 IMPORT const UBYTE                     table_opcolours_2650[2][256];
+IMPORT const int                       key_to_gid[2][17];
 IMPORT       TEXT                      autotext[GAMEINFOLINES][80 + 1],
+                                       datatip[1024 + 1],
                                        gtempstring[256 + 1],
                                        pgmtext[6 * KILOBYTE],
                                        joyname[2][MAX_PATH];
+IMPORT       UWORD                     console[4],
+                                       keypads[2][NUMKEYS],
+                                       temp_console[4],
+                                       temp_keypads[2][NUMKEYS];
 IMPORT       ULONG                     arcadia_bigctrls,
                                        arcadia_viewcontrolsas,
                                        elektor_bigctrls,
                                        interton_bigctrls,
                                        pong8550_viewcontrolsas,
                                        pong8600_viewcontrolsas,
-                                       jff[2],
+                                       jf[2],
                                        keyframes[SCANCODES],
                                        mikit_bigctrls,
                                        showpalladiumkeys1,
                                        si50_bigctrls,
+                                       softpad[2],
                                        swapped,
                                        viewkybdas,
                                        viewkybdas2,
                                        viewpadsas;
-IMPORT const DWORD                     joyfires[8];
 IMPORT const STRPTR                    opcodelink[256],
                                        overlays[OVERLAYS][33];
 IMPORT       HBRUSH                    hBrush[EMUBRUSHES];
 IMPORT       HFONT                     hSmallFont;
 IMPORT       HINSTANCE                 InstancePtr;
-IMPORT       HWND                      SubWindowPtr[SUBWINDOWS],
-                                       TipsPtr[SUBWINDOWS];
 IMPORT       RECT                      therect;
 IMPORT       int                       candy[CANDIES],
                                        CatalogPtr,
                                        clicked,
                                        guestrmb,
                                        hostcontroller[2],
+                                       joys,
                                        key1,
                                        key2,
                                        key3,
@@ -645,30 +608,87 @@ IMPORT       int                       candy[CANDIES],
                                        machine,
                                        memmap,
                                        oldcontrolkey,
-                                       paddleup,
-                                       paddledown,
-                                       paddleleft,
-                                       paddleright,
+                                       recmode,
                                        style,
                                        supercpu,
+                                       titleheight,
                                        whichgame,
                                        whichkeyrect,
-                                       whichoverlay;
-IMPORT const int                       num_to_num[NUMKEYS];
-IMPORT const struct GuestKeyStruct     guestkeys[NUMKEYS];
+                                       whichoverlay,
+                                       whose[2],
+                                       whosemouse;
 IMPORT       struct HostMachineStruct  hostmachines[MACHINES];
 IMPORT const struct KeyInfoStruct      keyinfo[KEYINFOS][KEYS];
 IMPORT       struct MachineStruct      machines[MACHINES];
 IMPORT const struct MemMapToStruct     memmap_to[MEMMAPS];
 IMPORT       struct OpcodeStruct       opcodes[3][256];
+IMPORT       struct SubWindowStruct    subwin[SUBWINDOWS];
 
 // MODULE VARIABLES-------------------------------------------------------
 
-MODULE       HICON                     controlsicon = NULL;
+MODULE       HICON                     controlsicon =   NULL,
+                                       padicon[2]   = { NULL, NULL };
+
+#define HOSTPADGADS 24
+MODULE       RECT                      hostmouserect[3],
+                                       hostpadrect[2][HOSTPADGADS];
+MODULE const int                       hostmousegad[3] =
+{ IDC_PADS_LTMOUSE,
+  IDC_PADS_MDMOUSE,
+  IDC_PADS_RTMOUSE,
+}, hostpadgad[2][HOSTPADGADS] = {
+{ IDC_PADS_LT_1,
+  IDC_PADS_LT_2,
+  IDC_PADS_LT_3,
+  IDC_PADS_LT_4,
+  IDC_PADS_LT_5,
+  IDC_PADS_LT_6,
+  IDC_PADS_LT_7,
+  IDC_PADS_LT_8,
+  IDC_PADS_LT_A,
+  IDC_PADS_LT_B,
+  IDC_PADS_LT_11,
+  IDC_PADS_LT_12,
+  IDC_PADS_LT_DUP,
+  IDC_PADS_LT_DDN,
+  IDC_PADS_LT_DLT,
+  IDC_PADS_LT_DRT,
+  IDC_PADS_LT_AUP,
+  IDC_PADS_LT_ADN,
+  IDC_PADS_LT_ALT,
+  IDC_PADS_LT_ART,
+  IDC_PADS_LT_AUP2,
+  IDC_PADS_LT_ADN2,
+  IDC_PADS_LT_ALT2,
+  IDC_PADS_LT_ART2,
+}, {
+  IDC_PADS_RT_1,
+  IDC_PADS_RT_2,
+  IDC_PADS_RT_3,
+  IDC_PADS_RT_4,
+  IDC_PADS_RT_5,
+  IDC_PADS_RT_6,
+  IDC_PADS_RT_7,
+  IDC_PADS_RT_8,
+  IDC_PADS_RT_A,
+  IDC_PADS_RT_B,
+  IDC_PADS_RT_11,
+  IDC_PADS_RT_12,
+  IDC_PADS_RT_DUP,
+  IDC_PADS_RT_DLT,
+  IDC_PADS_RT_DDN,
+  IDC_PADS_RT_DRT,
+  IDC_PADS_RT_AUP,
+  IDC_PADS_RT_ADN,
+  IDC_PADS_RT_ALT,
+  IDC_PADS_RT_ART,
+  IDC_PADS_RT_AUP2,
+  IDC_PADS_RT_ADN2,
+  IDC_PADS_RT_ART2,
+  IDC_PADS_RT_ALT2,
+} };
 
 // MODULE FUNCTIONS-------------------------------------------------------
-
-MODULE int buttontranslate(int player, int which);
 
 MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 MODULE BOOL CALLBACK GameInfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -746,53 +766,99 @@ EXPORT void help_opcodes(void)
 }
 
 EXPORT void help_hostpads(void)
-{   if (machine != ARCADIA && machine != PONG && !machines[machine].pvis)
+{   TRANSIENT int      i,
+                       next;
+    TRANSIENT TOOLINFO ti;
+    FAST      RECT     therect1,
+                       therect2;
+
+    if (machine != ARCADIA && machine != PONG && !machines[machine].pvis)
     {   return;
     }
 
-    open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPADS), PadsDlgProc);
+    switch (joys)
+    {
+    case 0:
+    case 1:   if (viewpadsas2[0] == 0)
+              {   open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPAD_GAMEWARE), PadsDlgProc);
+              } else
+              {   open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPAD_LOGITECH), PadsDlgProc);
+              }
+    adefault: if (viewpadsas2[0] == 0)
+              {   if (viewpadsas2[1] == 0)
+                  {   open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPADS_GW_GW), PadsDlgProc);
+                  } else
+                  {   open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPADS_GW_LT), PadsDlgProc);
+              }   }
+              else
+              {   if (viewpadsas2[1] == 0)
+                  {   open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPADS_LT_GW), PadsDlgProc);
+                  } else
+                  {   open_subwindow(SUBWINDOW_HOSTPADS, MAKEINTRESOURCE(IDD_HOSTPADS_LT_LT), PadsDlgProc);
+    }         }   }
     make_tips(SUBWINDOW_HOSTPADS, 51, IDC_PADS_LT_1);
+
+    next = 51;
+    for (i = 0; i < ((joys == 2) ? 2 : 1); i++)
+    {   if (whose[i] == 3)
+        {   ti.cbSize   = sizeof(TOOLINFO);
+            ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+            ti.hwnd     = subwin[SUBWINDOW_HOSTPADS].hwnd;
+            ti.uId      = next++;
+            ti.hinst    = InstancePtr;
+            ti.lpszText = LLL
+                          (   MSG_UNASSIGNEDPADTIP,
+                              "Use the \"Peripherals|Left/right controller »\" submenu(s)\n" \
+                              "to assign this host gamepad to a guest player."
+                          ); // this gets copied
+            GetWindowRect(GetDlgItem(subwin[SUBWINDOW_HOSTPADS].hwnd, (i == 0) ? IDC_LTHOSTPAD : IDC_RTHOSTPAD), &therect1); // gadgets relative to screen
+            GetWindowRect(subwin[SUBWINDOW_HOSTPADS].hwnd, &therect2); // window relative to screen
+            ti.rect.top    = therect1.top    - therect2.top  - titleheight - 2;
+            ti.rect.bottom = therect1.bottom - therect2.top  - titleheight - 2;
+            ti.rect.left   = therect1.left   - therect2.left - 3; // was -leftwidth rather than -3
+            ti.rect.right  = therect1.right  - therect2.left - 3; // was -leftwidth rather than -3
+            SendMessage(subwin[SUBWINDOW_HOSTPADS].tips, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+    }   }
+
     updatepadnames();
 }
 
 EXPORT void help_hostkybd(void)
 {   open_subwindow(SUBWINDOW_HOSTKYBD, MAKEINTRESOURCE(viewkybdas2 ? IDD_LAPTOP : IDD_DESKTOP), KybdDlgProc);
     make_tips(SUBWINDOW_HOSTKYBD, SCANCODES, 0);
-    updatekeynames(SubWindowPtr[SUBWINDOW_HOSTKYBD]);
+    updatekeynames(subwin[SUBWINDOW_HOSTKYBD].hwnd);
 }
 
 EXPORT void update_opcodes(void)
 {   int      i;
     TOOLINFO ti;
-    TEXT     datatip[512 + 1];
 
     update_opcodes_engine();
 
-    if (!SubWindowPtr[SUBWINDOW_OPCODES])
+    if (!subwin[SUBWINDOW_OPCODES].hwnd)
     {   return; // important!
     }
 
-    DISCARD SetWindowText(SubWindowPtr[SUBWINDOW_OPCODES], LLL(MSG_HAIL_OPCODES, "Opcodes"));
+    DISCARD SetWindowText(subwin[SUBWINDOW_OPCODES].hwnd, LLL(MSG_HAIL_OPCODES, "Opcodes"));
 
     for (i = 0; i < 256; i++)
-    {   DISCARD SetDlgItemText(SubWindowPtr[SUBWINDOW_OPCODES], IDC_OPCODE0 + i, opcodes[style][i].name);
+    {   DISCARD SetDlgItemText(subwin[SUBWINDOW_OPCODES].hwnd, IDC_OPCODE0 + i, opcodes[style][i].name);
 
         make_opcodetip(i, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_OPCODES];
+        ti.hwnd     = subwin[SUBWINDOW_OPCODES].hwnd;
         ti.uId      = i;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_OPCODES], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_OPCODES].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }   }
 
 EXPORT void update_overlaytips(void)
 {   int      i;
     TOOLINFO ti;
-    TEXT     datatip[256 + 1];
 
-    if (!SubWindowPtr[SUBWINDOW_GAMEINFO])
+    if (!subwin[SUBWINDOW_GAMEINFO].hwnd)
     {   return; // important!
     }
 
@@ -800,11 +866,11 @@ EXPORT void update_overlaytips(void)
     {   make_overlaytip(i, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_GAMEINFO];
+        ti.hwnd     = subwin[SUBWINDOW_GAMEINFO].hwnd;
         ti.uId      = i;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_GAMEINFO], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_GAMEINFO].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
     }
 
     if
@@ -812,41 +878,41 @@ EXPORT void update_overlaytips(void)
      || machine == PONG
      || machines[machine].pvis
     )
-    {   make_overlayspecialtip(keytable[key1].p1overlay, keytable[key1].p2overlay, 32, datatip);
+    {   make_overlayspecialtip(keytable[key1].overlay[0], keytable[key1].overlay[1], 32, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_GAMEINFO];
+        ti.hwnd     = subwin[SUBWINDOW_GAMEINFO].hwnd;
         ti.uId      = 32;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_GAMEINFO], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_GAMEINFO].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 
-        make_overlayspecialtip(keytable[key2].p1overlay, keytable[key2].p2overlay, 33, datatip);
+        make_overlayspecialtip(keytable[key2].overlay[0], keytable[key2].overlay[1], 33, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_GAMEINFO];
+        ti.hwnd     = subwin[SUBWINDOW_GAMEINFO].hwnd;
         ti.uId      = 33;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_GAMEINFO], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_GAMEINFO].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 
-        make_overlayspecialtip(keytable[key3].p1overlay, keytable[key3].p2overlay, 34, datatip);
+        make_overlayspecialtip(keytable[key3].overlay[0], keytable[key3].overlay[1], 34, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_GAMEINFO];
+        ti.hwnd     = subwin[SUBWINDOW_GAMEINFO].hwnd;
         ti.uId      = 34;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_GAMEINFO], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_GAMEINFO].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 
-        make_overlayspecialtip(keytable[key4].p1overlay, keytable[key4].p2overlay, 35, datatip);
+        make_overlayspecialtip(keytable[key4].overlay[0], keytable[key4].overlay[1], 35, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_GAMEINFO];
+        ti.hwnd     = subwin[SUBWINDOW_GAMEINFO].hwnd;
         ti.uId      = 35;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_GAMEINFO], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_GAMEINFO].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
     }
 
     if (!showpalladiumkeys1 && machine == ARCADIA
@@ -858,11 +924,11 @@ EXPORT void update_overlaytips(void)
         {   make_overlaytip(i, datatip);
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_GAMEINFO];
+            ti.hwnd     = subwin[SUBWINDOW_GAMEINFO].hwnd;
             ti.uId      = i;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_GAMEINFO], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+            SendMessage(subwin[SUBWINDOW_GAMEINFO].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }   }   }
 
 MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -878,6 +944,8 @@ MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_HOSTKYBD].hwnd = hwnd;
+
         DISCARD SetWindowText(hwnd, LLL(          MSG_HAIL_HOSTKYBD, "Host Keyboard"));
         setdlgtext(hwnd, IDL_VIEWKYBDAS,          MSG_VIEWAS,        "View as");
         setdlgtext(hwnd, IDC_VIEWKYBDAS_GUEST,    MSG_GUESTKEYS,     "Guest keys");
@@ -949,10 +1017,9 @@ MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         }   }
         // If they move the subwindow later, it doesn't matter.
 
-        move_subwindow(SUBWINDOW_HOSTKYBD, hwnd);
-
-        return TRUE;
-    case WM_LBUTTONDBLCLK: // no need for acase
+        move_subwindow(SUBWINDOW_HOSTKYBD);
+    return TRUE;
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         SetCapture(hwnd);
         mousex = (int) LOWORD(lParam); // pixels -> dialog units
@@ -981,8 +1048,7 @@ MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
                     handle_keydown(i);
                     break;
         }   }   }
-
-        return FALSE;
+    return FALSE;
     case WM_LBUTTONUP:
         ReleaseCapture();
         mousex = (int) LOWORD(lParam); // pixels -> dialog units
@@ -996,34 +1062,19 @@ MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             clicked = -1;
             DISCARD RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
         }
-
-        return FALSE;
-    case WM_CTLCOLORSTATIC: // no need for acase
+    return FALSE;
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         switch (gid)
         {
-        case IDL_KYBD_1ST:
-            SetBkColor((HDC) wParam, EMUPEN_RED);
-            return (LRESULT) hBrush[EMUBRUSH_RED];
-        acase IDL_KYBD_2ND:
-            SetBkColor((HDC) wParam, EMUPEN_BLUE);
-            return (LRESULT) hBrush[EMUBRUSH_BLUE];
-        acase IDL_KYBD_3RD:
-            SetBkColor((HDC) wParam, EMUPEN_GREEN);
-            return (LRESULT) hBrush[EMUBRUSH_GREEN];
-        acase IDL_KYBD_4TH:
-            SetBkColor((HDC) wParam, EMUPEN_WHITE);
-            return (LRESULT) hBrush[EMUBRUSH_WHITE];
-        acase IDL_KYBD_5TH:
-            SetBkColor((HDC) wParam, EMUPEN_GREY);
-            return (LRESULT) hBrush[EMUBRUSH_GREY];
-        acase IDL_KYBD_6TH:
-            SetBkColor((HDC) wParam, EMUPEN_PURPLE);
-            return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-        acase IDL_KYBD_7TH:
-            SetBkColor((HDC) wParam, EMUPEN_ORANGE);
-            return (LRESULT) hBrush[EMUBRUSH_ORANGE];
-        adefault:
+        case IDL_KYBD_1ST: SetBkColor((HDC) wParam, EMUPEN_RED   ); return (LRESULT) hBrush[EMUBRUSH_RED   ];
+        case IDL_KYBD_2ND: SetBkColor((HDC) wParam, EMUPEN_BLUE  ); return (LRESULT) hBrush[EMUBRUSH_BLUE  ];
+        case IDL_KYBD_3RD: SetBkColor((HDC) wParam, EMUPEN_GREEN ); return (LRESULT) hBrush[EMUBRUSH_GREEN ];
+        case IDL_KYBD_4TH: SetBkColor((HDC) wParam, EMUPEN_WHITE ); return (LRESULT) hBrush[EMUBRUSH_WHITE ];
+        case IDL_KYBD_5TH: SetBkColor((HDC) wParam, EMUPEN_GREY  ); return (LRESULT) hBrush[EMUBRUSH_GREY  ];
+        case IDL_KYBD_6TH: SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
+        case IDL_KYBD_7TH: SetBkColor((HDC) wParam, EMUPEN_ORANGE); return (LRESULT) hBrush[EMUBRUSH_ORANGE];
+        default:
             colour = setkybdcolour(gid);
             for (i = 0; i < SCANCODES; i++)
             {   if (keyname[i].gadget == gid && KeyDown((UWORD) (scan_to_scan(i))))
@@ -1033,27 +1084,26 @@ MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             SetBkColor((HDC) wParam, colour);
             switch (colour)
             {
-            case  EMUPEN_RED:    return (LRESULT) hBrush[EMUBRUSH_RED];
-            acase EMUPEN_BLUE:   return (LRESULT) hBrush[EMUBRUSH_BLUE];
-            acase EMUPEN_PURPLE: return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-            acase EMUPEN_WHITE:  return (LRESULT) hBrush[EMUBRUSH_WHITE];
-            acase EMUPEN_GREEN:  return (LRESULT) hBrush[EMUBRUSH_GREEN];
-            acase EMUPEN_GREY:   return (LRESULT) hBrush[EMUBRUSH_GREY];
-            acase EMUPEN_ORANGE: return (LRESULT) hBrush[EMUBRUSH_ORANGE];
-            adefault:            return TRUE;
+            case EMUPEN_RED:    return (LRESULT) hBrush[EMUBRUSH_RED];
+            case EMUPEN_BLUE:   return (LRESULT) hBrush[EMUBRUSH_BLUE];
+            case EMUPEN_PURPLE: return (LRESULT) hBrush[EMUBRUSH_PURPLE];
+            case EMUPEN_WHITE:  return (LRESULT) hBrush[EMUBRUSH_WHITE];
+            case EMUPEN_GREEN:  return (LRESULT) hBrush[EMUBRUSH_GREEN];
+            case EMUPEN_GREY:   return (LRESULT) hBrush[EMUBRUSH_GREY];
+            case EMUPEN_ORANGE: return (LRESULT) hBrush[EMUBRUSH_ORANGE];
+            default:            return TRUE;
         }   }
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         clearkybd();
-        DestroyWindow(SubWindowPtr[SUBWINDOW_HOSTKYBD]);
-        SubWindowPtr[SUBWINDOW_HOSTKYBD] = NULL;
+        DestroyWindow(subwin[SUBWINDOW_HOSTKYBD].hwnd);
+        subwin[SUBWINDOW_HOSTKYBD].hwnd = NULL;
         updatemenu(MENUITEM_HOSTKYBD);
-
-        return TRUE;
-    case WM_DESTROY: // no need for acase
-        SubWindowPtr[SUBWINDOW_HOSTKYBD] = NULL;
-        return FALSE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_DESTROY:
+        subwin[SUBWINDOW_HOSTKYBD].hwnd = NULL;
+    return FALSE;
+    case WM_COMMAND:
         gid = (int) LOWORD(wParam);
         if (gid >= IDC_VIEWKYBDAS_GUEST && gid <= IDC_VIEWKYBDAS_OVERLAYS)
         {   viewkybdas = gid - IDC_VIEWKYBDAS_GUEST;
@@ -1078,46 +1128,116 @@ MODULE BOOL CALLBACK KybdDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         {   candy[2 - 1] = FALSE;
             ShowWindow(GetDlgItem(hwnd, IDC_CANDY2), SW_HIDE);
         }
-        return TRUE;
-    case WM_MOVE: // no need for acase
+    return TRUE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 MODULE BOOL CALLBACK PadsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{   TRANSIENT LONG   gid;
-    TRANSIENT ULONG  colour;
-    PERSIST   HICON  localhicon;
-    TRANSIENT TEXT   tempstring[256 + 1];
+{   TRANSIENT LONG        gid;
+    TRANSIENT ULONG       colour;
+    TRANSIENT PAINTSTRUCT localps;
+    TRANSIENT RECT        localrect;
+    TRANSIENT int         i, j,
+                          mousex, mousey;
+    TRANSIENT POINT       thepoint;
+    PERSIST   RECT        candyrect;
+    PERSIST   HICON       localhicon;
 
     switch (Message)
     {
     case WM_INITDIALOG:
-        DISCARD SetWindowText( hwnd,                  LLL(MSG_HAIL_HOSTPADS  , "Host Gamepads/Mouse"));
+        subwin[SUBWINDOW_HOSTPADS].hwnd = hwnd;
 
-        setfont(hwnd, IDL_LEFTPLAYER);
-        strcpy(tempstring, LLL(MSG_LEFTCONTROLLER, "Left Controller"));
         if (hostcontroller[0] == CONTROLLER_1STDJOY)
-        {   sprintf(&tempstring[strlen(tempstring)], " (%s)", joyname[0]);
+        {   if (hostcontroller[1] == CONTROLLER_1STDJOY)
+            {   whose[0] = 2; // both
+            } else
+            {   whose[0] = swapped ? 1 : 0;
+        }   }
+        elif (hostcontroller[1] == CONTROLLER_1STDJOY)
+        {   whose[0] = swapped ? 0 : 1;
+        } else
+        {   whose[0] = 3; // neither
         }
         if (hostcontroller[0] == CONTROLLER_2NDDJOY)
-        {   sprintf(&tempstring[strlen(tempstring)], " (%s)", joyname[1]);
+        {   if (hostcontroller[1] == CONTROLLER_2NDDJOY)
+            {   whose[1] = 2; // both
+            } else
+            {   whose[1] = swapped ? 1 : 0;
+        }   }
+        elif (hostcontroller[1] == CONTROLLER_2NDDJOY)
+        {   whose[1] = swapped ? 0 : 1;
+        } else
+        {   whose[1] = 3; // neither
         }
-        DISCARD SetDlgItemText(hwnd, IDL_LEFTPLAYER, tempstring);
+        if (hostcontroller[0] == CONTROLLER_TRACKBALL)
+        {   if (hostcontroller[1] == CONTROLLER_TRACKBALL)
+            {   whosemouse = 2; // both
+            } else
+            {   whosemouse = swapped ? 1 : 0;
+        }   }
+        elif (hostcontroller[1] == CONTROLLER_TRACKBALL)
+        {   whosemouse = swapped ? 0 : 1;
+        } else
+        {   whosemouse = 3; // neither
+        }
 
-        setfont(hwnd, IDL_RIGHTPLAYER);
-        strcpy(tempstring, LLL(MSG_RIGHTCONTROLLER, "Right Controller"));
-        if (hostcontroller[1] == CONTROLLER_1STDJOY)
-        {   sprintf(&tempstring[strlen(tempstring)], " (%s)", joyname[0]);
-        }
-        if (hostcontroller[1] == CONTROLLER_2NDDJOY)
-        {   sprintf(&tempstring[strlen(tempstring)], " (%s)", joyname[1]);
-        }
-        DISCARD SetDlgItemText(hwnd, IDL_RIGHTPLAYER, tempstring);
+        DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_HOSTPADS, "Host Gamepads/Mouse")); // ideally we would use "Host Gamepad/Mouse" when joy <= 1
 
-        setdlgtext(hwnd, IDL_MOUSE,               MSG_MOUSE,         "Mouse");
+        setfont(hwnd, IDL_LEFTPLAYER);
+        if (joyname[0])
+        {   strcpy(gtempstring, joyname[0]);
+        } else
+        {   strcpy(gtempstring, LLL(MSG_1STDPAD, "1st digital gamepad"));
+        }
+        strcat(gtempstring, " (");
+        switch (whose[0])
+        {
+        case  0: strcat(gtempstring, LLL(MSG_LEFTPLAYER , "left player" ));
+        acase 1: strcat(gtempstring, LLL(MSG_RIGHTPLAYER, "right player"));
+        acase 2: strcat(gtempstring, LLL(MSG_BOTHPLAYERS, "both players"));
+        acase 3: strcat(gtempstring, LLL(MSG_UNASSIGNED , "unassigned"  ));
+        }
+        strcat(gtempstring, ")");
+        SetDlgItemText(hwnd, IDL_LEFTPLAYER, gtempstring);
+
+        if (joys == 2)
+        {   ShowWindow(GetDlgItem(hwnd, IDC_RTHOSTPAD), SW_SHOW);
+            setfont(hwnd, IDL_RIGHTPLAYER);
+            if (joyname[1])
+            {   strcpy(gtempstring, joyname[1]);
+            } else
+            {   strcpy(gtempstring, LLL(MSG_2NDDPAD, "2nd digital gamepad"));
+            }
+            strcat(gtempstring, " (");
+            switch (whose[1])
+            {
+            case  0: strcat(gtempstring, LLL(MSG_LEFTPLAYER , "left player" ));
+            acase 1: strcat(gtempstring, LLL(MSG_RIGHTPLAYER, "right player"));
+            acase 2: strcat(gtempstring, LLL(MSG_BOTHPLAYERS, "both players"));
+            acase 3: strcat(gtempstring, LLL(MSG_UNASSIGNED , "unassigned"  ));
+            }
+            strcat(gtempstring, ")");
+            SetDlgItemText(hwnd, IDL_RIGHTPLAYER, gtempstring);
+        }
+
+        setfont(hwnd, IDL_MOUSE);
+        strcpy(gtempstring, LLL(MSG_MOUSE, "Mouse"));
+        strcat(gtempstring, " (");
+        switch (whosemouse)
+        {
+        case  0: strcat(gtempstring, LLL(MSG_LEFTPLAYER , "left player" ));
+        acase 1: strcat(gtempstring, LLL(MSG_RIGHTPLAYER, "right player"));
+        acase 2: strcat(gtempstring, LLL(MSG_BOTHPLAYERS, "both players"));
+        acase 3: strcat(gtempstring, LLL(MSG_UNASSIGNED , "unassigned"  ));
+        }
+        strcat(gtempstring, ")");
+        SetDlgItemText(hwnd, IDL_MOUSE, gtempstring);
+
         setdlgtext(hwnd, IDL_VIEWPADSAS,          MSG_VIEWAS,        "View as");
         setdlgtext(hwnd, IDC_VIEWPADSAS_GUEST,    MSG_GUESTKEYS,     "Guest keys");
         setdlgtext(hwnd, IDC_VIEWPADSAS_HOST,     MSG_HOSTKEYS,      "Host keys");
@@ -1128,7 +1248,8 @@ MODULE BOOL CALLBACK PadsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         setdlgtext(hwnd, IDL_PADSLEGEND3,         MSG_KYBDLEGEND_3,  "Console");
         setdlgtext(hwnd, IDL_PADSLEGEND4,         MSG_KYBDLEGEND_4,  "Reserved");
         setdlgtext(hwnd, IDL_PADSLEGEND5,         MSG_KYBDLEGEND_5,  "Unused");
-        setdlgtext(hwnd, IDL_PADSLEGEND6,         MSG_KYBDLEGEND_7,  "Pressed");
+        setdlgtext(hwnd, IDL_PADSLEGEND6,         MSG_KYBDLEGEND_6,  "Multiple");
+        setdlgtext(hwnd, IDL_PADSLEGEND7,         MSG_KYBDLEGEND_7,  "Pressed");
 
         DISCARD CheckRadioButton
         (   hwnd,
@@ -1137,181 +1258,319 @@ MODULE BOOL CALLBACK PadsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             IDC_VIEWPADSAS_GUEST + viewpadsas
         );
 
+        setdlgtext(hwnd, IDL_VIEWPADSAS2, MSG_VIEWAS2, "View as:");
+        SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS2), CB_ADDSTRING, (WPARAM) 0, (LPARAM) "Gameware USB Rumble Control");
+        SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS2), CB_ADDSTRING, (WPARAM) 0, (LPARAM) "Logitech Dual Action");
+        SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS2), CB_SETCURSEL, (WPARAM) viewpadsas2[0], (LPARAM) 0);
+        switch (viewpadsas2[0])
+        {
+        case  0: padicon[0] = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_GAMEWARE));
+        acase 1: padicon[0] = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_LOGITECH));
+        }
+        DISCARD SendMessage(GetDlgItem(hwnd, IDC_LTHOSTPAD), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) padicon[0]);
+        ShowWindow(GetDlgItem(hwnd, IDC_LTHOSTPAD), SW_SHOW);
+
         localhicon = LoadImage(InstancePtr, MAKEINTRESOURCE(memmap_to[memmap].icon), IMAGE_ICON, 32, 32, 0);
         DISCARD SendMessage(GetDlgItem(hwnd, IDL_PADSGLYPH), STM_SETICON, (WPARAM) localhicon, (LPARAM) 0);
 
-        move_subwindow(SUBWINDOW_HOSTPADS, hwnd);
+        if (joys == 2)
+        {   DISCARD GetWindowRect(GetDlgItem(hwnd, IDC_CANDY5), &localrect);
+            thepoint.x       = localrect.left;
+            thepoint.y       = localrect.top;
+            DISCARD ScreenToClient(hwnd, &thepoint);
+            candyrect.left   = thepoint.x;
+            candyrect.top    = thepoint.y;
+            thepoint.x       = localrect.right;
+            thepoint.y       = localrect.bottom;
+            DISCARD ScreenToClient(hwnd, &thepoint);
+            candyrect.right  = thepoint.x;
+            candyrect.bottom = thepoint.y;
+            if (candy[5 - 1])
+            {   ShowWindow(GetDlgItem(hwnd, IDC_CANDY5), SW_SHOW);
+            }
 
-        return TRUE;
-    case WM_CTLCOLORSTATIC: // no need for acase
+            setdlgtext(hwnd, IDL_VIEWPADSAS3, MSG_VIEWAS2, "View as:");
+            SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS3), CB_ADDSTRING, (WPARAM) 0, (LPARAM) "Gameware USB Rumble Control");
+            SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS3), CB_ADDSTRING, (WPARAM) 0, (LPARAM) "Logitech Dual Action");
+            SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS3), CB_SETCURSEL, (WPARAM) viewpadsas2[1], (LPARAM) 0);
+            switch (viewpadsas2[1])
+            {
+            case  0: padicon[1] = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_GAMEWARE));
+            acase 1: padicon[1] = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_LOGITECH));
+            }
+            DISCARD SendMessage(GetDlgItem(hwnd, IDC_RTHOSTPAD), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) padicon[1]);
+            ShowWindow(GetDlgItem(hwnd, IDC_RTHOSTPAD), SW_SHOW);
+        }
+
+        for (i = 0; i < ((joys == 2) ? 2 : 1); i++)
+        {   for (j = 0; j < HOSTPADGADS; j++)
+            {   GetWindowRect(GetDlgItem(hwnd, hostpadgad[i][j]), &localrect);
+                thepoint.x               = localrect.left;
+                thepoint.y               = localrect.top;
+                DISCARD ScreenToClient(hwnd, &thepoint);
+                hostpadrect[i][j].left   = thepoint.x;
+                hostpadrect[i][j].top    = thepoint.y;
+                thepoint.x               = localrect.right;
+                thepoint.y               = localrect.bottom;
+                DISCARD ScreenToClient(hwnd, &thepoint);
+                hostpadrect[i][j].right  = thepoint.x;
+                hostpadrect[i][j].bottom = thepoint.y;
+        }   }
+        for (i = 0; i < 3; i++)
+        {   GetWindowRect(GetDlgItem(hwnd, hostmousegad[i]), &localrect);
+            thepoint.x              = localrect.left;
+            thepoint.y              = localrect.top;
+            DISCARD ScreenToClient(hwnd, &thepoint);
+            hostmouserect[i].left   = thepoint.x;
+            hostmouserect[i].top    = thepoint.y;
+            thepoint.x              = localrect.right;
+            thepoint.y              = localrect.bottom;
+            DISCARD ScreenToClient(hwnd, &thepoint);
+            hostmouserect[i].right  = thepoint.x;
+            hostmouserect[i].bottom = thepoint.y;
+        }
+        // If they move the subwindow later, it doesn't matter.
+
+        move_subwindow(SUBWINDOW_HOSTPADS);
+    return TRUE;
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         switch (gid)
         {
-        case IDL_PADS_1ST:
-            SetBkColor((HDC) wParam, EMUPEN_RED);
-            return (LRESULT) hBrush[EMUBRUSH_RED];
-        acase IDL_PADS_2ND:
-            SetBkColor((HDC) wParam, EMUPEN_BLUE);
-            return (LRESULT) hBrush[EMUBRUSH_BLUE];
-        acase IDL_PADS_3RD:
-            SetBkColor((HDC) wParam, EMUPEN_GREEN);
-            return (LRESULT) hBrush[EMUBRUSH_GREEN];
-        acase IDL_PADS_4TH:
-            SetBkColor((HDC) wParam, EMUPEN_WHITE);
-            return (LRESULT) hBrush[EMUBRUSH_WHITE];
-        acase IDL_PADS_5TH:
-            SetBkColor((HDC) wParam, EMUPEN_GREY);
-            return (LRESULT) hBrush[EMUBRUSH_GREY];
-        acase IDL_PADS_6TH:
-            SetBkColor((HDC) wParam, EMUPEN_ORANGE);
-            return (LRESULT) hBrush[EMUBRUSH_ORANGE];
-        adefault:
-            if
-            (   gid == IDC_PADS_LT_5
-             || gid == IDC_PADS_LT_6
-             || gid == IDC_PADS_LT_A
-             || gid == IDC_PADS_RT_5
-             || gid == IDC_PADS_RT_6
-             || gid == IDC_PADS_RT_A
-            )
-            {   if
-                (   (gid == IDC_PADS_LT_5 && (jff[0] & JOYA))
-                 || (gid == IDC_PADS_LT_6 && (jff[0] & JOYB))
-                 || (gid == IDC_PADS_LT_A && (jff[0] & JOYSTART))
-                 || (gid == IDC_PADS_RT_5 && (jff[1] & JOYA))
-                 || (gid == IDC_PADS_RT_6 && (jff[1] & JOYB))
-                 || (gid == IDC_PADS_RT_A && (jff[1] & JOYSTART))
-                )
-                {   colour = EMUPEN_ORANGE;
-                } else
-                {   colour = EMUPEN_GREEN;
-            }   }
-            elif
-            (   gid == IDC_PADS_LT_B
-             || gid == IDC_PADS_LT_7
-             || gid == IDC_PADS_LT_8
-             || gid == IDC_PADS_RT_B
-             || gid == IDC_PADS_RT_7
-             || gid == IDC_PADS_RT_8
-             || (!guestrmb && gid == IDC_PADS_RTMOUSE)
-            )
-            {   if
-                (   (gid == IDC_PADS_LT_B && (jff[0] & JOYRESET   ))
-                 || (gid == IDC_PADS_LT_7 && (jff[0] & JOYAUTOFIRE))
-                 || (gid == IDC_PADS_LT_8 && (jff[0] & JOYPAUSE   ))
-                 || (gid == IDC_PADS_RT_B && (jff[1] & JOYRESET   ))
-                 || (gid == IDC_PADS_RT_7 && (jff[1] & JOYAUTOFIRE))
-                 || (gid == IDC_PADS_RT_8 && (jff[1] & JOYPAUSE   ))
-                )
-                {   colour = EMUPEN_ORANGE;
-                } else
-                {   colour = EMUPEN_WHITE;
-            }   }
-            elif
-            (   gid == IDC_PADS_LT_AUP2
-             || gid == IDC_PADS_LT_ADN2
-             || gid == IDC_PADS_LT_ALT2
-             || gid == IDC_PADS_LT_ART2
-             || gid == IDC_PADS_RT_AUP2
-             || gid == IDC_PADS_RT_ADN2
-             || gid == IDC_PADS_RT_ALT2
-             || gid == IDC_PADS_RT_ART2
-            )
+        case IDL_PADS_1ST: SetBkColor((HDC) wParam, EMUPEN_RED);    return (LRESULT) hBrush[EMUBRUSH_RED];
+        case IDL_PADS_2ND: SetBkColor((HDC) wParam, EMUPEN_BLUE);   return (LRESULT) hBrush[EMUBRUSH_BLUE];
+        case IDL_PADS_3RD: SetBkColor((HDC) wParam, EMUPEN_GREEN);  return (LRESULT) hBrush[EMUBRUSH_GREEN];
+        case IDL_PADS_4TH: SetBkColor((HDC) wParam, EMUPEN_WHITE);  return (LRESULT) hBrush[EMUBRUSH_WHITE];
+        case IDL_PADS_5TH: SetBkColor((HDC) wParam, EMUPEN_GREY);   return (LRESULT) hBrush[EMUBRUSH_GREY];
+        case IDL_PADS_6TH: SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
+        case IDL_PADS_7TH: SetBkColor((HDC) wParam, EMUPEN_ORANGE); return (LRESULT) hBrush[EMUBRUSH_ORANGE];
+        case IDC_PADS_LT_5:
+        case IDC_PADS_LT_6:
+        case IDC_PADS_LT_A:
+            if (whose[0] == 3)
             {   colour = EMUPEN_GREY;
             } elif
-            (   gid == IDC_PADS_LT_DUP
-             || gid == IDC_PADS_LT_DDN
-             || gid == IDC_PADS_LT_DLT
-             || gid == IDC_PADS_LT_DRT
-             || gid == IDC_PADS_LT_AUP
-             || gid == IDC_PADS_LT_ADN
-             || gid == IDC_PADS_LT_ALT
-             || gid == IDC_PADS_LT_ART
-             || gid == IDC_PADS_LT_1
-             || gid == IDC_PADS_LT_2
-             || gid == IDC_PADS_LT_3
-             || gid == IDC_PADS_LT_4
-             || gid == IDC_PADS_LT_11
-             || gid == IDC_PADS_LT_12
-             || gid == IDC_PADS_LTMOUSE
-             || gid == IDC_PADS_MDMOUSE
-             || (guestrmb && gid == IDC_PADS_RTMOUSE)
+            (   (gid == IDC_PADS_LT_5 && (jf[0] & JOYA       ))
+             || (gid == IDC_PADS_LT_6 && (jf[0] & JOYB       ))
+             || (gid == IDC_PADS_LT_A && (jf[0] & JOYSTART   ))
             )
-            {   if
-                (   ( gid == IDC_PADS_LT_1                              && (jff[0] & joyfires[button[0][0] - 1]))
-                 || ((gid == IDC_PADS_LT_11  || gid == IDC_PADS_LT_12 ) && (jff[0] & JOYFIRE1                  ))
-                 || ( gid == IDC_PADS_LT_2                              && (jff[0] & joyfires[button[0][1] - 1]))
-                 || ( gid == IDC_PADS_LT_3                              && (jff[0] & joyfires[button[0][2] - 1]))
-                 || ( gid == IDC_PADS_LT_4                              && (jff[0] & joyfires[button[0][3] - 1]))
-                 || ((gid == IDC_PADS_LT_DUP || gid == IDC_PADS_LT_AUP) &&  jy[0] <=  64     )
-                 || ((gid == IDC_PADS_LT_DDN || gid == IDC_PADS_LT_ADN) &&  jy[0] >= 192     )
-                 || ((gid == IDC_PADS_LT_DLT || gid == IDC_PADS_LT_ALT) &&  jx[0] <=  64     )
-                 || ((gid == IDC_PADS_LT_DRT || gid == IDC_PADS_LT_ART) &&  jx[0] >= 192     )
-                 || ( gid == IDC_PADS_LTMOUSE                           &&  lmb              )
-                 || ( gid == IDC_PADS_MDMOUSE                           &&  mmb              )
-                 || ( gid == IDC_PADS_RTMOUSE                           &&  rmb              )
-                )
-                {   colour = EMUPEN_ORANGE;
-                } else
-                {   colour = (swapped ? EMUPEN_BLUE : EMUPEN_RED);
-            }   }
-            elif
-            (   gid == IDC_PADS_RT_DUP
-             || gid == IDC_PADS_RT_DDN
-             || gid == IDC_PADS_RT_DLT
-             || gid == IDC_PADS_RT_DRT
-             || gid == IDC_PADS_RT_AUP
-             || gid == IDC_PADS_RT_ADN
-             || gid == IDC_PADS_RT_ALT
-             || gid == IDC_PADS_RT_ART
-             || gid == IDC_PADS_RT_1
-             || gid == IDC_PADS_RT_2
-             || gid == IDC_PADS_RT_3
-             || gid == IDC_PADS_RT_4
-             || gid == IDC_PADS_RT_11
-             || gid == IDC_PADS_RT_12
+            {   colour = EMUPEN_ORANGE;
+            } else
+            {   colour = EMUPEN_GREEN;
+            }
+        acase IDC_PADS_LT_7:
+        case  IDC_PADS_LT_8:
+        case  IDC_PADS_LT_B:
+            if (whose[0] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   (gid == IDC_PADS_LT_7 && (jf[0] & JOYAUTOFIRE))
+             || (gid == IDC_PADS_LT_8 && (jf[0] & JOYPAUSE   ))
+             || (gid == IDC_PADS_LT_B && (jf[0] & JOYRESET   ))
             )
-            {   if
-                (   ( gid == IDC_PADS_RT_1                              && (jff[1] & joyfires[button[1][0] - 1]))
-                 || ((gid == IDC_PADS_RT_11  || gid == IDC_PADS_RT_12 ) && (jff[1] & JOYFIRE1                  ))
-                 || ( gid == IDC_PADS_RT_2                              && (jff[1] & joyfires[button[1][1] - 1]))
-                 || ( gid == IDC_PADS_RT_3                              && (jff[1] & joyfires[button[1][2] - 1]))
-                 || ( gid == IDC_PADS_RT_4                              && (jff[1] & joyfires[button[1][3] - 1]))
-                 || ((gid == IDC_PADS_RT_DUP || gid == IDC_PADS_RT_AUP) &&  jy[1] <=  64     )
-                 || ((gid == IDC_PADS_RT_DDN || gid == IDC_PADS_RT_ADN) &&  jy[1] >= 192     )
-                 || ((gid == IDC_PADS_RT_DLT || gid == IDC_PADS_RT_ALT) &&  jx[1] <=  64     )
-                 || ((gid == IDC_PADS_RT_DRT || gid == IDC_PADS_RT_ART) &&  jx[1] >= 192     )
-                )
-                {   colour = EMUPEN_ORANGE;
-                } else
-                {   colour = (swapped ? EMUPEN_RED : EMUPEN_BLUE);
-            }   }
-            SetBkColor((HDC) wParam, colour);
-            switch (colour)
-            {
-            case  EMUPEN_RED:    return (LRESULT) hBrush[EMUBRUSH_RED];
-            acase EMUPEN_BLUE:   return (LRESULT) hBrush[EMUBRUSH_BLUE];
-            acase EMUPEN_PURPLE: return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-            acase EMUPEN_WHITE:  return (LRESULT) hBrush[EMUBRUSH_WHITE];
-            acase EMUPEN_GREEN:  return (LRESULT) hBrush[EMUBRUSH_GREEN];
-            acase EMUPEN_GREY:   return (LRESULT) hBrush[EMUBRUSH_GREY];
-            acase EMUPEN_ORANGE: return (LRESULT) hBrush[EMUBRUSH_ORANGE];
-            adefault:            return TRUE;
-        }   }
-    case WM_CLOSE: // no need for acase
-        clearkybd();
-        DestroyWindow(SubWindowPtr[SUBWINDOW_HOSTPADS]);
-        SubWindowPtr[SUBWINDOW_HOSTPADS] = NULL;
-        updatemenu(MENUITEM_HOSTPADS);
+            {   colour = EMUPEN_ORANGE;
+            } else
+            {   colour = EMUPEN_WHITE;
+            }
+        acase IDC_PADS_RT_5:
+        case  IDC_PADS_RT_6:
+        case  IDC_PADS_RT_A:
+            if (whose[1] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   (gid == IDC_PADS_RT_5 && (jf[1] & JOYA       ))
+             || (gid == IDC_PADS_RT_6 && (jf[1] & JOYB       ))
+             || (gid == IDC_PADS_RT_A && (jf[1] & JOYSTART   ))
+            )
+            {   colour = EMUPEN_ORANGE;
+            } else
+            {   colour = EMUPEN_GREEN;
+            }
+        acase IDC_PADS_RT_7:
+        case  IDC_PADS_RT_8:
+        case  IDC_PADS_RT_B:
+            if (whose[1] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   (gid == IDC_PADS_RT_7 && (jf[1] & JOYAUTOFIRE))
+             || (gid == IDC_PADS_RT_8 && (jf[1] & JOYPAUSE   ))
+             || (gid == IDC_PADS_RT_B && (jf[1] & JOYRESET   ))
+            )
+            {   colour = EMUPEN_ORANGE;
+            } else
+            {   colour = EMUPEN_WHITE;
+            }
+        acase IDC_PADS_LT_AUP2:
+        case  IDC_PADS_LT_ADN2:
+        case  IDC_PADS_LT_ALT2:
+        case  IDC_PADS_LT_ART2:
+        case  IDC_PADS_RT_AUP2:
+        case  IDC_PADS_RT_ADN2:
+        case  IDC_PADS_RT_ALT2:
+        case  IDC_PADS_RT_ART2:
+            colour = EMUPEN_GREY;
+        acase IDC_PADS_LT_DUP:
+        case  IDC_PADS_LT_DDN:
+        case  IDC_PADS_LT_DLT:
+        case  IDC_PADS_LT_DRT:
+        case  IDC_PADS_LT_AUP:
+        case  IDC_PADS_LT_ADN:
+        case  IDC_PADS_LT_ALT:
+        case  IDC_PADS_LT_ART:
+            if (whose[0] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   ((gid == IDC_PADS_LT_DUP || gid == IDC_PADS_LT_AUP) && jy[0] <=  64)
+             || ((gid == IDC_PADS_LT_DDN || gid == IDC_PADS_LT_ADN) && jy[0] >= 192)
+             || ((gid == IDC_PADS_LT_DLT || gid == IDC_PADS_LT_ALT) && jx[0] <=  64)
+             || ((gid == IDC_PADS_LT_DRT || gid == IDC_PADS_LT_ART) && jx[0] >= 192)
+            )
+            {   colour = EMUPEN_ORANGE;
+            } elif (whose[0] == 2)
+            {   colour = EMUPEN_PURPLE;
+            } else
+            {   colour = (whose[0] ? EMUPEN_BLUE : EMUPEN_RED);
+            }
+        acase IDC_PADS_RT_DUP:
+        case  IDC_PADS_RT_DDN:
+        case  IDC_PADS_RT_DLT:
+        case  IDC_PADS_RT_DRT:
+        case  IDC_PADS_RT_AUP:
+        case  IDC_PADS_RT_ADN:
+        case  IDC_PADS_RT_ALT:
+        case  IDC_PADS_RT_ART:
+            if (whose[1] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   ((gid == IDC_PADS_RT_DUP || gid == IDC_PADS_RT_AUP) && jy[1] <=  64)
+             || ((gid == IDC_PADS_RT_DDN || gid == IDC_PADS_RT_ADN) && jy[1] >= 192)
+             || ((gid == IDC_PADS_RT_DLT || gid == IDC_PADS_RT_ALT) && jx[1] <=  64)
+             || ((gid == IDC_PADS_RT_DRT || gid == IDC_PADS_RT_ART) && jx[1] >= 192)
+            )
+            {   colour = EMUPEN_ORANGE;
+            } elif (whose[1] == 2)
+            {   colour = EMUPEN_PURPLE;
+            } else
+            {   colour = (whose[1] ? EMUPEN_BLUE : EMUPEN_RED);
+            }
+        acase IDC_PADS_LT_1:
+        case IDC_PADS_LT_2:
+        case IDC_PADS_LT_3:
+        case IDC_PADS_LT_4:
+            if (whose[0] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   (gid == IDC_PADS_LT_1 && (jf[0] & joyfires[button[0][0] - 1]))
+             || (gid == IDC_PADS_LT_2 && (jf[0] & joyfires[button[0][1] - 1]))
+             || (gid == IDC_PADS_LT_3 && (jf[0] & joyfires[button[0][2] - 1]))
+             || (gid == IDC_PADS_LT_4 && (jf[0] & joyfires[button[0][3] - 1]))
+            )
+            {   colour = EMUPEN_ORANGE;
+            } elif (whose[0] == 2)
+            {   colour = EMUPEN_PURPLE;
+            } else
+            {   colour = (whose[0] ? EMUPEN_BLUE : EMUPEN_RED);
+            }
+        acase IDC_PADS_RT_1:
+        case IDC_PADS_RT_2:
+        case IDC_PADS_RT_3:
+        case IDC_PADS_RT_4:
+            if (whose[1] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif
+            (   (gid == IDC_PADS_RT_1 && (jf[1] & joyfires[button[1][0] - 1]))
+             || (gid == IDC_PADS_RT_2 && (jf[1] & joyfires[button[1][1] - 1]))
+             || (gid == IDC_PADS_RT_3 && (jf[1] & joyfires[button[1][2] - 1]))
+             || (gid == IDC_PADS_RT_4 && (jf[1] & joyfires[button[1][3] - 1]))
+            )
+            {   colour = EMUPEN_ORANGE;
+            } elif (whose[1] == 2)
+            {   colour = EMUPEN_PURPLE;
+            } else
+            {   colour = (whose[1] ? EMUPEN_BLUE : EMUPEN_RED);
+            }
+        acase IDC_PADS_LT_11:
+        case IDC_PADS_LT_12:
+            if (whose[0] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif (jf[0] & JOYFIRE1)
+            {   colour = EMUPEN_ORANGE;
+            } elif (whose[0] == 2)
+            {   colour = EMUPEN_PURPLE;
+            } else
+            {   colour = (whose[0] ? EMUPEN_BLUE : EMUPEN_RED);
+            }
+        acase IDC_PADS_RT_11:
+        case IDC_PADS_RT_12:
+            if (whose[1] == 3)
+            {   colour = EMUPEN_GREY;
+            } elif (jf[1] & JOYFIRE1)
+            {   colour = EMUPEN_ORANGE;
+            } elif (whose[1] == 2)
+            {   colour = EMUPEN_PURPLE;
+            } else
+            {   colour = (whose[1] ? EMUPEN_BLUE : EMUPEN_RED);
+            }
+        acase IDC_PADS_LTMOUSE:
+            if   (whosemouse == 3) colour = EMUPEN_GREY;
+            elif (lmb            ) colour = EMUPEN_ORANGE;
+            elif (whosemouse == 2) colour = EMUPEN_PURPLE;
+            else                   colour = (whosemouse ? EMUPEN_BLUE : EMUPEN_RED);
+        acase IDC_PADS_MDMOUSE:
+            if   (whosemouse == 3) colour = EMUPEN_GREY;
+            elif (mmb)             colour = EMUPEN_ORANGE;
+            elif (whosemouse == 2) colour = EMUPEN_PURPLE;
+            else                   colour = (whosemouse ? EMUPEN_BLUE : EMUPEN_RED);
+        acase IDC_PADS_RTMOUSE:
+            if   (!guestrmb      ) colour = EMUPEN_WHITE;
+            elif (whosemouse == 3) colour = EMUPEN_GREY;
+            elif (rmb            ) colour = EMUPEN_ORANGE;
+            elif (whosemouse == 2) colour = EMUPEN_PURPLE;
+            else                   colour = (whosemouse ? EMUPEN_BLUE : EMUPEN_RED);
+        }
 
-        return TRUE;
-    case WM_DESTROY: // no need for acase
+        SetBkColor((HDC) wParam, colour);
+        switch (colour)
+        {
+        case  EMUPEN_RED:    return (LRESULT) hBrush[EMUBRUSH_RED];
+        acase EMUPEN_BLUE:   return (LRESULT) hBrush[EMUBRUSH_BLUE];
+        acase EMUPEN_PURPLE: return (LRESULT) hBrush[EMUBRUSH_PURPLE];
+        acase EMUPEN_WHITE:  return (LRESULT) hBrush[EMUBRUSH_WHITE];
+        acase EMUPEN_GREEN:  return (LRESULT) hBrush[EMUBRUSH_GREEN];
+        acase EMUPEN_GREY:   return (LRESULT) hBrush[EMUBRUSH_GREY];
+        acase EMUPEN_ORANGE: return (LRESULT) hBrush[EMUBRUSH_ORANGE];
+        adefault:            return TRUE;
+        }
+    // no need for acase
+    case WM_PAINT:
+        DISCARD BeginPaint(hwnd, &localps);
+        updatepadnames();
+        DISCARD EndPaint(hwnd, &localps);
+    return FALSE;
+    case WM_CLOSE:
+        softpad[0] = softpad[1] = 0;
+        if (padicon[0])
+        {   DeleteObject(padicon[0]);
+            padicon[0] = NULL;
+        }
+        if (padicon[1])
+        {   DeleteObject(padicon[1]);
+            padicon[1] = NULL;
+        }
+        DestroyWindow(subwin[SUBWINDOW_HOSTPADS].hwnd);
+        subwin[SUBWINDOW_HOSTPADS].hwnd = NULL;
+        updatemenu(MENUITEM_HOSTPADS);
+    return TRUE;
+    case WM_DESTROY:
         DeleteObject(localhicon);
-        SubWindowPtr[SUBWINDOW_HOSTPADS] = NULL;
-        return FALSE;
-    case WM_COMMAND: // no need for acase
+        subwin[SUBWINDOW_HOSTPADS].hwnd = NULL;
+    return FALSE;
+    case WM_COMMAND:
         gid = (int) LOWORD(wParam);
-        if (gid >= IDC_VIEWPADSAS_GUEST && gid <= IDC_VIEWPADSAS_OVERLAYS)
+        if (gid == IDC_CANDY5)
+        {   candy[5 - 1] = FALSE;
+            ShowWindow(GetDlgItem(hwnd, IDC_CANDY5), SW_HIDE);
+        } elif (gid >= IDC_VIEWPADSAS_GUEST && gid <= IDC_VIEWPADSAS_OVERLAYS)
         {   viewpadsas = gid - IDC_VIEWPADSAS_GUEST;
             DISCARD CheckRadioButton
             (   hwnd,
@@ -1320,28 +1579,109 @@ MODULE BOOL CALLBACK PadsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
                 IDC_VIEWPADSAS_GUEST + viewpadsas
             );
             updatepadnames();
-        }
-        return TRUE;
-    case WM_MOVE: // no need for acase
+        } elif (gid == IDC_VIEWPADSAS2)
+        {   if (HIWORD(wParam) == CBN_SELENDOK)
+            {   viewpadsas2[0] = SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS2), CB_GETCURSEL, 0, 0);
+                reopen_subwindow(SUBWINDOW_HOSTPADS);
+        }   }
+        elif (gid == IDC_VIEWPADSAS3)
+        {   // assert(joys == 2);
+            if (HIWORD(wParam) == CBN_SELENDOK)
+            {   viewpadsas2[1] = SendMessage(GetDlgItem(hwnd, IDC_VIEWPADSAS3), CB_GETCURSEL, 0, 0);
+                reopen_subwindow(SUBWINDOW_HOSTPADS);
+        }   }
+    return TRUE;
+    case WM_LBUTTONDBLCLK:
+    case WM_LBUTTONDOWN:
+        SetCapture(hwnd);
+        mousex = (int) LOWORD(lParam); // pixels -> dialog units
+        mousey = (int) HIWORD(lParam); // pixels -> dialog units
+#ifdef VERBOSE
+        zprintf(TEXTPEN_VERBOSE, "X: %d, Y: %d.\n", mousex, mousey);
+#endif
+        softpad[0] = softpad[1] = 0;
+        if
+        (   joys   == 2
+         && mousex >= candyrect.left
+         && mousex <= candyrect.right
+         && mousey >= candyrect.top
+         && mousey <= candyrect.bottom
+        )
+        {   candy[5 - 1] = TRUE;
+            ShowWindow(GetDlgItem(hwnd, IDC_CANDY5), SW_SHOW);
+        } else
+        {   for (i = 0; i < joys; i++)
+            {   for (j = 0; j < HOSTPADGADS; j++)
+                {   if
+                    (   mousex >= hostpadrect[i][j].left
+                     && mousex <= hostpadrect[i][j].right
+                     && mousey >= hostpadrect[i][j].top
+                     && mousey <= hostpadrect[i][j].bottom
+                    )
+                    {   switch (j)
+                        {
+                        case   0:                   softpad[i] = joyfires[button[i][0] - 1]; // IDC_PADS_xT_1
+                        acase  1:                   softpad[i] = joyfires[button[i][1] - 1]; // IDC_PADS_xT_2
+                        acase  2:                   softpad[i] = joyfires[button[i][2] - 1]; // IDC_PADS_xT_3
+                        acase  3:                   softpad[i] = joyfires[button[i][3] - 1]; // IDC_PADS_xT_4
+                        acase  4:                   softpad[i] = JOYA;                       // IDC_PADS_xT_5
+                        acase  5:                   softpad[i] = JOYB;                       // IDC_PADS_xT_6
+                        acase  6:                   softpad[i] = JOYAUTOFIRE;                // IDC_PADS_xT_7
+                        acase  7:                   softpad[i] = JOYPAUSE;                   // IDC_PADS_xT_8
+                        acase  8:                   softpad[i] = JOYSTART;                   // IDC_PADS_xT_A
+                        acase  9:                   softpad[i] = JOYRESET;                   // IDC_PADS_xT_B
+                        acase 10: case 11:          softpad[i] = JOYFIRE1;
+                        acase 12: case 16: case 20: softpad[i] = JOYUP;
+                        acase 13: case 17: case 21: softpad[i] = JOYDOWN;
+                        acase 14: case 18: case 22: softpad[i] = JOYLEFT;
+                        acase 15: case 19: case 23: softpad[i] = JOYRIGHT;
+            }   }   }   }
+            if (whose[0] == 3) softpad[0] = 0;
+            if (whose[1] == 3) softpad[1] = 0;
+
+            if (whosemouse != 3)
+            {   for (i = 0; i < 3; i++)
+                {   if
+                    (   mousex >= hostmouserect[i].left
+                     && mousex <= hostmouserect[i].right
+                     && mousey >= hostmouserect[i].top
+                     && mousey <= hostmouserect[i].bottom
+                    )
+                    {   switch (i)
+                        {
+                        case  0:               lmb = TRUE; // IDC_PADS_LTMOUSE
+                        acase 1:               mmb = TRUE; // IDC_PADS_MDMOUSE
+                        acase 2: if (guestrmb) rmb = TRUE; // IDC_PADS_RTMOUSE
+                        }
+                        updatepadnames();
+        }   }   }   }
+    return FALSE;
+    case WM_LBUTTONUP:
+        ReleaseCapture();
+        softpad[0] = softpad[1] = 0;
+        lmb = mmb = rmb = FALSE;
+        updatepadnames();
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {   TRANSIENT PAINTSTRUCT localps;
-    TRANSIENT RECT        localrect;
-    TRANSIENT POINT       thepoint;
     TRANSIENT LONG        gid;
     TRANSIENT ULONG       scancode;
     TRANSIENT int         mousex, mousey,
-                          oldviewcontrolsas;
-    PERSIST   RECT        candyrect;
+                          oldviewcontrolsas,
+                          whichkey;
 
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_CONTROLS].hwnd = hwnd;
+
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_CONTROLS, "Guest Controls"));
         switch (machine)
         {
@@ -1367,22 +1707,6 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             acase 2: controlsicon = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(arcadia_bigctrls ? IDB_CONTROLS_PALLADIUM_BIG : IDB_CONTROLS_PALLADIUM_SML));
             }
             DISCARD SendMessage(GetDlgItem(hwnd, IDC_CONTROLS), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) controlsicon);
-
-            if (arcadia_bigctrls)
-            {   DISCARD GetWindowRect(GetDlgItem(hwnd, IDC_CANDY4), &localrect);
-                thepoint.x        = localrect.left;
-                thepoint.y        = localrect.top;
-                DISCARD ScreenToClient(hwnd, &thepoint);
-                candyrect.left    = thepoint.x;
-                candyrect.top     = thepoint.y;
-                thepoint.x        = localrect.right;
-                thepoint.y        = localrect.bottom;
-                DISCARD ScreenToClient(hwnd, &thepoint);
-                candyrect.right   = thepoint.x;
-                candyrect.bottom  = thepoint.y;
-                if (candy[4 - 1])
-                {   ShowWindow(GetDlgItem(hwnd, IDC_CANDY4), SW_SHOW);
-            }   }
         acase INTERTON:
             setdlgtext(hwnd, IDC_LARGEIMAGE,     MSG_LARGEIMAGE, "Large image?");
             DISCARD SendMessage
@@ -1487,7 +1811,9 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
          || machine == MIKIT
          || machine == PONG
         )
-        {   setdlgtext(hwnd, IDL_HOVER7            , MSG_HOVER             , "Hover over a button for more information.");
+        {   setdlgtext(hwnd, IDL_HOVER7            , MSG_CONTROLS_HOVER    , "Hover over a button for more information.\n" \
+                                                                             "Left-click to press a button.\n" \
+                                                                             "Right-click to redefine a button.");
             if (machines[machine].coinop || machine == PONG)
             {   setdlgtext(hwnd, IDL_CONTROLS_OVERLAY  , MSG_CONTROLS_OVERLAY2, "Overlay/guest key:");
             } else
@@ -1499,17 +1825,9 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             setdlgtext(hwnd, IDL_CONTROLS_HOSTMOUSE, MSG_CONTROLS_HOSTMOUSE, "Host mouse button(s):");
         }
 
-        // this is so that paddle axes which are never read by the
-        // game are reported to be centred.
-        sx[0] =
-        sy[0] =
-        sx[1] =
-        sy[1] = 128;
-
-        move_subwindow(SUBWINDOW_CONTROLS, hwnd);
-
+        move_subwindow(SUBWINDOW_CONTROLS);
     return FALSE;
-    acase WM_ACTIVATE:
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_COMMAND:
         gid = (int) LOWORD(wParam);
@@ -1536,7 +1854,7 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             {   close_subwindow(SUBWINDOW_CONTROLS);
                 fix_keyrects();
                 view_controls();
-                if (SubWindowPtr[SUBWINDOW_GAMEINFO])
+                if (subwin[SUBWINDOW_GAMEINFO].hwnd)
                 {   close_subwindow(SUBWINDOW_GAMEINFO);
                     help_gameinfo();
                 }
@@ -1592,35 +1910,46 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             close_subwindow(SUBWINDOW_CONTROLS);
             fix_keyrects();
             view_controls();
-        } elif (gid == IDC_CANDY4)
-        {   candy[4 - 1] = FALSE;
-            ShowWindow(GetDlgItem(hwnd, IDC_CANDY4), SW_HIDE);
         }
     return TRUE;
-    case WM_LBUTTONDBLCLK: // no need for acase
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         mousex = (int) LOWORD(lParam); // pixels -> dialog units
         mousey = (int) HIWORD(lParam); // pixels -> dialog units
 #ifdef VERBOSE
         zprintf(TEXTPEN_VERBOSE, "X: %d, Y: %d.\n", mousex, mousey);
 #endif
-        if
-        (   machine == ARCADIA
-         && arcadia_bigctrls
-         && mousex >= candyrect.left
-         && mousex <= candyrect.right
-         && mousey >= candyrect.top
-         && mousey <= candyrect.bottom
-        )
-        {   candy[4 - 1] = TRUE;
-            ShowWindow(GetDlgItem(hwnd, IDC_CANDY4), SW_SHOW);
-        } else
+        if (recmode != RECMODE_PLAY)
         {   SetCapture(hwnd);
-            controls_mousedown(mousex, mousey);
+            controls_mousedown(controls_getkey(mousex, mousey));
         }
     acase WM_LBUTTONUP:
         ReleaseCapture();
         controls_mouseup();
+    acase WM_RBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+        mousex = (int) LOWORD(lParam); // pixels -> dialog units
+        mousey = (int) HIWORD(lParam); // pixels -> dialog units
+        SetCapture(hwnd);
+        whichkey = controls_getkey(mousex, mousey);
+        if (whichkey != -1 && keyinfo[whichkeyrect][whichkey].to_keypad != -1)
+        {   if (keyinfo[whichkeyrect][whichkey].player == -1)
+            {   temp_console[keyinfo[whichkeyrect][whichkey].to_keypad] =
+                     console[keyinfo[whichkeyrect][whichkey].to_keypad];
+                subreq(keyinfo[whichkeyrect][whichkey].to_keypad, 2);
+                     console[keyinfo[whichkeyrect][whichkey].to_keypad] =
+                temp_console[keyinfo[whichkeyrect][whichkey].to_keypad];
+            } else
+            {   temp_keypads[keyinfo[whichkeyrect][whichkey].player][keyinfo[whichkeyrect][whichkey].to_keypad] =
+                     keypads[keyinfo[whichkeyrect][whichkey].player][keyinfo[whichkeyrect][whichkey].to_keypad];
+                subreq(keyinfo[whichkeyrect][whichkey].to_keypad, keyinfo[whichkeyrect][whichkey].player);
+                     keypads[keyinfo[whichkeyrect][whichkey].player][keyinfo[whichkeyrect][whichkey].to_keypad] =
+                temp_keypads[keyinfo[whichkeyrect][whichkey].player][keyinfo[whichkeyrect][whichkey].to_keypad];
+            }
+            update_controlstip(TRUE);
+        }
+    acase WM_RBUTTONUP:
+        ReleaseCapture();
     acase WM_CLOSE:
         softctrl = softlshift = softrshift = FALSE;
         if (controlsicon)
@@ -1628,7 +1957,7 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             controlsicon = NULL;
         }
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_CONTROLS] = NULL;
+        subwin[SUBWINDOW_CONTROLS].hwnd = NULL;
         updatemenu(MENUITEM_CONTROLS);
     acase WM_PAINT:
         BeginPaint(hwnd, &localps);
@@ -1649,18 +1978,18 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         }
         DISCARD EndPaint(hwnd, &localps);
     return FALSE; // important!
-    case WM_KEYDOWN: // no need for acase
+    case WM_KEYDOWN:
         scancode = (lParam & 33488896) >> 16;
         handle_keydown(scancode);
     return FALSE;
-    case WM_KEYUP: // no need for acase
+    case WM_KEYUP:
         scancode = (lParam & 33488896) >> 16;
         handle_keyup(scancode);
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
@@ -1676,46 +2005,10 @@ MODULE BOOL CALLBACK GameInfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
                           localhicon3 = NULL,
                           localhicon4 = NULL;
 
-PERSIST const int key_to_gid[2][16] = {
-{ IDC_LT_0,  //  0
-  IDC_LT_1,  //  1
-  IDC_LT_2,  //  2
-  IDC_LT_3,  //  3
-  IDC_LT_4,  //  4
-  IDC_LT_5,  //  5
-  IDC_LT_6,  //  6
-  IDC_LT_7,  //  7
-  IDC_LT_8,  //  8
-  IDC_LT_9,  //  9
-  IDC_LT_CL, // 10
-  IDC_LT_EN, // 11
-  IDC_LT_X1, // 12
-  IDC_LT_X2, // 13
-  IDC_LT_X3, // 14
-  IDC_LT_X4  // 15
-},
-{ IDC_RT_0,  //  0
-  IDC_RT_1,  //  1
-  IDC_RT_2,  //  2
-  IDC_RT_3,  //  3
-  IDC_RT_4,  //  4
-  IDC_RT_5,  //  5
-  IDC_RT_6,  //  6
-  IDC_RT_7,  //  7
-  IDC_RT_8,  //  8
-  IDC_RT_9,  //  9
-  IDC_RT_CL, // 10
-  IDC_RT_EN, // 11
-  IDC_RT_X1, // 12
-  IDC_RT_X2, // 13
-  IDC_RT_X3, // 14
-  IDC_RT_X4  // 15
-} };
-
     switch (Message)
     {
     case WM_INITDIALOG:
-        SubWindowPtr[SUBWINDOW_GAMEINFO] = hwnd;
+        subwin[SUBWINDOW_GAMEINFO].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL(        MSG_HAIL_INFO,         "Game Information"));
         setdlgtext(hwnd, IDOK,                  MSG_OK,                "OK");
@@ -1947,7 +2240,7 @@ PERSIST const int key_to_gid[2][16] = {
         acase MONACOPOS:         localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_MONACOGRANDPRIX));
         acase NIBBLEMENPOS:      localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE((arcadia_viewcontrolsas == 1) ? IDB_BOX_MPT_NIBBLEMEN        : IDB_BOX_NIBBLEMEN));
         acase OCEANBATTLEPOS:    localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE((arcadia_viewcontrolsas == 1) ? IDB_BOX_MPT_OCEANBATTLE      : IDB_BOX_OCEANBATTLE));
-        acase PARASHOOTERPOS:    localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_PARASHOOTER));
+        acase PARASHOOTERPOS:    localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE((arcadia_viewcontrolsas == 1) ? IDB_BOX_MPT_PARASHOOTER      : IDB_BOX_PARASHOOTER));
         acase PLEIADESPOS:       localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_PLEIADES ));
         acase R2DTANKPOS:        localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_R2DTANK  ));
         acase REDCLASHPOS:
@@ -1992,7 +2285,7 @@ PERSIST const int key_to_gid[2][16] = {
         acase WINTERSPORTSPOS:   localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_10));
         acase HIPPODROMEPOS:
         case  229:               localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_11));
-        acase HUNTINGPOS:        localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_12));
+        acase I_HUNTINGPOS:      localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_12));
         acase CHESS1POS:         localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_13));
         acase MOTOCROSSPOS:      localhicon2 = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_BOX_14));
         acase _4INAROWPOS:
@@ -2182,11 +2475,11 @@ PERSIST const int key_to_gid[2][16] = {
 
         enablegads();
 
-        move_subwindow(SUBWINDOW_GAMEINFO, hwnd);
+        move_subwindow(SUBWINDOW_GAMEINFO);
 
         // DISCARD SetFocus(GetDlgItem(hwnd, IDOK));
     return FALSE; // must be FALSE so that our SetFocus()sing is respected
-    case WM_CTLCOLORSTATIC: // no need for acase
+    case WM_CTLCOLORSTATIC:
         if
         (   machine == ARCADIA
          || machines[machine].pvis
@@ -2229,20 +2522,20 @@ PERSIST const int key_to_gid[2][16] = {
                 return (LRESULT) hBrush[EMUBRUSH_YELLOW];
         }   }
     return FALSE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         clearkybd();
-        DestroyWindow(SubWindowPtr[SUBWINDOW_GAMEINFO]);
-        SubWindowPtr[SUBWINDOW_GAMEINFO] = NULL;
+        DestroyWindow(subwin[SUBWINDOW_GAMEINFO].hwnd);
+        subwin[SUBWINDOW_GAMEINFO].hwnd = NULL;
         updatemenu(MENUITEM_GAMEINFO);
     return TRUE;
-    case WM_COMMAND: // no need for acase
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDOK:
         case IDCANCEL:
             clearkybd();
-            DestroyWindow(SubWindowPtr[SUBWINDOW_GAMEINFO]);
-            SubWindowPtr[SUBWINDOW_GAMEINFO] = NULL;
+            DestroyWindow(subwin[SUBWINDOW_GAMEINFO].hwnd);
+            subwin[SUBWINDOW_GAMEINFO].hwnd = NULL;
             updatemenu(MENUITEM_GAMEINFO);
         acase IDC_SHOWPALLADIUMKEYS:
             if (SendMessage(GetDlgItem(hwnd, IDC_SHOWPALLADIUMKEYS), BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -2256,7 +2549,7 @@ PERSIST const int key_to_gid[2][16] = {
             SendMessage(GetDlgItem(hwnd, IDC_PGMINFO), EM_SETSEL , -1, -1); // this prevents it from selecting all the text when clicking on the rest of the window
         }
     return TRUE;
-    case WM_DESTROY: // no need for acase
+    case WM_DESTROY:
         DeleteObject(localhicon1);
         if (localhicon2)
         {   DeleteObject(localhicon2);
@@ -2270,24 +2563,24 @@ PERSIST const int key_to_gid[2][16] = {
         {   DeleteObject(localhicon4);
             localhicon4 = NULL;
         }
-        SubWindowPtr[SUBWINDOW_GAMEINFO] = NULL;
+        subwin[SUBWINDOW_GAMEINFO].hwnd = NULL;
     return FALSE;
-    case WM_PAINT: // no need for acase
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
     return FALSE;
-    case WM_KEYDOWN: // no need for acase
+    case WM_KEYDOWN:
         scancode = (lParam & 33488896) >> 16;
         handle_keydown(scancode);
     return FALSE;
-    case WM_KEYUP: // no need for acase
+    case WM_KEYUP:
         scancode = (lParam & 33488896) >> 16;
         handle_keyup(scancode);
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
+    return FALSE;
+    default:
     return FALSE;
     // using return DefWindowProc(hwnd, Message, wParam, lParam); means that we would
     // have to manually reactivate the main window after closing this requester.
@@ -2307,7 +2600,11 @@ MODULE BOOL CALLBACK OpcodesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_OPCODES].hwnd = hwnd;
+
         DISCARD SetWindowText(hwnd, LLL(    MSG_HAIL_OPCODES, "Opcodes"));
+
+        setdlgtext(hwnd, IDL_HOVER8       , MSG_HOVER       , "Hover over a button for more information.");
 
         setdlgtext(hwnd, IDL_OPCODESLEGEND, MSG_LEGEND,       "Legend");
 #ifdef THOLIN
@@ -2343,9 +2640,9 @@ MODULE BOOL CALLBACK OpcodesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             opcodes[style][i].rect.bottom = thepoint.y;
         }
 
-        move_subwindow(SUBWINDOW_OPCODES, hwnd);
+        move_subwindow(SUBWINDOW_OPCODES);
     return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
@@ -2379,19 +2676,19 @@ MODULE BOOL CALLBACK OpcodesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             case IDL_OP_10TH: SetBkColor((HDC) wParam, EMUPEN_DARKBLUE); return (LRESULT) hBrush[EMUBRUSH_DARKBLUE];
         }   }
     return FALSE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         clearkybd();
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_OPCODES] = NULL;
+        subwin[SUBWINDOW_OPCODES].hwnd = NULL;
         updatemenu(MENUITEM_OPCODES);
     return TRUE;
-    case WM_DESTROY: // no need for acase
-        SubWindowPtr[SUBWINDOW_OPCODES] = NULL;
+    case WM_DESTROY:
+        subwin[SUBWINDOW_OPCODES].hwnd = NULL;
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_LBUTTONDBLCLK: // no need for acase
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         mousex = (int) LOWORD(lParam);
         mousey = (int) HIWORD(lParam);
@@ -2425,7 +2722,7 @@ EXPORT void setkybdtext(int scancode, HWND hwnd, ULONG gid, STRPTR contents)
     ti.uId      = scancode;
     ti.hinst    = InstancePtr;
     ti.lpszText = contents; // this gets copied
-    SendMessage(TipsPtr[SUBWINDOW_HOSTKYBD], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+    SendMessage(subwin[SUBWINDOW_HOSTKYBD].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }
 EXPORT void setkybdtextandtips(int scancode, HWND hwnd, ULONG gid, STRPTR contents, STRPTR tipcontents)
 {   TOOLINFO ti;
@@ -2438,266 +2735,21 @@ EXPORT void setkybdtextandtips(int scancode, HWND hwnd, ULONG gid, STRPTR conten
     ti.uId      = scancode;
     ti.hinst    = InstancePtr;
     ti.lpszText = tipcontents; // this gets copied
-    SendMessage(TipsPtr[SUBWINDOW_HOSTKYBD], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+    SendMessage(subwin[SUBWINDOW_HOSTKYBD].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }
 EXPORT void setpadtext(ULONG gid, STRPTR contents)
 {   TOOLINFO ti;
 
-    SetDlgItemText(SubWindowPtr[SUBWINDOW_HOSTPADS], gid, contents);
+    SetDlgItemText(subwin[SUBWINDOW_HOSTPADS].hwnd, gid, contents);
 
     ti.cbSize   = sizeof(TOOLINFO);
     ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-    ti.hwnd     = SubWindowPtr[SUBWINDOW_HOSTPADS];
+    ti.hwnd     = subwin[SUBWINDOW_HOSTPADS].hwnd;
     ti.uId      = gid - IDC_PADS_LT_1;
     ti.hinst    = InstancePtr;
     ti.lpszText = contents; // this gets copied
-    SendMessage(TipsPtr[SUBWINDOW_HOSTPADS], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+    SendMessage(subwin[SUBWINDOW_HOSTPADS].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }
-
-EXPORT void updatepadnames(void)
-{   switch (viewpadsas)
-    {
-    case 0: // guest
-    case 2: // overlays
-        switch (button[swapped ? 1 : 0][4])
-        {
-        case  5: setpadtext(IDC_PADS_LT_5, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_LT_5, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_LT_5, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_LT_5, LLL(MSG_PAUSE   , "Pause"));
-        }
-        switch (button[swapped ? 1 : 0][5])
-        {
-        case  5: setpadtext(IDC_PADS_LT_6, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_LT_6, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_LT_6, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_LT_6, LLL(MSG_PAUSE   , "Pause"   ));
-        }
-        switch (button[swapped ? 1 : 0][6])
-        {
-        case  5: setpadtext(IDC_PADS_LT_7, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_LT_7, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_LT_7, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_LT_7, LLL(MSG_PAUSE   , "Pause"   ));
-        }
-        switch (button[swapped ? 1 : 0][7])
-        {
-        case  5: setpadtext(IDC_PADS_LT_8, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_LT_8, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_LT_8, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_LT_8, LLL(MSG_PAUSE   , "Pause"   ));
-        }
-
-        setpadtext(IDC_PADS_LT_A,    machines[machine].consolekeyname[0]);
-        setpadtext(IDC_PADS_LT_B,    "Reset");
-        setpadtext(IDC_PADS_LT_AUP2, "");
-        setpadtext(IDC_PADS_LT_ADN2, "");
-        setpadtext(IDC_PADS_LT_ALT2, "");
-        setpadtext(IDC_PADS_LT_ART2, "");
-
-        switch (button[swapped ? 0 : 1][4])
-        {
-        case  5: setpadtext(IDC_PADS_RT_5, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_RT_5, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_RT_5, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_RT_5, LLL(MSG_PAUSE   , "Pause"   ));
-        }
-        switch (button[swapped ? 0 : 1][5])
-        {
-        case  5: setpadtext(IDC_PADS_RT_6, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_RT_6, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_RT_6, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_RT_6, LLL(MSG_PAUSE   , "Pause"));
-        }
-        switch (button[swapped ? 0 : 1][6])
-        {
-        case  5: setpadtext(IDC_PADS_RT_7, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_RT_7, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_RT_7, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_RT_7, LLL(MSG_PAUSE   , "Pause"   ));
-        }
-        switch (button[swapped ? 0 : 1][7])
-        {
-        case  5: setpadtext(IDC_PADS_RT_8, machines[machine].consolekeyname[1]); // joy A
-        acase 6: setpadtext(IDC_PADS_RT_8, machines[machine].consolekeyname[2]); // joy B
-        acase 7: setpadtext(IDC_PADS_RT_8, LLL(MSG_AUTOFIRE, "Autofire"));
-        acase 8: setpadtext(IDC_PADS_RT_8, LLL(MSG_PAUSE   , "Pause"   ));
-        }
-
-        setpadtext(IDC_PADS_RT_A,    machines[machine].consolekeyname[0]);
-        setpadtext(IDC_PADS_RT_B,    "Reset");
-        setpadtext(IDC_PADS_RT_AUP2, "");
-        setpadtext(IDC_PADS_RT_ADN2, "");
-        setpadtext(IDC_PADS_RT_ALT2, "");
-        setpadtext(IDC_PADS_RT_ART2, "");
-
-        if (paddleup == -1)
-        {   setpadtext(IDC_PADS_LT_DUP, LLL(MSG_KEY_UP, "Up"));
-            setpadtext(IDC_PADS_LT_AUP, LLL(MSG_KEY_UP, "Up"));
-            setpadtext(IDC_PADS_RT_DUP, LLL(MSG_KEY_UP, "Up"));
-            setpadtext(IDC_PADS_RT_AUP, LLL(MSG_KEY_UP, "Up"));
-        } elif (viewpadsas == 0) // guest
-        {   setpadtext(IDC_PADS_LT_DUP, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddleup]]);
-            setpadtext(IDC_PADS_LT_AUP, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddleup]]);
-            setpadtext(IDC_PADS_RT_DUP, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddleup]]);
-            setpadtext(IDC_PADS_RT_AUP, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddleup]]);
-        } else
-        {   // assert(viewpadsas == 2);
-            setpadtext(IDC_PADS_LT_DUP, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleup]].p2 : guestkeys[num_to_num[paddleup]].p1]);
-            setpadtext(IDC_PADS_LT_AUP, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleup]].p2 : guestkeys[num_to_num[paddleup]].p1]);
-            setpadtext(IDC_PADS_RT_DUP, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleup]].p1 : guestkeys[num_to_num[paddleup]].p2]);
-            setpadtext(IDC_PADS_RT_AUP, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleup]].p1 : guestkeys[num_to_num[paddleup]].p2]);
-        }
-        if (paddledown == -1)
-        {   setpadtext(IDC_PADS_LT_DDN, LLL(MSG_KEY_DN, "Dn"));
-            setpadtext(IDC_PADS_LT_ADN, LLL(MSG_KEY_DN, "Dn"));
-            setpadtext(IDC_PADS_RT_DDN, LLL(MSG_KEY_DN, "Dn"));
-            setpadtext(IDC_PADS_RT_ADN, LLL(MSG_KEY_DN, "Dn"));
-        } elif (viewpadsas == 0) // guest
-        {   setpadtext(IDC_PADS_LT_DDN, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddledown]]);
-            setpadtext(IDC_PADS_LT_ADN, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddledown]]);
-            setpadtext(IDC_PADS_RT_DDN, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddledown]]);
-            setpadtext(IDC_PADS_RT_ADN, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddledown]]);
-        } else
-        {   // assert(viewpadsas == 2);
-            setpadtext(IDC_PADS_LT_DDN, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddledown]].p2 : guestkeys[num_to_num[paddledown]].p1]);
-            setpadtext(IDC_PADS_LT_ADN, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddledown]].p2 : guestkeys[num_to_num[paddledown]].p1]);
-            setpadtext(IDC_PADS_RT_DDN, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddledown]].p1 : guestkeys[num_to_num[paddledown]].p2]);
-            setpadtext(IDC_PADS_RT_ADN, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddledown]].p1 : guestkeys[num_to_num[paddledown]].p2]);
-        }
-        if (paddleleft == -1)
-        {   setpadtext(IDC_PADS_LT_DLT, LLL(MSG_KEY_LT, "Lt"));
-            setpadtext(IDC_PADS_LT_ALT, LLL(MSG_KEY_LT, "Lt"));
-            setpadtext(IDC_PADS_RT_DLT, LLL(MSG_KEY_LT, "Lt"));
-            setpadtext(IDC_PADS_RT_ALT, LLL(MSG_KEY_LT, "Lt"));
-        } elif (viewpadsas == 0) // guest
-        {   setpadtext(IDC_PADS_LT_DLT, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddleleft]]);
-            setpadtext(IDC_PADS_LT_ALT, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddleleft]]);
-            setpadtext(IDC_PADS_RT_DLT, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddleleft]]);
-            setpadtext(IDC_PADS_RT_ALT, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddleleft]]);
-        } else
-        {   // assert(viewpadsas == 2);
-            setpadtext(IDC_PADS_LT_DLT, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleleft]].p2 : guestkeys[num_to_num[paddleleft]].p1]);
-            setpadtext(IDC_PADS_LT_ALT, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleleft]].p2 : guestkeys[num_to_num[paddleleft]].p1]);
-            setpadtext(IDC_PADS_RT_DLT, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleleft]].p1 : guestkeys[num_to_num[paddleleft]].p2]);
-            setpadtext(IDC_PADS_RT_ALT, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleleft]].p1 : guestkeys[num_to_num[paddleleft]].p2]);
-        }
-        if (paddleright == -1)
-        {   setpadtext(IDC_PADS_LT_DRT, LLL(MSG_KEY_RT, "Rt"));
-            setpadtext(IDC_PADS_LT_ART, LLL(MSG_KEY_RT, "Rt"));
-            setpadtext(IDC_PADS_RT_DRT, LLL(MSG_KEY_RT, "Rt"));
-            setpadtext(IDC_PADS_RT_ART, LLL(MSG_KEY_RT, "Rt"));
-        } elif (viewpadsas == 0) // guest
-        {   setpadtext(IDC_PADS_LT_DRT, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddleright]]);
-            setpadtext(IDC_PADS_LT_ART, machines[machine].keynames[swapped ? 1 : 0][num_to_num[paddleright]]);
-            setpadtext(IDC_PADS_RT_DRT, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddleright]]);
-            setpadtext(IDC_PADS_RT_ART, machines[machine].keynames[swapped ? 0 : 1][num_to_num[paddleright]]);
-        } else
-        {   // assert(viewpadsas == 2);
-            setpadtext(IDC_PADS_LT_DRT, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleright]].p2 : guestkeys[num_to_num[paddleright]].p1]);
-            setpadtext(IDC_PADS_LT_ART, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleright]].p2 : guestkeys[num_to_num[paddleright]].p1]);
-            setpadtext(IDC_PADS_RT_DRT, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleright]].p1 : guestkeys[num_to_num[paddleright]].p2]);
-            setpadtext(IDC_PADS_RT_ART, overlays[whichoverlay][swapped ? guestkeys[num_to_num[paddleright]].p1 : guestkeys[num_to_num[paddleright]].p2]);
-        }
-
-        if (viewpadsas == 0)
-        {   setpadtext(IDC_PADS_LT_1,    machines[machine].keynames[swapped ? 1 : 0][num_to_num[buttontranslate(0, 0)]]);
-            setpadtext(IDC_PADS_LT_11,   machines[machine].keynames[swapped ? 1 : 0][num_to_num[key1]]);
-            setpadtext(IDC_PADS_LT_12,   machines[machine].keynames[swapped ? 1 : 0][num_to_num[key1]]);
-            setpadtext(IDC_PADS_LT_2,    machines[machine].keynames[swapped ? 1 : 0][num_to_num[buttontranslate(0, 1)]]);
-            setpadtext(IDC_PADS_LT_3,    machines[machine].keynames[swapped ? 1 : 0][num_to_num[buttontranslate(0, 2)]]);
-            setpadtext(IDC_PADS_LT_4,    machines[machine].keynames[swapped ? 1 : 0][num_to_num[buttontranslate(0, 3)]]);
-            setpadtext(IDC_PADS_LTMOUSE, machines[machine].keynames[swapped ? 1 : 0][num_to_num[key1]]);
-            setpadtext(IDC_PADS_MDMOUSE, machines[machine].keynames[swapped ? 1 : 0][num_to_num[key2]]);
-            if (guestrmb)
-            {   setpadtext(IDC_PADS_RTMOUSE, machines[machine].keynames[swapped ? 1 : 0][num_to_num[key3]]);
-            } else
-            {   setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT , "Right" ));
-            }
-
-            setpadtext(IDC_PADS_RT_1,    machines[machine].keynames[swapped ? 0 : 1][num_to_num[buttontranslate(1, 0)]]);
-            setpadtext(IDC_PADS_RT_11,   machines[machine].keynames[swapped ? 0 : 1][num_to_num[key1]]);
-            setpadtext(IDC_PADS_RT_12,   machines[machine].keynames[swapped ? 0 : 1][num_to_num[key1]]);
-            setpadtext(IDC_PADS_RT_2,    machines[machine].keynames[swapped ? 0 : 1][num_to_num[buttontranslate(1, 1)]]);
-            setpadtext(IDC_PADS_RT_3,    machines[machine].keynames[swapped ? 0 : 1][num_to_num[buttontranslate(1, 2)]]);
-            setpadtext(IDC_PADS_RT_4,    machines[machine].keynames[swapped ? 0 : 1][num_to_num[buttontranslate(1, 3)]]);
-        } else
-        {   setpadtext(IDC_PADS_LT_1,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(0, 0)]].p2 : guestkeys[num_to_num[buttontranslate(0, 0)]].p1]);
-            setpadtext(IDC_PADS_LT_11,   overlays[whichoverlay][swapped ? guestkeys[num_to_num[key1                 ]].p2 : guestkeys[num_to_num[key1                 ]].p1]);
-            setpadtext(IDC_PADS_LT_12,   overlays[whichoverlay][swapped ? guestkeys[num_to_num[key1                 ]].p2 : guestkeys[num_to_num[key1                 ]].p1]);
-            setpadtext(IDC_PADS_LT_2,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(0, 1)]].p2 : guestkeys[num_to_num[buttontranslate(0, 1)]].p1]);
-            setpadtext(IDC_PADS_LT_3,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(0, 2)]].p2 : guestkeys[num_to_num[buttontranslate(0, 2)]].p1]);
-            setpadtext(IDC_PADS_LT_4,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(0, 3)]].p2 : guestkeys[num_to_num[buttontranslate(0, 3)]].p1]);
-            setpadtext(IDC_PADS_LTMOUSE, overlays[whichoverlay][swapped ? guestkeys[num_to_num[key1                 ]].p2 : guestkeys[num_to_num[key1                 ]].p1]);
-            setpadtext(IDC_PADS_MDMOUSE, overlays[whichoverlay][swapped ? guestkeys[num_to_num[key2                 ]].p2 : guestkeys[num_to_num[key2                 ]].p1]);
-            if (guestrmb)
-            {   setpadtext(IDC_PADS_RTMOUSE, overlays[whichoverlay][swapped ? guestkeys[num_to_num[key3             ]].p2 : guestkeys[num_to_num[key3                 ]].p1]);
-            } else
-            {   setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT , "Right" ));
-            }
-
-            setpadtext(IDC_PADS_RT_1,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(1, 0)]].p1 : guestkeys[num_to_num[buttontranslate(1, 0)]].p2]);
-            setpadtext(IDC_PADS_RT_11,   overlays[whichoverlay][swapped ? guestkeys[num_to_num[key1                 ]].p1 : guestkeys[num_to_num[key1                 ]].p2]);
-            setpadtext(IDC_PADS_RT_12,   overlays[whichoverlay][swapped ? guestkeys[num_to_num[key1                 ]].p1 : guestkeys[num_to_num[key1                 ]].p2]);
-            setpadtext(IDC_PADS_RT_2,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(1, 1)]].p1 : guestkeys[num_to_num[buttontranslate(1, 1)]].p2]);
-            setpadtext(IDC_PADS_RT_3,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(1, 2)]].p1 : guestkeys[num_to_num[buttontranslate(1, 2)]].p2]);
-            setpadtext(IDC_PADS_RT_4,    overlays[whichoverlay][swapped ? guestkeys[num_to_num[buttontranslate(1, 3)]].p1 : guestkeys[num_to_num[buttontranslate(1, 3)]].p2]);
-        }
-    acase 1: // host
-        setpadtext(IDC_PADS_LT_A,    LLL(MSG_START2, "Start" ));
-        setpadtext(IDC_PADS_LT_B,    LLL(MSG_SELECT, "SELECT")); // would be better in mixed case in this instance
-        setpadtext(IDC_PADS_LT_1,    "1");
-        setpadtext(IDC_PADS_LT_2,    "2");
-        setpadtext(IDC_PADS_LT_3,    "3");
-        setpadtext(IDC_PADS_LT_4,    "4");
-        setpadtext(IDC_PADS_LT_5,    "5");
-        setpadtext(IDC_PADS_LT_6,    "6");
-        setpadtext(IDC_PADS_LT_7,    "7");
-        setpadtext(IDC_PADS_LT_8,    "8");
-        setpadtext(IDC_PADS_LT_11,   "11");
-        setpadtext(IDC_PADS_LT_12,   "12");
-        setpadtext(IDC_PADS_LT_DUP,  LLL(MSG_KEY_UP, "Up"    ));
-        setpadtext(IDC_PADS_LT_DDN,  LLL(MSG_KEY_DN, "Dn"    ));
-        setpadtext(IDC_PADS_LT_DLT,  LLL(MSG_KEY_LT, "Lt"    ));
-        setpadtext(IDC_PADS_LT_DRT,  LLL(MSG_KEY_RT, "Rt"    ));
-        setpadtext(IDC_PADS_LT_AUP,  LLL(MSG_KEY_UP, "Up"    ));
-        setpadtext(IDC_PADS_LT_ADN,  LLL(MSG_KEY_DN, "Dn"    ));
-        setpadtext(IDC_PADS_LT_ALT,  LLL(MSG_KEY_LT, "Lt"    ));
-        setpadtext(IDC_PADS_LT_ART,  LLL(MSG_KEY_RT, "Rt"    ));
-        setpadtext(IDC_PADS_LT_AUP2, LLL(MSG_KEY_UP, "Up"    ));
-        setpadtext(IDC_PADS_LT_ADN2, LLL(MSG_KEY_DN, "Dn"    ));
-        setpadtext(IDC_PADS_LT_ALT2, LLL(MSG_KEY_LT, "Lt"    ));
-        setpadtext(IDC_PADS_LT_ART2, LLL(MSG_KEY_RT, "Rt"    ));
-
-        setpadtext(IDC_PADS_RT_A,    LLL(MSG_START2, "Start" ));
-        setpadtext(IDC_PADS_RT_B,    LLL(MSG_SELECT, "SELECT")); // would be better in mixed case in this instance
-        setpadtext(IDC_PADS_RT_1,    "1");
-        setpadtext(IDC_PADS_RT_2,    "2");
-        setpadtext(IDC_PADS_RT_3,    "3");
-        setpadtext(IDC_PADS_RT_4,    "4");
-        setpadtext(IDC_PADS_RT_5,    "5");
-        setpadtext(IDC_PADS_RT_6,    "6");
-        setpadtext(IDC_PADS_RT_7,    "7");
-        setpadtext(IDC_PADS_RT_8,    "8");
-        setpadtext(IDC_PADS_RT_11,   "11");
-        setpadtext(IDC_PADS_RT_12,   "12");
-        setpadtext(IDC_PADS_RT_DUP,  LLL(MSG_KEY_UP, "Up"    ));
-        setpadtext(IDC_PADS_RT_DDN,  LLL(MSG_KEY_DN, "Dn"    ));
-        setpadtext(IDC_PADS_RT_DLT,  LLL(MSG_KEY_LT, "Lt"    ));
-        setpadtext(IDC_PADS_RT_DRT,  LLL(MSG_KEY_RT, "Rt"    ));
-        setpadtext(IDC_PADS_RT_AUP,  LLL(MSG_KEY_UP, "Up"    ));
-        setpadtext(IDC_PADS_RT_ADN,  LLL(MSG_KEY_DN, "Dn"    ));
-        setpadtext(IDC_PADS_RT_ALT,  LLL(MSG_KEY_LT, "Lt"    ));
-        setpadtext(IDC_PADS_RT_ART,  LLL(MSG_KEY_RT, "Rt"    ));
-        setpadtext(IDC_PADS_RT_AUP2, LLL(MSG_KEY_UP, "Up"    ));
-        setpadtext(IDC_PADS_RT_ADN2, LLL(MSG_KEY_DN, "Dn"    ));
-        setpadtext(IDC_PADS_RT_ALT2, LLL(MSG_KEY_LT, "Lt"    ));
-        setpadtext(IDC_PADS_RT_ART2, LLL(MSG_KEY_RT, "Rt"    ));
-
-        setpadtext(IDC_PADS_LTMOUSE, LLL(MSG_LEFT  , "Left"  ));
-        setpadtext(IDC_PADS_MDMOUSE, LLL(MSG_MIDDLE, "Middle"));
-        setpadtext(IDC_PADS_RTMOUSE, LLL(MSG_RIGHT , "Right" ));
-}   }
 
 EXPORT void invert(int localkey)
 {   HBITMAP OldBitmapPtr;
@@ -2751,17 +2803,17 @@ EXPORT void invert2(int left, int top, int right, int bottom)
     localrect.bottom = bottom;
 
     if (machine == PIPBUG)
-    {   ControlsRastPtr2 = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS2));
+    {   ControlsRastPtr2 = GetDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS2));
         InvertRect(ControlsRastPtr2, &localrect);
-        ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS2), ControlsRastPtr2);
+        ReleaseDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS2), ControlsRastPtr2);
     } else
-    {   ControlsRastPtr1 = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS));
+    {   ControlsRastPtr1 = GetDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS));
         InvertRect(ControlsRastPtr1, &localrect);
-        ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS), ControlsRastPtr1);
+        ReleaseDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS), ControlsRastPtr1);
 }   }
 
 EXPORT void drawctrlglow_system(FLAG lit)
-{   ControlsRastPtr1 = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS));
+{   ControlsRastPtr1 = GetDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS));
     if (machine == INSTRUCTOR)
     {   SelectObject(ControlsRastPtr1, hBrush[lit ? EMUBRUSH_RED     : EMUBRUSH_DARKBLUE]); // almost pink
     } else
@@ -2775,15 +2827,5 @@ EXPORT void drawctrlglow_system(FLAG lit)
         therect.right  + 2,
         therect.bottom + 2
     );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_CONTROLS], IDC_CONTROLS), ControlsRastPtr1);
+    ReleaseDC(GetDlgItem(subwin[SUBWINDOW_CONTROLS].hwnd, IDC_CONTROLS), ControlsRastPtr1);
 }
-
-MODULE int buttontranslate(int player, int which)
-{   switch (button[swapped ? (1 - player) : player][which])
-    {
-    acase 2: return key2;
-    acase 3: return key3;
-    acase 4: return key4;
-    adefault: // eg. 1
-        return key1;
-}   }

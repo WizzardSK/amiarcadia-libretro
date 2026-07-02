@@ -59,7 +59,6 @@ IMPORT const struct CodeCommentStruct codecomment[];
 IMPORT       struct MachineStruct machines[MACHINES];
 #ifdef AMIGA
     IMPORT struct Catalog*        CatalogPtr;
-    IMPORT struct Window*         SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef WIN32
     IMPORT int                    CatalogPtr; // APTR doesn't work

@@ -132,8 +132,7 @@ EXPORT FILE                    *ANIMHandle      = NULL,
                                *PNGHandle       = NULL,
                                *SMUSHandle      = NULL,
                                *SMUSTrackHandle[GUESTCHANNELS],
-                               *TapeHandle      = NULL,
-                               *WAVHandle[TOTALCHANNELS];
+                               *TapeHandle      = NULL;
 #ifdef WIN32
     EXPORT TEXT                 file_bkgrnd[MAX_PATH + 1],
                                 path_bkgrnd[MAX_PATH + 1];
@@ -206,8 +205,7 @@ IMPORT int                      aifffile,
                                 wide,
                                 ymfile;
 IMPORT double                   samplewhere_f;
-IMPORT FLAG                     guestplaying[TOTALCHANNELS],
-                                tr_underline[8];
+IMPORT FLAG                     tr_underline[8];
 IMPORT TEXT                     autotext[GAMEINFOLINES][80 + 1],
                                 file_game[MAX_PATH + 1],
                                 fn_game[MAX_PATH + 1], // the entire pathname (path and file)
@@ -243,6 +241,7 @@ IMPORT ASCREEN                  screen[BOXWIDTH][BOXHEIGHT];
 IMPORT UBYTE*                   IOBuffer;
 IMPORT FILE                    *DisHandle,
                                *MacroHandle;
+IMPORT struct ChannelStruct     channel[TOTALCHANNELS];
 IMPORT struct HostMachineStruct hostmachines[MACHINES];
 IMPORT struct KindStruct        filekind[KINDS];
 IMPORT struct MachineStruct     machines[MACHINES];
@@ -284,9 +283,7 @@ MODULE SWORD                    linebytes    = 40,
 MODULE SLONG                    datastart;
 MODULE ULONG                    mngframes,
                                 pngframes,
-                                startframe,
-                                wavcycle[TOTALCHANNELS],
-                                wavoffset[TOTALCHANNELS];
+                                startframe;
 MODULE FILE                    *PapertapeHandle[2] = { NULL, NULL },
                                *PSGHandle[2]       = { NULL, NULL },
                                *YMHandle[2]        = { NULL, NULL };
@@ -2441,23 +2438,23 @@ EXPORT void sound_startrecording(void)
     FAST TEXT tempstring[7 + 1];
 
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   // assert(!WAVHandle[i]);
-        guestplaying[i] = FALSE;
+    {   // assert(!channel[i].WAVHandle);
+        channel[i].playing = FALSE;
         if (memmapinfo[memmap].channelused[i] == 1)
         {   sprintf((char*) tempstring, "!%d.wav", i);
-            if ((WAVHandle[i] = fopen((const char*) tempstring, "wb")))
+            if ((channel[i].WAVHandle = fopen((const char*) tempstring, "wb")))
             {   ulong_to_le(&wav_header[24], samplerate);
                 ulong_to_le(&wav_header[28], samplerate * bitrate / 8);
                 uword_to_le(&wav_header[32], (UWORD) (bitrate / 8));
                 uword_to_le(&wav_header[34], (UWORD) bitrate);
-                fwrite(wav_header, 44, 1, WAVHandle[i]);
-                wavoffset[i] = 0;
-                wavcycle[i] = cycles_2650;
+                fwrite(wav_header, 44, 1, channel[i].WAVHandle);
+                channel[i].wavoffset = 0;
+                channel[i].wavcycle = cycles_2650;
             } else
             {   for (j = 0; j < TOTALCHANNELS; j++)
-                {   if (WAVHandle[j])
-                    {   fclose(WAVHandle[j]);
-                        WAVHandle[j] = NULL;
+                {   if (channel[j].WAVHandle)
+                    {   fclose(channel[j].WAVHandle);
+                        channel[j].WAVHandle = NULL;
                 }   }
                 say("Can't open temporary output file!");
                 return;
@@ -2479,14 +2476,14 @@ EXPORT void sound_stoprecording(void)
 
     smallest = (ULONG) -1;
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   if (WAVHandle[i])
+    {   if (channel[i].WAVHandle)
         {   write_wav(i, TRUE);
-            if (wavoffset[i] & 1)
+            if (channel[i].wavoffset & 1)
             {
 #ifdef KEEPTEMPFILES
                 truncated = TRUE;
 #endif
-                wavoffset[i]--; // so we don't have to worry about pad bytes
+                channel[i].wavoffset--; // so we don't have to worry about pad bytes
             }
 #ifdef KEEPTEMPFILES
             else
@@ -2495,18 +2492,18 @@ EXPORT void sound_stoprecording(void)
             }
 #endif
 
-            ulong_to_le(&wav_header[ 4], 36 + wavoffset[i]);
-            DISCARD fseek(WAVHandle[i],  4, SEEK_SET);
-            fwrite(&wav_header[ 4], 4, 1, WAVHandle[i]);
+            ulong_to_le(&wav_header[ 4], 36 + channel[i].wavoffset);
+            DISCARD fseek(channel[i].WAVHandle,  4, SEEK_SET);
+            fwrite(&wav_header[ 4], 4, 1, channel[i].WAVHandle);
 
             // we already did 24..35 at the start
 
-            ulong_to_le(&wav_header[40],      wavoffset[i]);
-            DISCARD fseek(WAVHandle[i], 40, SEEK_SET);
-            fwrite(&wav_header[40], 4, 1, WAVHandle[i]);
+            ulong_to_le(&wav_header[40],      channel[i].wavoffset);
+            DISCARD fseek(channel[i].WAVHandle, 40, SEEK_SET);
+            fwrite(&wav_header[40], 4, 1, channel[i].WAVHandle);
 
-            fclose(WAVHandle[i]);
-            WAVHandle[i] = NULL;
+            fclose(channel[i].WAVHandle);
+            channel[i].WAVHandle = NULL;
 
 #ifdef KEEPTEMPFILES
             if (truncated)
@@ -2514,21 +2511,21 @@ EXPORT void sound_stoprecording(void)
                 sprintf(tempstring, "!%d.wav", i);
 #ifdef WIN32
                 if ((fh = _open(tempstring, _O_RDWR | _O_CREAT, _S_IREAD | _S_IWRITE)) != -1)
-                {   DISCARD _chsize(fh, 44 + wavoffset[i]);
+                {   DISCARD _chsize(fh, 44 + channel[i].wavoffset);
                     _close(fh);
                 }
 #endif
 #ifdef AMIGA
                     if ((fh = Open(tempstring, MODE_OLDFILE)))
-                {   DISCARD SetFileSize(fh, 44 + wavoffset[i], OFFSET_BEGINNING);
+                {   DISCARD SetFileSize(fh, 44 + channel[i].wavoffset, OFFSET_BEGINNING);
                     Close(fh);
                 }
 #endif
             }
 #endif
 
-            if (wavoffset[i] < smallest)
-            {   smallest = wavoffset[i];
+            if (channel[i].wavoffset < smallest)
+            {   smallest = channel[i].wavoffset;
     }   }   }
 
     combine(KIND_8SVX, smallest);
@@ -2547,11 +2544,9 @@ EXPORT void sound_stoprecording(void)
 MODULE void combine(int kind, ULONG smallest)
 {   TRANSIENT FILE  *CombinedHandle,
                     *SingleHandle;
-    TRANSIENT UBYTE *CombinedUBYTEBuffer,
-                    *SingleUBYTEBuffer[TOTALCHANNELS];
-    TRANSIENT SWORD *SingleSWORDBuffer[TOTALCHANNELS],
-                    *CombinedSWORDBuffer;
-    TRANSIENT SBYTE *CombinedSBYTEBuffer;
+    TRANSIENT UBYTE* CombinedUBYTEBuffer;
+    TRANSIENT SWORD* CombinedSWORDBuffer;
+    TRANSIENT SBYTE* CombinedSBYTEBuffer;
     TRANSIENT int    combined;
     TRANSIENT ULONG  i, j;
     PERSIST   TEXT   tempstring[80 + 1];
@@ -2566,7 +2561,7 @@ MODULE void combine(int kind, ULONG smallest)
     }
 
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   SingleUBYTEBuffer[i] = NULL;
+    {   channel[i].SingleUBYTEBuffer = NULL;
     }
 
     for (i = 0; i < TOTALCHANNELS; i++)
@@ -2574,9 +2569,9 @@ MODULE void combine(int kind, ULONG smallest)
         {   sprintf((char*) tempstring, "!%d.wav", (int) i);
             if ((SingleHandle = fopen((const char*) tempstring, "rb")))
             {   DISCARD fseek(SingleHandle, 44, SEEK_SET);
-                SingleUBYTEBuffer[i] = malloc(smallest); // should check return code!
-                SingleSWORDBuffer[i] = (SWORD*) SingleUBYTEBuffer[i];
-                if (fread(SingleUBYTEBuffer[i], (size_t) smallest, 1, SingleHandle) != 1)
+                channel[i].SingleUBYTEBuffer = malloc(smallest); // should check return code!
+                channel[i].SingleSWORDBuffer = (SWORD*) channel[i].SingleUBYTEBuffer;
+                if (fread(channel[i].SingleUBYTEBuffer, (size_t) smallest, 1, SingleHandle) != 1)
                 {   fclose(SingleHandle);
                     sprintf((char*) tempstring, "Can't read %d bytes from temporary file \"!%d.wav\"!", (int) smallest, (int) i);
                     say((STRPTR) tempstring);
@@ -2651,7 +2646,7 @@ MODULE void combine(int kind, ULONG smallest)
         {   combined = 0;
             for (j = 0; j < TOTALCHANNELS; j++)
             {   if (memmapinfo[memmap].channelused[j] == 1)
-                {   combined += SingleUBYTEBuffer[j][i] - 128;
+                {   combined += channel[j].SingleUBYTEBuffer[i] - 128;
             }   }
             if (combined < -128)
             {   combined = -128;
@@ -2670,11 +2665,11 @@ MODULE void combine(int kind, ULONG smallest)
             {   if (memmapinfo[memmap].channelused[j] == 1)
                 {
 #ifdef WIN32
-                    combined += SingleSWORDBuffer[j][i];
+                    combined += channel[j].SingleSWORDBuffer[i];
 #endif
 #ifdef AMIGA
-                    combined += (((SingleSWORDBuffer[j][i] & 0xFF00) >> 8)
-                             |   ((SingleSWORDBuffer[j][i] & 0x00FF) << 8));
+                    combined += (((channel[j].SingleSWORDBuffer[i] & 0xFF00) >> 8)
+                             |   ((channel[j].SingleSWORDBuffer[i] & 0x00FF) << 8));
 #endif
             }   }
             if (combined < -32768)
@@ -2700,9 +2695,9 @@ MODULE void combine(int kind, ULONG smallest)
 
 DONE:
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   if (SingleUBYTEBuffer[i])
-        {   free(SingleUBYTEBuffer[i]);
-            // SingleUBYTEBuffer[i] = NULL;
+    {   if (channel[i].SingleUBYTEBuffer)
+        {   free(channel[i].SingleUBYTEBuffer);
+            // channel[i].SingleUBYTEBuffer = NULL;
     }   }
 
 #ifdef AMIGA
@@ -2738,14 +2733,14 @@ EXPORT void write_wav(int guestchan, FLAG silencing)
     FAST int    i;
 
     if
-    (   !WAVHandle[guestchan]
-     || cycles_2650 <= wavcycle[guestchan]
-     || (silencing && guestplaying[guestchan])
+    (   !channel[guestchan].WAVHandle
+     || cycles_2650 <= channel[guestchan].wavcycle
+     || (silencing && channel[guestchan].playing)
     )
     {   return;
     }
 
-    since     =  cycles_2650 - wavcycle[guestchan];
+    since     =  cycles_2650 - channel[guestchan].wavcycle;
     cpsf      =  ((region == REGION_NTSC) ? 60.0 : 50.0) * machines[machine].cpf;
     cps       =  (ULONG) cpsf;
     secs      =  (double) since;
@@ -2753,8 +2748,8 @@ EXPORT void write_wav(int guestchan, FLAG silencing)
     samples_d =  secs * (double) samplerate;
     samples   =  (ULONG) samples_d;
 
-    wavoffset[guestchan] += samples * (bitrate / 8);
-    wavcycle[ guestchan] =  cycles_2650;
+    channel[guestchan].wavoffset += samples * (bitrate / 8);
+    channel[guestchan].wavcycle  =  cycles_2650;
 
     if (samples <= 0)
     {   return;
@@ -2775,13 +2770,13 @@ EXPORT void write_wav(int guestchan, FLAG silencing)
         {   loops = samples / SoundLength[guestchan];
             if (loops)
             {   for (i = 0; i < (int) loops; i++)
-                {   fwrite(SoundBuffer[guestchan],            SoundLength[guestchan]  * 2, 1, WAVHandle[guestchan]);
+                {   fwrite(SoundBuffer[guestchan],            SoundLength[guestchan]  * 2, 1, channel[guestchan].WAVHandle);
             }   }
             if (samples % SoundLength[ guestchan])
-            {   fwrite(    SoundBuffer[guestchan], (samples % SoundLength[guestchan]) * 2, 1, WAVHandle[guestchan]);
+            {   fwrite(    SoundBuffer[guestchan], (samples % SoundLength[guestchan]) * 2, 1, channel[guestchan].WAVHandle);
         }   }
         else
-        {   fwrite(        SoundBuffer[guestchan],  samples                           * 2, 1, WAVHandle[guestchan]);
+        {   fwrite(        SoundBuffer[guestchan],  samples                           * 2, 1, channel[guestchan].WAVHandle);
     }   }
 #endif
     else
@@ -2790,13 +2785,13 @@ EXPORT void write_wav(int guestchan, FLAG silencing)
         {   loops = samples / SoundLength[guestchan];
             if (loops)
             {   for (i = 0; i < (int) loops; i++)
-                {   fwrite(SoundBuffer[guestchan],            SoundLength[guestchan]     , 1, WAVHandle[guestchan]);
+                {   fwrite(SoundBuffer[guestchan],            SoundLength[guestchan]     , 1, channel[guestchan].WAVHandle);
             }   }
             if (samples % SoundLength[guestchan])
-            {   fwrite(    SoundBuffer[guestchan],  samples % SoundLength[guestchan]     , 1, WAVHandle[guestchan]);
+            {   fwrite(    SoundBuffer[guestchan],  samples % SoundLength[guestchan]     , 1, channel[guestchan].WAVHandle);
         }   }
         else
-        {   fwrite(        SoundBuffer[guestchan],  samples                              , 1, WAVHandle[guestchan]);
+        {   fwrite(        SoundBuffer[guestchan],  samples                              , 1, channel[guestchan].WAVHandle);
 }   }   }
 
 #define NUMLOOPS        32 // was 8
@@ -4226,12 +4221,12 @@ MODULE void write_samples(int guestchan, int samples)
         {
         case 11025:
 #ifdef WIN32
-            fwrite(samp[guestchan - GUESTCHANNELS].bodybase, samples, 1, WAVHandle[guestchan]);
+            fwrite(samp[guestchan - GUESTCHANNELS].bodybase, samples, 1, channel[guestchan].WAVHandle);
 #endif
 #ifdef AMIGA
             for (i = 0; i < samples; i++)
             {   byteval[0] = samp[guestchan - GUESTCHANNELS].bodybase[i] ^ 0x80; // SBYTE in .8svx file -> UBYTE in .wav file
-                fwrite(byteval, 1, 1, WAVHandle[guestchan]);
+                fwrite(byteval, 1, 1, channel[guestchan].WAVHandle);
             }
 #endif
         acase 22050:
@@ -4241,7 +4236,7 @@ MODULE void write_samples(int guestchan, int samples)
                 byteval[0] ^= 0x80; // SBYTE in .8svx file -> UBYTE in .wav file
 #endif
                 byteval[1] = byteval[0];
-                fwrite(byteval, 2, 1, WAVHandle[guestchan]);
+                fwrite(byteval, 2, 1, channel[guestchan].WAVHandle);
             }
         acase 44100:
             for (i = 0; i < samples; i++)
@@ -4249,7 +4244,7 @@ MODULE void write_samples(int guestchan, int samples)
                 byteval[1] =
                 byteval[2] =
                 byteval[3] = byteval[0];
-                fwrite(byteval, 4, 1, WAVHandle[guestchan]);
+                fwrite(byteval, 4, 1, channel[guestchan].WAVHandle);
         }   }
 #ifdef WIN32 // 16-bit sound is not supported on AmiArcadia
     acase 16:
@@ -4260,14 +4255,14 @@ MODULE void write_samples(int guestchan, int samples)
             for (i = 0; i < samples; i++)
             {   byteval[0] = samp[guestchan - GUESTCHANNELS].bodybase[i];
                 wordval[0] = ((byteval[0] << 8) | byteval[0]) ^ 0x80; // 0..255 -> -32768..32767
-                fwrite(wordval, 2, 1, WAVHandle[guestchan]);
+                fwrite(wordval, 2, 1, channel[guestchan].WAVHandle);
             }
         acase 22050:
             for (i = 0; i < samples; i++)
             {   byteval[0] = samp[guestchan - GUESTCHANNELS].bodybase[i];
                 wordval[0] = ((byteval[0] << 8) | byteval[0]) ^ 0x80; // 0..255 -> -32768..32767
                 wordval[1] = wordval[0];
-                fwrite(wordval, 4, 1, WAVHandle[guestchan]);
+                fwrite(wordval, 4, 1, channel[guestchan].WAVHandle);
             }
         acase 44100:
             for (i = 0; i < samples; i++)
@@ -4276,7 +4271,7 @@ MODULE void write_samples(int guestchan, int samples)
                 wordval[1] =
                 wordval[2] =
                 wordval[3] = wordval[0];
-                fwrite(wordval, 8, 1, WAVHandle[guestchan]);
+                fwrite(wordval, 8, 1, channel[guestchan].WAVHandle);
         }   }
 #endif
 }   }
@@ -4287,20 +4282,20 @@ MODULE void write_silence(int guestchan, int samples)
     case 8:
         while (samples >= 1)
         {   if (samples >= SILENCEBUFSIZE)
-            {   fwrite(SilenceBuffer8, SILENCEBUFSIZE, 1, WAVHandle[guestchan]); // write one second of silence
+            {   fwrite(SilenceBuffer8, SILENCEBUFSIZE, 1, channel[guestchan].WAVHandle); // write one second of silence
                 samples -= SILENCEBUFSIZE;
             } else
-            {   fwrite(SilenceBuffer8, samples       , 1, WAVHandle[guestchan]); // write a fraction of a second of silence
+            {   fwrite(SilenceBuffer8, samples       , 1, channel[guestchan].WAVHandle); // write a fraction of a second of silence
                 samples = 0;
         }   }
 #ifdef WIN32
     acase 16:
         while (samples >= 1)
         {   if (samples >= SILENCEBUFSIZE) // only * 1 here because samples is assuming 8 bits
-            {   fwrite(SilenceBuffer16, SILENCEBUFSIZE * 2, 1, WAVHandle[guestchan]); // write one second of silence
+            {   fwrite(SilenceBuffer16, SILENCEBUFSIZE * 2, 1, channel[guestchan].WAVHandle); // write one second of silence
                 samples -= SILENCEBUFSIZE;
             } else
-            {   fwrite(SilenceBuffer16, samples        * 2, 1, WAVHandle[guestchan]); // write a fraction of a second of silence
+            {   fwrite(SilenceBuffer16, samples        * 2, 1, channel[guestchan].WAVHandle); // write a fraction of a second of silence
                 samples = 0;
         }   }
 #endif
@@ -5458,7 +5453,12 @@ MODULE void set_volume(int guestvolume)
         } else
         {   upvol_8  =  volume_3to16[guestvolume].up8;
             dnvol_8  =  volume_3to16[guestvolume].dn8;
-    }   }
+        }
+#if defined(WIN32) && defined(SCALEVOLUME)
+        upvol_8      = ((upvol_8 - 128) * hostvolume / 8) + 128;
+        dnvol_8      = ((dnvol_8 - 128) * hostvolume / 8) + 128;
+#endif
+    }
 #ifdef WIN32
     else
     {   // assert(bitrate == 16);
@@ -5468,12 +5468,7 @@ MODULE void set_volume(int guestvolume)
         } else
         {   upvol_16 =  volume_3to16[guestvolume].up16;
             dnvol_16 = -volume_3to16[guestvolume].up16;
-    }   }
-#endif
-
-#ifdef WIN32
-    if (bitrate == 16)
-    {
+        }
 #ifdef SCALEVOLUME
         upvol_16 = upvol_16 * hostvolume / 8;
         dnvol_16 = dnvol_16 * hostvolume / 8;
@@ -5482,13 +5477,6 @@ MODULE void set_volume(int guestvolume)
         upvol_l =  upvol_16 & 0x00FF;
         dnvol_h = (dnvol_16 & 0xFF00) >> 8;
         dnvol_l =  dnvol_16 & 0x00FF;
-    } else
+    }
 #endif
-    {
-#ifdef SCALEVOLUME
-        if (bitrate == 8)
-        {   upvol_8  = ((upvol_8 - 128) * hostvolume / 8) + 128;
-            dnvol_8  = ((dnvol_8 - 128) * hostvolume / 8) + 128;
-        }
-#endif
-}   }
+}

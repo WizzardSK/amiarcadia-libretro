@@ -34,15 +34,11 @@ typedef unsigned char bool;
 
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
-#define DRAWPREVIEWPIXEL(x, y, z) canvasdisplay[CANVAS_PREVIEW][(  (y) * 2       * PREVIEWWIDTH) + ((x) * 2)    ] = \
-                                  canvasdisplay[CANVAS_PREVIEW][(  (y) * 2       * PREVIEWWIDTH) + ((x) * 2) + 1] = \
-                                  canvasdisplay[CANVAS_PREVIEW][((((y) * 2) + 1) * PREVIEWWIDTH) + ((x) * 2)    ] = \
-                                  canvasdisplay[CANVAS_PREVIEW][((((y) * 2) + 1) * PREVIEWWIDTH) + ((x) * 2) + 1] = pencolours[colourset][(z)]
-
 // EXPORTED VARIABLES-----------------------------------------------------
 
 EXPORT       FLAG                  repaintmemmap;
-EXPORT       int                   candy[CANDIES]       = { TRUE, TRUE, TRUE, TRUE },
+EXPORT       TEXT                  datatip[1024 + 1];
+EXPORT       int                   candy[CANDIES]       = { TRUE, TRUE, TRUE, FALSE, TRUE },
                                    sprviewcolour,
                                    textcolour           = TEXTPEN_DEFAULT;
 EXPORT       HBRUSH                hSpriteBrush[9];
@@ -162,11 +158,8 @@ IMPORT       int                       autopause,
                                        size,
                                        speedup,
                                        style,
-                                       subwinx[SUBWINDOWS],
-                                       subwiny[SUBWINDOWS],
                                        timeunit,
                                        titleheight,
-                                    // twin_baudrate,
                                        wheremusicmouse[2],
                                        whichcpu,
                                        whichgame,
@@ -174,9 +167,7 @@ IMPORT       int                       autopause,
                                        winheight,
                                        wsm,
                                        viewingsprite;
-IMPORT const int                       num_to_num[NUMKEYS],
-                                       speedupnum[SPEED_MAX - SPEED_MIN + 1],
-                                       SubWindowMenuItem[SUBWINDOWS];
+IMPORT const int                       speedupnum[SPEED_MAX - SPEED_MIN + 1];
 IMPORT       FLAG                      capslock,
                                        consoleopened,
                                        incli,
@@ -204,7 +195,6 @@ IMPORT const UBYTE                     arcadia_pdg[2][64][8],
                                        dg640_chars[128][DG640_CHARHEIGHT],
                                        phunsy_chars[128][8],
                                        phunsy_gfx[16][8];
-IMPORT       ULONG*                    canvasdisplay[CANVASES];
 IMPORT       UWORD                     mirror_r[32768],
                                        mirror_w[32768];
 IMPORT const UWORD                     pvi_spritedata[4];
@@ -227,13 +217,10 @@ IMPORT       ULONG                     analog,
                                        winleftx,
                                        wintopy;
 IMPORT const ULONG                     EmuBrush[EMUBRUSHES];
-IMPORT       ULONG*                    canvasdisplay[CANVASES];
 IMPORT       STRPTR                    colournames[GUESTCOLOURS + 1],
                                        timeunitstr1;
 IMPORT       HWND                      hToolbar,
-                                       MainWindowPtr,
-                                       SubWindowPtr[SUBWINDOWS],
-                                       TipsPtr[SUBWINDOWS];
+                                       MainWindowPtr;
 IMPORT       HBRUSH                    hBrush[EMUBRUSHES];
 IMPORT       HFONT                     hFont,
                                        hGreekFont,
@@ -253,13 +240,10 @@ IMPORT       struct NoteStruct         notes[NOTES + 1];
 IMPORT       struct KeyNameStruct      keyname[SCANCODES];
 IMPORT       struct MachineStruct      machines[MACHINES];
 IMPORT       struct MonitorStruct      monitor[MONITORGADS];
+IMPORT       struct SubWindowStruct    subwin[SUBWINDOWS];
 IMPORT const struct KnownStruct        known[KNOWNGAMES];
 IMPORT const struct KeyHelpStruct      keyhelp[40];
 IMPORT       ASCREEN                   screen[BOXWIDTH][BOXHEIGHT];
-IMPORT struct
-{   BITMAPINFOHEADER Header;
-    DWORD            Colours[3];
-} CanvasBitMapInfo[CANVASES];
 
 // MODULE VARIABLES-------------------------------------------------------
 
@@ -662,21 +646,30 @@ EXPORT void view_monitor(int kind)
         if (!hostmachines[machine].monitor_xvi)
         {   return;
         }
-        open_subwindow(SUBWINDOW_MONITOR_XVI,  MAKEINTRESOURCE(hostmachines[machine].monitor_xvi ), XVIMonitorDlgProc);
+        open_subwindow(SUBWINDOW_MONITOR_XVI, MAKEINTRESOURCE(hostmachines[machine].monitor_xvi), XVIMonitorDlgProc);
         switch (machine)
         {
         case ARCADIA:
-            make_tips(    SUBWINDOW_MONITOR_XVI, ARCADIA_LASTMONGAD  - ARCADIA_FIRSTMONGAD + 1, ARCADIA_FIRSTMONGAD);
-            update_xvimonitortips();
+            make_tips(    SUBWINDOW_MONITOR_XVI, ARCADIA_MONGADS , ARCADIA_FIRSTMONGAD ); //   0..112 (A_CONSOLE..A_SPRITE3Y)
         acase INTERTON:
-            make_tips(    SUBWINDOW_MONITOR_XVI, INTERTON_LASTMONGAD - I_FIRSTMONGAD       + 1, I_FIRSTMONGAD);
-            make_moretips(SUBWINDOW_MONITOR_XVI, PVI1ST_LASTMONGAD   - PVI1ST_FIRSTMONGAD  + 1, PVI1ST_FIRSTMONGAD, INTERTON_LASTMONGAD - I_FIRSTMONGAD + 1);
-            update_xvimonitortips();
+            make_tips(    SUBWINDOW_MONITOR_XVI, INTERTON_MONGADS, INTERTON_FIRSTMONGAD); // 143..187 ("$1F0F".."$1FAD")
+            make_moretips(SUBWINDOW_MONITOR_XVI, PVI1ST_MONGADS  , PVI1ST_FIRSTMONGAD, INTERTON_MONGADS);
         acase ELEKTOR:
-            make_tips(    SUBWINDOW_MONITOR_XVI, IE_LASTMONGAD       - E_FIRSTMONGAD       + 1, E_FIRSTMONGAD);
-            make_moretips(SUBWINDOW_MONITOR_XVI, PVI1ST_LASTMONGAD   - PVI1ST_FIRSTMONGAD  + 1, PVI1ST_FIRSTMONGAD, IE_LASTMONGAD       - E_FIRSTMONGAD + 1);
-            update_xvimonitortips();
-    }   }
+            make_tips(    SUBWINDOW_MONITOR_XVI, ELEKTOR_MONGADS , ELEKTOR_FIRSTMONGAD ); // 141..150 (E_CASIN..IE_NOISE)
+            make_moretips(SUBWINDOW_MONITOR_XVI, PVI1ST_MONGADS  , PVI1ST_FIRSTMONGAD, ELEKTOR_MONGADS);
+        acase MALZAK:
+            make_tips(    SUBWINDOW_MONITOR_XVI, PVI1ST_MONGADS  , PVI1ST_FIRSTMONGAD  );
+            make_moretips(SUBWINDOW_MONITOR_XVI, PVI2ND_MONGADS  , PVI2ND_FIRSTMONGAD, PVI1ST_MONGADS);
+        acase ZACCARIA:
+            make_tips(    SUBWINDOW_MONITOR_XVI, PVI1ST_MONGADS  , PVI1ST_FIRSTMONGAD  );
+            if (memmap != MEMMAP_ASTROWARS)
+            {   make_moretips(SUBWINDOW_MONITOR_XVI, PVI2ND_MONGADS + PVI3RD_MONGADS, PVI2ND_FIRSTMONGAD, PVI1ST_MONGADS);
+            }
+        adefault: // should never happen
+            return;
+        }
+        update_xvimonitortips();
+    }
 
     update_monitor(TRUE);
 }
@@ -684,19 +677,19 @@ EXPORT void view_monitor(int kind)
 EXPORT void close_subwindow(int which)
 {   RECT localrect;
 
-    if (!SubWindowPtr[which])
+    if (!subwin[which].hwnd)
     {   return;
     }
 
-    GetWindowRect(SubWindowPtr[which], &localrect); // window relative to screen
-    subwinx[which] = localrect.left;
-    subwiny[which] = localrect.top;
+    GetWindowRect(subwin[which].hwnd, &localrect); // window relative to screen
+    subwin[which].x = localrect.left;
+    subwin[which].y = localrect.top;
 
-    DestroyWindow(SubWindowPtr[which]);
-    SubWindowPtr[which] = NULL;
-    updatemenu(SubWindowMenuItem[which]);
+    DestroyWindow(subwin[which].hwnd);
+    subwin[which].hwnd = NULL;
+    updatemenu(subwin[which].menuitem);
 
-    TipsPtr[which] = NULL;
+    subwin[which].tips = NULL;
 }
 
 EXPORT void setmonitorstring(int kind, HWND gadgetptr, STRPTR contents)
@@ -709,7 +702,7 @@ EXPORT void setmemory(int whichgad, STRPTR contents)
 {   DISCARD SetWindowText(memorygad[whichgad], contents);
 }
 EXPORT void setsprview(int x, int y, int passedcolour)
-{   SetDlgItemText(SubWindowPtr[SUBWINDOW_SPRITES], IDC_SPR_11 + (y * 8) + x, "");
+{   SetDlgItemText(subwin[SUBWINDOW_SPRITES].hwnd, IDC_SPR_11 + (y * 8) + x, "");
 }
 
 EXPORT void make_tips(int kind, int elements, int firstgad)
@@ -718,9 +711,9 @@ EXPORT void make_tips(int kind, int elements, int firstgad)
     FAST      RECT     therect1,
                        therect2;
 
-    // assert(SubWindowPtr[kind]);
+    // assert(subwin[kind].hwnd);
 
-    if (!(TipsPtr[kind] = CreateWindowEx
+    if (!(subwin[kind].tips = CreateWindowEx
     (   0,
         TOOLTIPS_CLASS,
         (LPSTR) NULL,
@@ -729,7 +722,7 @@ EXPORT void make_tips(int kind, int elements, int firstgad)
         CW_USEDEFAULT,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        SubWindowPtr[kind],
+        subwin[kind].hwnd,
         (HMENU) NULL,
         InstancePtr,
         NULL
@@ -739,10 +732,10 @@ EXPORT void make_tips(int kind, int elements, int firstgad)
 
     // SetWindowPos(TipsPtr[kind], HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE); // apparently not needed
 
-    SendMessage(TipsPtr[kind], TTM_SETMAXTIPWIDTH, 0,            32767); // to enable multi-line support
-    SendMessage(TipsPtr[kind], TTM_SETDELAYTIME,   TTDT_AUTOPOP, 32767); // tooltip duration
-    SendMessage(TipsPtr[kind], TTM_SETDELAYTIME,   TTDT_INITIAL,     0); // tooltip delay
-    SendMessage(TipsPtr[kind], TTM_SETDELAYTIME,   TTDT_RESHOW,      0); // tooltip delay
+    SendMessage(subwin[kind].tips, TTM_SETMAXTIPWIDTH, 0,            32767); // to enable multi-line support
+    SendMessage(subwin[kind].tips, TTM_SETDELAYTIME,   TTDT_AUTOPOP, 32767); // tooltip duration
+    SendMessage(subwin[kind].tips, TTM_SETDELAYTIME,   TTDT_INITIAL,     0); // tooltip delay
+    SendMessage(subwin[kind].tips, TTM_SETDELAYTIME,   TTDT_RESHOW,      0); // tooltip delay
 
     for (i = 0; i < elements; i++)
     {   if
@@ -764,7 +757,7 @@ EXPORT void make_tips(int kind, int elements, int firstgad)
 
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[kind];
+        ti.hwnd     = subwin[kind].hwnd;
         ti.uId      = i;
         ti.hinst    = InstancePtr;
         ti.lpszText = ""; // this is done later
@@ -776,24 +769,24 @@ EXPORT void make_tips(int kind, int elements, int firstgad)
         switch (kind)
         {
         case SUBWINDOW_GAMEINFO:
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], keyhelp[i].gid              ), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, keyhelp[i].gid              ), &therect1); // gadgets relative to screen
         acase SUBWINDOW_HOSTKYBD:
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], keyname[i].gadget           ), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, keyname[i].gadget           ), &therect1); // gadgets relative to screen
         acase SUBWINDOW_MONITOR_CPU:
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], ibmgad[CPU_FIRSTMONGAD  + i]), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, ibmgad[CPU_FIRSTMONGAD  + i]), &therect1); // gadgets relative to screen
         acase SUBWINDOW_MONITOR_XVI:
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], ibmgad[firstgad + i]        ), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, ibmgad[firstgad + i]        ), &therect1); // gadgets relative to screen
         acase SUBWINDOW_MONITOR_PSGS:
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], ibmgad[PSGS_FIRSTMONGAD + i]), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, ibmgad[PSGS_FIRSTMONGAD + i]), &therect1); // gadgets relative to screen
         adefault: // eg. SUBWINDOW_HOSTPADS, SUBWINDOW_MEMORY, SUBWINDOW_OPCODES, SUBWINDOW_FLOPPYDRIVE
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], firstgad + i                ), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, firstgad + i                ), &therect1); // gadgets relative to screen
         }
-        GetWindowRect(SubWindowPtr[kind], &therect2); // window relative to screen
+        GetWindowRect(subwin[kind].hwnd, &therect2); // window relative to screen
         ti.rect.top    = therect1.top    - therect2.top  - titleheight - 2;
         ti.rect.bottom = therect1.bottom - therect2.top  - titleheight - 2;
         ti.rect.left   = therect1.left   - therect2.left - 3; // was -leftwidth rather than -3
         ti.rect.right  = therect1.right  - therect2.left - 3; // was -leftwidth rather than -3
-        SendMessage(TipsPtr[kind], TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[kind].tips, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
     }
 
     // SendMessage(TipsPtr[kind], TTM_ACTIVATE, (WPARAM) TRUE, 0); // it's active anyway by default
@@ -805,12 +798,12 @@ MODULE void make_moretips(int kind, int elements, int firstgad, int howmany)
     FAST      RECT     therect1,
                        therect2;
 
-    // assert(SubWindowPtr[kind]);
+    // assert(subwin[kind].hwnd);
 
     for (i = 0; i < elements; i++)
     {   ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[kind];
+        ti.hwnd     = subwin[kind].hwnd;
         ti.uId      = i + howmany;
         ti.hinst    = InstancePtr;
         ti.lpszText = ""; // this is done later
@@ -822,18 +815,18 @@ MODULE void make_moretips(int kind, int elements, int firstgad, int howmany)
         switch (kind)
         {
         case SUBWINDOW_MONITOR_XVI:
-            GetWindowRect(GetDlgItem(SubWindowPtr[kind], ibmgad[firstgad + i]), &therect1); // gadgets relative to screen
+            GetWindowRect(GetDlgItem(subwin[kind].hwnd, ibmgad[firstgad + i]), &therect1); // gadgets relative to screen
         }
-        GetWindowRect(SubWindowPtr[kind], &therect2); // window relative to screen
+        GetWindowRect(subwin[kind].hwnd, &therect2); // window relative to screen
         ti.rect.top    = therect1.top    - therect2.top  - titleheight - 2;
         ti.rect.bottom = therect1.bottom - therect2.top  - titleheight - 2;
         ti.rect.left   = therect1.left   - therect2.left - leftwidth;
         ti.rect.right  = therect1.right  - therect2.left - leftwidth;
 
-        SendMessage(TipsPtr[kind], TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[kind].tips, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
     }
 
-    // SendMessage(TipsPtr[kind], TTM_ACTIVATE, (WPARAM) TRUE, 0); // it's active anyway by default
+    // SendMessage(subwin[kind].tips, TTM_ACTIVATE, (WPARAM) TRUE, 0); // it's active anyway by default
 }
 
 EXPORT void edit_palette(void)
@@ -848,7 +841,7 @@ EXPORT void tools_music(void)
          && machine                != PONG
          && machine                != TYPERIGHT
         )
-     || SubWindowPtr[SUBWINDOW_MUSIC]
+     || subwin[SUBWINDOW_MUSIC].hwnd
     )
     {   return; // important!
     }
@@ -859,7 +852,7 @@ EXPORT void tools_music(void)
 
 EXPORT void open_spriteeditor(void)
 {   if
-    (   SubWindowPtr[SUBWINDOW_SPRITES]
+    (   subwin[SUBWINDOW_SPRITES].hwnd
      || (machine != ARCADIA && machines[machine].pvis == 0 && machine != BINBUG && machine != CD2650 && machine != PHUNSY) // eg. PIPBUG, INSTRUCTOR
      || (cheevos && RA_HardcoreModeIsActive())
     )
@@ -903,11 +896,11 @@ EXPORT void open_spriteeditor(void)
         open_subwindow(SUBWINDOW_SPRITES, MAKEINTRESOURCE(IDD_PDGVIEWER_PHUNSY), SpriteDlgProc);
     }
 
-    // assert(SubWindowPtr[SUBWINDOW_SPRITES]);
-    DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_WHICHSPRITE), WM_SETREDRAW,            FALSE,         0);
-    DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_WHICHSPRITE), LB_SETTOPINDEX, (WPARAM) viewingsprite, 0);
-    DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_WHICHSPRITE), LB_SETCURSEL,   (WPARAM) viewingsprite, 0);
-    DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_WHICHSPRITE), WM_SETREDRAW,            TRUE,          0);
+    // assert(subwin[SUBWINDOW_SPRITES].hwnd);
+    DISCARD SendMessage(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_WHICHSPRITE), WM_SETREDRAW,            FALSE,         0);
+    DISCARD SendMessage(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_WHICHSPRITE), LB_SETTOPINDEX, (WPARAM) viewingsprite, 0);
+    DISCARD SendMessage(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_WHICHSPRITE), LB_SETCURSEL,   (WPARAM) viewingsprite, 0);
+    DISCARD SendMessage(GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_WHICHSPRITE), WM_SETREDRAW,            TRUE,          0);
 
     updatemenu(MENUITEM_SPRITEVIEWER);
     update_spriteeditor(TRUE);
@@ -954,8 +947,8 @@ EXPORT void do_preview(FLAG force)
     FAST int   x, y;
 
     if
-    (   !SubWindowPtr[SUBWINDOW_SPRITES]
-     || !GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_PREVIEW)
+    (   !subwin[SUBWINDOW_SPRITES].hwnd
+     || !GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_PREVIEW)
     )
     {   return; // important!
     }
@@ -973,7 +966,7 @@ EXPORT void do_preview(FLAG force)
                 {   // assert(viewingsprite >= 56 && viewingsprite <= 63);
                     t = (memory[0x1980 + ((viewingsprite - 56) * 8) + y] & (128 >> x));
                 }
-                DRAWPREVIEWPIXEL(x + 2, y + 6, t ? sprviewcolour : GREY1);
+                DRAWPREVIEW(x + 2, y + 6, t ? sprviewcolour : GREY1);
         }   }
     acase INTERTON:
     case ELEKTOR:
@@ -982,7 +975,7 @@ EXPORT void do_preview(FLAG force)
         for (y = 0; y < 10; y++)
         {   for (x = 0; x < 8; x++)
             {   t = (memory[pvibase + (0x100 * (viewingsprite / 4)) + pvi_spritedata[viewingsprite % 4] + y] & (128 >> x));
-                DRAWPREVIEWPIXEL(x + 2, y + 5, t ? sprviewcolour : GREY1);
+                DRAWPREVIEW(x + 2, y + 5, t ? sprviewcolour : GREY1);
         }   }
     acase BINBUG:
         for (y = 0; y < 16; y++)
@@ -992,13 +985,13 @@ EXPORT void do_preview(FLAG force)
                 } else
                 {   t = memory[0x7000 + ((viewingsprite - 128) * 16) + y] & (128 >> x);
                 }
-                DRAWPREVIEWPIXEL(x + 2, y + 2, t ? sprviewcolour : GREY1);
+                DRAWPREVIEW(x + 2, y + 2, t ? sprviewcolour : GREY1);
         }   }
     acase CD2650:
         for (y = 0; y < 8; y++)
         {   for (x = 0; x < 8; x++)
             {   t = cd2650_chars_bmp[viewingsprite][y] & (128 >> x);
-                DRAWPREVIEWPIXEL(x + 2, y + 6, t ? sprviewcolour : GREY1);
+                DRAWPREVIEW(x + 2, y + 6, t ? sprviewcolour : GREY1);
         }   }
     acase PHUNSY:
         for (y = 0; y < 8; y++)
@@ -1008,26 +1001,10 @@ EXPORT void do_preview(FLAG force)
                 } else
                 {   t = phunsy_gfx[( viewingsprite - 128) % 16][y] & (32 >> x);
                 }
-                DRAWPREVIEWPIXEL(x + 3, y + 6, t ? sprviewcolour : BLUE);
+                DRAWPREVIEW(x + 3, y + 6, t ? sprviewcolour : BLUE);
     }   }   }
 
-    PreviewRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_PREVIEW));
-    DISCARD StretchDIBits
-    (   PreviewRastPtr,
-          0,            // dest leftx
-          0,            // dest topy
-        PREVIEWWIDTH,   // dest width
-        PREVIEWHEIGHT,  // dest height
-          0,            // source leftx
-          0,            // source topy
-        PREVIEWWIDTH,   // source width
-        PREVIEWHEIGHT,  // source height
-        canvasdisplay[CANVAS_PREVIEW], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_PREVIEW], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS, // format of data
-        SRCCOPY         // blit mode
-    );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_PREVIEW), PreviewRastPtr);
+    wpa8(CANVAS_PREVIEW, 0, 0);
 }
 
 EXPORT void ghostmonitorbutton(int kind, HWND which, int state)
@@ -1040,12 +1017,12 @@ EXPORT void ghostmonitorbutton(int kind, HWND which, int state)
 }   }
 
 EXPORT void open_subwindow(int which, LPCTSTR dialog, DLGPROC function)
-{   if (SubWindowPtr[which])
+{   if (subwin[which].hwnd)
     {   return; // important!
     }
 
     opening = TRUE;
-    SubWindowPtr[which] = CreateDialog
+    subwin[which].hwnd = CreateDialog
     (   InstancePtr,
         dialog,
         MainWindowPtr,
@@ -1053,7 +1030,7 @@ EXPORT void open_subwindow(int which, LPCTSTR dialog, DLGPROC function)
     );
     opening = FALSE;
 
-    updatemenu(SubWindowMenuItem[which]);
+    updatemenu(subwin[which].menuitem);
     if (which != SUBWINDOW_MEMORY)
     {   DISCARD SetActiveWindow(MainWindowPtr);
     }
@@ -1067,9 +1044,8 @@ EXPORT void open_subwindow(int which, LPCTSTR dialog, DLGPROC function)
 EXPORT void update_memorytips(void)
 {   int      i;
     TOOLINFO ti;
-    TEXT     datatip[512 + 1];
 
-    if (!SubWindowPtr[SUBWINDOW_MEMORY])
+    if (!subwin[SUBWINDOW_MEMORY].hwnd)
     {   return; // important!
     }
 
@@ -1077,19 +1053,18 @@ EXPORT void update_memorytips(void)
     {   make_memorytip(regionstart + i, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_MEMORY];
+        ti.hwnd     = subwin[SUBWINDOW_MEMORY].hwnd;
         ti.uId      = i;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_MEMORY], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_MEMORY].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }   }
 
 EXPORT void update_cpumonitortips(void)
 {   int      i;
     TOOLINFO ti;
-    TEXT     datatip[512 + 1];
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_CPU])
+    if (!subwin[SUBWINDOW_MONITOR_CPU].hwnd)
     {   return;
     }
 
@@ -1099,10 +1074,10 @@ EXPORT void update_cpumonitortips(void)
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP | TTF_IDISHWND;
         ti.uId      = i;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_CPU];
+        ti.hwnd     = subwin[SUBWINDOW_MONITOR_CPU].hwnd;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_MONITOR_CPU], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_MONITOR_CPU].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
     }
 
     if (machine == TWIN)
@@ -1112,18 +1087,17 @@ EXPORT void update_cpumonitortips(void)
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP | TTF_IDISHWND;
             ti.uId      = CPUTIPS + i;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_CPU];
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_CPU].hwnd;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_MONITOR_CPU], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+            SendMessage(subwin[SUBWINDOW_MONITOR_CPU].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }   }   }
 
 EXPORT void update_psgmonitortips(void)
 {   int      i;
     TOOLINFO ti;
-    TEXT     datatip[512 + 1];
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_PSGS])
+    if (!subwin[SUBWINDOW_MONITOR_PSGS].hwnd)
     {   return;
     }
 
@@ -1133,19 +1107,18 @@ EXPORT void update_psgmonitortips(void)
     {   make_monitortip(monitor[i].addr, datatip);
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_PSGS];
+        ti.hwnd     = subwin[SUBWINDOW_MONITOR_PSGS].hwnd;
         ti.uId      = i - PSGS_FIRSTMONGAD;
         ti.hinst    = InstancePtr;
         ti.lpszText = datatip; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_MONITOR_PSGS], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_MONITOR_PSGS].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }   }
 
 EXPORT void update_xvimonitortips(void)
 {   int      i;
     TOOLINFO ti;
-    TEXT     datatip[512 + 1];
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_XVI])
+    if (!subwin[SUBWINDOW_MONITOR_XVI].hwnd)
     {   return;
     }
 
@@ -1156,73 +1129,113 @@ EXPORT void update_xvimonitortips(void)
         {   make_monitortip(monitor[i].addr, datatip);
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_XVI];
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
             ti.uId      = i - ARCADIA_FIRSTMONGAD;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_MONITOR_XVI], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
         }
     acase INTERTON:
-        for (i = I_FIRSTMONGAD; i <= INTERTON_LASTMONGAD; i++)
+        for (i = INTERTON_FIRSTMONGAD; i <= INTERTON_LASTMONGAD; i++)
         {   make_monitortip(monitor[i].addr, datatip);
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_XVI];
-            ti.uId      = i - I_FIRSTMONGAD;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - INTERTON_FIRSTMONGAD;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_MONITOR_XVI], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
         }
         for (i = PVI1ST_FIRSTMONGAD; i <= PVI1ST_LASTMONGAD; i++)
         {   make_monitortip(pvibase + monitor[i].addr, datatip);
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_XVI];
-            ti.uId      = i - PVI1ST_FIRSTMONGAD + INTERTON_LASTMONGAD - I_FIRSTMONGAD + 1;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - PVI1ST_FIRSTMONGAD + INTERTON_MONGADS;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_MONITOR_XVI], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
         }
     acase ELEKTOR:
-        for (i = E_FIRSTMONGAD; i <= IE_LASTMONGAD; i++)
+        for (i = ELEKTOR_FIRSTMONGAD; i <= ELEKTOR_LASTMONGAD; i++)
         {   make_monitortip(monitor[i].addr, datatip);
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_XVI];
-            ti.uId      = i - E_FIRSTMONGAD;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - ELEKTOR_FIRSTMONGAD;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_MONITOR_XVI], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
         }
         for (i = PVI1ST_FIRSTMONGAD; i <= PVI1ST_LASTMONGAD; i++)
         {   make_monitortip(pvibase + monitor[i].addr, datatip);
             ti.cbSize   = sizeof(TOOLINFO);
             ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-            ti.hwnd     = SubWindowPtr[SUBWINDOW_MONITOR_XVI];
-            ti.uId      = i - PVI1ST_FIRSTMONGAD + IE_LASTMONGAD - E_FIRSTMONGAD + 1;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - PVI1ST_FIRSTMONGAD + ELEKTOR_MONGADS;
             ti.hinst    = InstancePtr;
             ti.lpszText = datatip; // this gets copied
-            SendMessage(TipsPtr[SUBWINDOW_MONITOR_XVI], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
-}   }   }
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        }
+    acase MALZAK:
+        for (i = PVI1ST_FIRSTMONGAD; i <= PVI1ST_LASTMONGAD; i++)
+        {   make_monitortip(pvibase + monitor[i].addr, datatip);
+            ti.cbSize   = sizeof(TOOLINFO);
+            ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - PVI1ST_FIRSTMONGAD;
+            ti.hinst    = InstancePtr;
+            ti.lpszText = datatip; // this gets copied
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        }
+        for (i = PVI2ND_FIRSTMONGAD; i <= PVI2ND_LASTMONGAD; i++)
+        {   make_monitortip(pvibase + monitor[i].addr, datatip);
+            ti.cbSize   = sizeof(TOOLINFO);
+            ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - PVI2ND_FIRSTMONGAD + PVI1ST_MONGADS;
+            ti.hinst    = InstancePtr;
+            ti.lpszText = datatip; // this gets copied
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        }
+    acase ZACCARIA:
+        for (i = PVI1ST_FIRSTMONGAD; i <= PVI1ST_LASTMONGAD; i++)
+        {   make_monitortip(pvibase + monitor[i].addr, datatip);
+            ti.cbSize   = sizeof(TOOLINFO);
+            ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+            ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+            ti.uId      = i - PVI1ST_FIRSTMONGAD;
+            ti.hinst    = InstancePtr;
+            ti.lpszText = datatip; // this gets copied
+            SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        }
+        if (memmap != MEMMAP_ASTROWARS)
+        {   for (i = PVI2ND_FIRSTMONGAD; i <= PVI3RD_LASTMONGAD; i++)
+            {   make_monitortip(pvibase + monitor[i].addr, datatip);
+                ti.cbSize   = sizeof(TOOLINFO);
+                ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
+                ti.hwnd     = subwin[SUBWINDOW_MONITOR_XVI].hwnd;
+                ti.uId      = i - PVI2ND_FIRSTMONGAD + PVI1ST_MONGADS;
+                ti.hinst    = InstancePtr;
+                ti.lpszText = datatip; // this gets copied
+                SendMessage(subwin[SUBWINDOW_MONITOR_XVI].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+}   }   }   }
 
 EXPORT void setdlgtext(HWND hwnd, int gid, int msg, STRPTR defaultmsg)
 {   setfont(hwnd, gid);
     SetDlgItemText(hwnd, gid, LLL(msg, defaultmsg));
 }
 
-EXPORT void move_subwindow(int which, HWND hwnd)
-{   // SubWindowPtr[which] isn't set up yet, so we require
-    // the window handle to be passed to us as an argument.
+EXPORT void move_subwindow(int whichsubwin)
+{   // assert(subwin[whichsubwin].hwnd);
 
-    // assert(hwnd);
-
-    if (subwinx[which] != -1)
-    {   // assert(subwiny[which] != -1);
+    if (subwin[whichsubwin].x != -1)
+    {   // assert(subwin[whichsubwin].y != -1);
         DISCARD SetWindowPos
-        (   hwnd,
+        (   subwin[whichsubwin].hwnd,
             HWND_TOP,
-            subwinx[which],
-            subwiny[which],
+            subwin[whichsubwin].x,
+            subwin[whichsubwin].y,
             0,
             0,
             SWP_NOCOPYBITS | SWP_NOSIZE
@@ -1232,7 +1245,7 @@ EXPORT void move_subwindow(int which, HWND hwnd)
 EXPORT void update_notation(void)
 {   update_opcodes();
 
-    if (!SubWindowPtr[SUBWINDOW_MONITOR_CPU])
+    if (!subwin[SUBWINDOW_MONITOR_CPU].hwnd)
     {   return;
     }
 
@@ -1240,49 +1253,49 @@ EXPORT void update_notation(void)
     {
     case STYLE_SIGNETICS1:
     case STYLE_SIGNETICS2:
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R0 , "R0:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R1 , "R1:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R2 , "R2:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R3 , "R3:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R4 , "R4:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R5 , "R5:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R6 , "R6:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSU, "PSU:");
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSL, "PSL:");
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_IAR, "IAR:");
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R0 , "R0:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R1 , "R1:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R2 , "R2:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R3 , "R3:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R4 , "R4:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R5 , "R5:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R6 , "R6:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSU, "PSU:");
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSL, "PSL:");
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_IAR, "IAR:");
     acase STYLE_OLDCALM:
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R0 , "A:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R1 , "B:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R2 , "C:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R3 , "D:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R4 , "B':" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R5 , "C':" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R6 , "D':" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSU, "U:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSL, "L:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_IAR, "PC:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R0 , "A:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R1 , "B:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R2 , "C:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R3 , "D:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R4 , "B':" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R5 , "C':" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R6 , "D':" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSU, "U:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSL, "L:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_IAR, "PC:" );
     acase STYLE_NEWCALM:
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R0 , "R0:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R1 , "R1:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R2 , "R2:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R3 , "R3:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R4 , "R4:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R5 , "R5:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R6 , "R6:" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSU, "PSU:");
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSL, "PSL:");
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_IAR, "PC:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R0 , "R0:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R1 , "R1:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R2 , "R2:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R3 , "R3:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R4 , "R4:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R5 , "R5:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R6 , "R6:" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSU, "PSU:");
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSL, "PSL:");
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_IAR, "PC:" );
     acase STYLE_IEEE:
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R0 , ".0:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R1 , ".1:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R2 , ".2:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R3 , ".3:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R4 , ".4':" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R5 , ".5':" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_R6 , ".6':" );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSU, ".U:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_PSL, ".L:"  );
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_MONITOR_CPU], IDL_IAR, ".PC:" ); // not explicitly specified in IEEE-694 standard
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R0 , ".0:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R1 , ".1:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R2 , ".2:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R3 , ".3:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R4 , ".4':" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R5 , ".5':" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_R6 , ".6':" );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSU, ".U:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_PSL, ".L:"  );
+        SetDlgItemText(subwin[SUBWINDOW_MONITOR_CPU].hwnd, IDL_IAR, ".PC:" ); // not explicitly specified in IEEE-694 standard
     }
 
     update_cpumonitortips();
@@ -1305,6 +1318,8 @@ MODULE BOOL CALLBACK MemoryDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_MEMORY].hwnd = hwnd;
+
         setdlgtext(hwnd, IDL_HOVER2,             MSG_HOVER,        "Hover over a button for more information.");
         SetWindowText(hwnd, LLL(                 MSG_HAIL_MEMORY,  "Memory Editor"));
 
@@ -1378,22 +1393,20 @@ MODULE BOOL CALLBACK MemoryDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         SendMessage(GetDlgItem(hwnd, IDC_MEMREGION), TBM_SETPOS     ,  TRUE,                           regionlevel);
         DISCARD SetFocus(GetDlgItem(hwnd, IDC_MEMREGION));
 
-        move_subwindow(SUBWINDOW_MEMORY, hwnd);
-
-        return FALSE;
-    case WM_PAINT: // no need for acase
-        // note that SubWindowPtr[SUBWINDOW_MEMORY] is not necessarily yet set up correctly at this point
+        move_subwindow(SUBWINDOW_MEMORY);
+    return FALSE;
+    case WM_PAINT:
         BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
         repaintmemmap = TRUE;
-        return FALSE;
+    return FALSE;
     case WM_HSCROLL:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         if (gid == IDC_MEMREGION)
         {   update_memory(TRUE);
         }
-        return FALSE;
-    case WM_CTLCOLORSTATIC: // no need for acase
+    return FALSE;
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         switch (gid)
         {
@@ -1476,11 +1489,11 @@ MODULE BOOL CALLBACK MemoryDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         }
     acase WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_MEMORY] = NULL;
+        subwin[SUBWINDOW_MEMORY].hwnd = NULL;
         updatemenu(MENUITEM_EDITMEMORY);
     acase WM_DESTROY:
-        return FALSE;
-    case WM_LBUTTONDOWN: // no need for acase
+    return FALSE;
+    case WM_LBUTTONDOWN:
     // not WM_LBUTTONDBLCLK!
         mousex = (int) LOWORD(lParam);
         mousey = (int) HIWORD(lParam);
@@ -1512,13 +1525,12 @@ MODULE BOOL CALLBACK MemoryDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
                     debug_edit(tempstring, TRUE, FALSE);
                     break; // for speed
         }   }   }
-
-        return FALSE;
-    case WM_MOVE: // no need for acase
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    adefault: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
     }
     return TRUE;
 }
@@ -1539,7 +1551,7 @@ MODULE BOOL CALLBACK CPUMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
     switch (Message)
     {
     case WM_INITDIALOG:
-        // note that SubWindowPtr[SUBWINDOW_MONITOR_CPU] is not yet set up correctly at this point
+        subwin[SUBWINDOW_MONITOR_CPU].hwnd = hwnd;
 
         if (machine == TYPERIGHT)
         {   SetWindowText(    hwnd, LLL(                 MSG_HAIL_TR_MONITOR  , "Type-right Monitor"));
@@ -1591,35 +1603,33 @@ MODULE BOOL CALLBACK CPUMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
             cpuicon[1] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_TWIN_GLOW), IMAGE_ICON, 48, 48, 0);
         }
 
-        move_subwindow(SUBWINDOW_MONITOR_CPU, hwnd);
-
-        return FALSE;
-    acase WM_NOTIFY:
+        move_subwindow(SUBWINDOW_MONITOR_CPU);
+    return FALSE;
+    case WM_NOTIFY:
         switch (((LPNMHDR) lParam)->code)
         {
         case TTN_SHOW:
-            return FALSE;
-        default: // no need for acase
-            return FALSE;
+        return FALSE;
+        default:
+        return FALSE;
         }
     acase WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_MONITOR_CPU] = NULL;
+        subwin[SUBWINDOW_MONITOR_CPU].hwnd = NULL;
         updatemenu(MENUITEM_VIEWMONITOR_CPU);
         if (machine == TWIN)
         {   DeleteObject(cpuicon[0]);
             DeleteObject(cpuicon[1]);
         }
     acase WM_DESTROY:
-        return FALSE;
-    case WM_PAINT: // no need for acase
-        // note that SubWindowPtr[SUBWINDOW_MONITOR_CPU] is not necessarily yet set up correctly at this point
+    return FALSE;
+    case WM_PAINT:
         BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
-        return FALSE; // important!
-    acase WM_CTLCOLORSTATIC:
+    return FALSE; // important!
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         for (i = CPU_FIRSTMONGAD; i <= CPU_LASTMONGAD; i++)
         {   if (ibmgad[i] == gid)
@@ -1629,8 +1639,8 @@ MODULE BOOL CALLBACK CPUMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
                 } // implied else
                 return TRUE;
         }   }
-        return TRUE;
-    acase WM_LBUTTONDBLCLK:
+    return TRUE;
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         mousex = (int) LOWORD(lParam);
         mousey = (int) HIWORD(lParam);
@@ -1710,12 +1720,12 @@ MODULE BOOL CALLBACK CPUMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
                 }   }
                 return FALSE; // for speed
         }   }
-        return FALSE;
-    case WM_MOVE: // no need for acase
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    adefault: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
     }
 
     return TRUE;
@@ -1735,7 +1745,7 @@ MODULE BOOL CALLBACK PSGsMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
     switch (Message)
     {
     case WM_INITDIALOG:
-        // note that SubWindowPtr[SUBWINDOW_MONITOR_PSGS] is not yet set up correctly at this point
+        subwin[SUBWINDOW_MONITOR_PSGS].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL( MSG_HAIL_MONITOR_PSGS, "Real-Time PSGs Monitor"));
         if (memmap == MEMMAP_F)
@@ -1762,10 +1772,9 @@ MODULE BOOL CALLBACK PSGsMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
         }
         // If they move the subwindow later, it doesn't matter.
 
-        move_subwindow(SUBWINDOW_MONITOR_PSGS, hwnd);
-
-        return FALSE;
-    acase WM_ACTIVATE:
+        move_subwindow(SUBWINDOW_MONITOR_PSGS);
+    return FALSE;
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_CLOSE:
         for (i = PSGS_FIRSTMONGAD; i <= PSGS_LASTMONGAD; i++)
@@ -1776,16 +1785,15 @@ MODULE BOOL CALLBACK PSGsMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             monitor[i].rect.bottom = 0;
         }
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_MONITOR_PSGS] = NULL;
+        subwin[SUBWINDOW_MONITOR_PSGS].hwnd = NULL;
         updatemenu(MENUITEM_VIEWMONITOR_PSGS);
     acase WM_DESTROY:
-        return FALSE;
-    case WM_PAINT: // no need for acase
-        // note that SubWindowPtr[SUBWINDOW_MONITOR_PSGS] is not necessarily yet set up correctly at this point
+    return FALSE;
+    case WM_PAINT:
         BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
-        return FALSE; // important!
-    case WM_MBUTTONDBLCLK: // no need for acase
+    return FALSE; // important!
+    case WM_MBUTTONDBLCLK:
     case WM_MBUTTONDOWN:
         mousex = (int) LOWORD(lParam);
         mousey = (int) HIWORD(lParam);
@@ -1873,12 +1881,11 @@ MODULE BOOL CALLBACK PSGsMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
                 }
                 break; // for speed
         }   }
-
-        return FALSE;
-    case WM_MOVE: // no need for acase
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    adefault: // no need for adefault
+    return FALSE;
+    default:
         return FALSE;
     }
 
@@ -1899,43 +1906,45 @@ MODULE BOOL CALLBACK XVIMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
     switch (Message)
     {
     case WM_INITDIALOG:
-        // note that SubWindowPtr[SUBWINDOW_MONITOR_XVI] is not yet set up correctly at this point
+        subwin[SUBWINDOW_MONITOR_XVI].hwnd = hwnd;
 
-        DISCARD SetWindowText(hwnd, LLL( MSG_HAIL_MONITOR_XVI, "Real-Time UVI/PVI(s) Monitor"));
+        DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_MONITOR_XVI, "Real-Time UVI/PVI(s) Monitor"));
         switch (machine)
         {
         case ARCADIA:
-            setdlgtext(hwnd, IDC_RAM_GROUP,  MSG_UVIRAM_GAD,  "UVI RAM Contents");
-            setdlgtext(hwnd, IDC_UVI_GROUP,  MSG_UVI_GAD,     "2637 UVI Status");
-            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,     "Paddles");
-            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,       "Hover over a button for more information.");
+            setdlgtext(hwnd, IDC_RAM_GROUP,  MSG_UVIRAM_GAD,   "UVI RAM Contents");
+            setdlgtext(hwnd, IDC_UVI_GROUP,  MSG_UVI_GAD,      "2637 UVI Status");
+            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,      "Paddles");
+            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,        "Hover over a button for more information.");
         acase INTERTON:
-            setdlgtext(hwnd, IDC_RAM_GROUP,  MSG_PVIRAM_GAD,  "PVI RAM Contents");
-            setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI_GAD,     "2636 PVI Status");
-            setdlgtext(hwnd, IDL_OTHER_GROUP,MSG_OTHERS,      "Other Registers");
-            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,     "Paddles");
-            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,       "Hover over a button for more information.");
+            setdlgtext(hwnd, IDC_RAM_GROUP,  MSG_PVIRAM_GAD,   "PVI RAM Contents");
+            setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI_GAD,      "2636 PVI Status");
+            setdlgtext(hwnd, IDL_OTHER_GROUP,MSG_OTHERS,       "Other Registers");
+            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,      "Paddles");
+            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,        "Hover over a button for more information.");
         acase ELEKTOR:
-            setdlgtext(hwnd, IDC_PSG1_GROUP, MSG_PSG1_GAD,    "AY-3-8910 PSG #1 Status");
-            setdlgtext(hwnd, IDC_PSG2_GROUP, MSG_PSG2_GAD,    "AY-3-8910 PSG #2 Status");
-            setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI_GAD,     "2636 PVI Status");
-            setdlgtext(hwnd, IDL_OTHER_GROUP,MSG_OTHERS,      "Other Registers");
-            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,     "Paddles");
-            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,       "Hover over a button for more information.");
+            setdlgtext(hwnd, IDC_PSG1_GROUP, MSG_PSG1_GAD,     "AY-3-8910 PSG #1 Status");
+            setdlgtext(hwnd, IDC_PSG2_GROUP, MSG_PSG2_GAD,     "AY-3-8910 PSG #2 Status");
+            setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI_GAD,      "2636 PVI Status");
+            setdlgtext(hwnd, IDL_OTHER_GROUP,MSG_OTHERS,       "Other Registers");
+            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,      "Paddles");
+            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,        "Hover over a button for more information.");
         acase ZACCARIA:
             if (machines[machine].pvis == 1)
-            {   setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI_GAD,     "2636 PVI Status");
+            {   setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI_GAD,  "2636 PVI Status");
             } elif (machines[machine].pvis == 3)
-            {   setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI1_GAD,    "2636 PVI #1 Status");
-                setdlgtext(hwnd, IDC_PVI2_GROUP, MSG_PVI2_GAD,    "2636 PVI #2 Status");
-                setdlgtext(hwnd, IDC_PVI3_GROUP, MSG_PVI3_GAD,    "2636 PVI #3 Status");
+            {   setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI1_GAD, "2636 PVI #1 Status");
+                setdlgtext(hwnd, IDC_PVI2_GROUP, MSG_PVI2_GAD, "2636 PVI #2 Status");
+                setdlgtext(hwnd, IDC_PVI3_GROUP, MSG_PVI3_GAD, "2636 PVI #3 Status");
             }
+            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,        "Hover over a button for more information.");
         acase MALZAK:
-            setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI1_GAD,    "2636 PVI #1 Status");
-            setdlgtext(hwnd, IDC_PVI2_GROUP, MSG_PVI2_GAD,    "2636 PVI #2 Status");
+            setdlgtext(hwnd, IDC_PVI1_GROUP, MSG_PVI1_GAD,     "2636 PVI #1 Status");
+            setdlgtext(hwnd, IDC_PVI2_GROUP, MSG_PVI2_GAD,     "2636 PVI #2 Status");
+            setdlgtext(hwnd, IDL_HOVER4,     MSG_HOVER,        "Hover over a button for more information.");
         acase PONG:
         case BINBUG:
-            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,     "Paddles");
+            setdlgtext(hwnd, IDL_PADDLES,    MSG_PADDLES,      "Paddles");
         }
         localhicon = LoadImage(InstancePtr, MAKEINTRESOURCE(memmap_to[memmap].icon), IMAGE_ICON, 32, 32, 0);
         DISCARD SendMessage(GetDlgItem(hwnd, IDL_XVIMONITORGLYPH), STM_SETICON, (WPARAM) localhicon, (LPARAM) 0);
@@ -1975,13 +1984,13 @@ MODULE BOOL CALLBACK XVIMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
         }   }
         // If they move the subwindow later, it doesn't matter.
 
-        move_subwindow(SUBWINDOW_MONITOR_XVI, hwnd);
+        move_subwindow(SUBWINDOW_MONITOR_XVI);
     return FALSE;
     case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_MONITOR_XVI] = NULL;
+        subwin[SUBWINDOW_MONITOR_XVI].hwnd = NULL;
         for (i = XVI_FIRSTMONGAD; i <= XVI_LASTMONGAD; i++)
         {   monitor[i].used        = FALSE;
             monitor[i].gadget      = NULL;
@@ -1993,17 +2002,16 @@ MODULE BOOL CALLBACK XVIMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
         updatemenu(MENUITEM_VIEWMONITOR_XVI);
     acase WM_DESTROY:
     return FALSE;
-    case WM_PAINT: // no need for acase
+    case WM_PAINT:
         BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
         if (machine == ARCADIA || machine == INTERTON || machine == ELEKTOR || machine == PONG || machine == BINBUG)
         {   clear_axes(hwnd);
-            SubWindowPtr[SUBWINDOW_MONITOR_XVI] = hwnd; // important!
             do_axes();
             // UpdateWindow(GetDlgItem(hwnd, IDC_AXES));
         }
     return FALSE; // important!
-    case WM_MBUTTONDBLCLK: // no need for acase
+    case WM_MBUTTONDBLCLK:
     case WM_MBUTTONDOWN:
         mousex = (int) LOWORD(lParam);
         mousey = (int) HIWORD(lParam);
@@ -2079,7 +2087,7 @@ MODULE BOOL CALLBACK XVIMonitorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
                 break; // for speed
         }   }
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
     default:
@@ -2100,7 +2108,7 @@ MODULE BOOL CALLBACK PaletteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
     switch (Message)
     {
     case WM_INITDIALOG:
-        SubWindowPtr[SUBWINDOW_PALETTE] = hwnd;
+        subwin[SUBWINDOW_PALETTE].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL(   MSG_HAIL_PALETTE    , "Palette Editor"   ));
 
@@ -2178,18 +2186,17 @@ MODULE BOOL CALLBACK PaletteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         {   oldpencolours[i] = pencolours[colourset][i];
         }
 
-        move_subwindow(SUBWINDOW_PALETTE, hwnd);
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+        move_subwindow(SUBWINDOW_PALETTE);
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_PALETTE] = NULL;
+        subwin[SUBWINDOW_PALETTE].hwnd = NULL;
         updatemenu(MENUITEM_PALETTE);
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         if (LOWORD(wParam) >= IDC_PEN0 && LOWORD(wParam) <= IDC_PEN23)
         {   palettepen = LOWORD(wParam) - IDC_PEN0;
             update_palette(FALSE);
@@ -2211,7 +2218,7 @@ MODULE BOOL CALLBACK PaletteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             //lint -fallthrough
             case IDOK:
                 DestroyWindow(hwnd);
-                SubWindowPtr[SUBWINDOW_PALETTE] = NULL;
+                subwin[SUBWINDOW_PALETTE].hwnd = NULL;
                 updatemenu(MENUITEM_PALETTE);
                 update_spriteeditor(TRUE);
                 return TRUE;
@@ -2275,8 +2282,8 @@ MODULE BOOL CALLBACK PaletteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                         update_palette(FALSE);
                         redrawscreen();
         }   }   }   }
-        return FALSE;
-    case WM_VSCROLL: // no need for acase
+    return FALSE;
+    case WM_VSCROLL:
         if (lParam == (long) GetDlgItem(hwnd, IDC_RED))
         {   pencolours[colourset][palettepen] &= 0x0000FFFF;
             pencolours[colourset][palettepen] |= ((ULONG) (255 - SendMessage
@@ -2324,11 +2331,11 @@ MODULE BOOL CALLBACK PaletteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 
         update_palette(FALSE);
         redrawscreen();
-        return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    return FALSE;
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
-        return TRUE;
-    case WM_CTLCOLORSTATIC: // no need for acase
+    return TRUE;
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
 
         if (gid == IDC_PALETTEPREVIEW)
@@ -2348,12 +2355,12 @@ MODULE BOOL CALLBACK PaletteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         }
     case WM_DESTROY: // no need for acase
         DeleteObject(hLocalBrush);
-        return TRUE;
-    case WM_MOVE: // no need for acase
+    return TRUE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 MODULE BOOL CALLBACK SpeedDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -2363,6 +2370,8 @@ MODULE BOOL CALLBACK SpeedDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_SPEED].hwnd = hwnd;
+
         DISCARD SetWindowText(hwnd,                LLL(MSG_HAIL_ADJUSTSPEED, "Adjust Speed")      );
         setdlgtext(           hwnd, IDL_EMUSPEED,      MSG_HAIL_EMUSPEED,    "Emulation Speed"    );
         setdlgtext(           hwnd, IDL_FRAMESKIP,     MSG_HAIL_FRAMESKIP,   "Frame Skipping"     );
@@ -2485,10 +2494,9 @@ MODULE BOOL CALLBACK SpeedDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             DISCARD CheckRadioButton(hwnd, IDC_TWIN_110BAUD, IDC_TWIN_9600BAUD, IDC_TWIN_110BAUD + twin_baudrate); */
         }
 
-        move_subwindow(SUBWINDOW_SPEED, hwnd);
-
-        return FALSE;
-    case WM_ACTIVATE: // no need for acase
+        move_subwindow(SUBWINDOW_SPEED);
+    return FALSE;
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_HSCROLL:
         if (lParam == (long) GetDlgItem(hwnd, IDC_ADJUSTSPEED))
@@ -2579,17 +2587,17 @@ MODULE BOOL CALLBACK SpeedDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
     acase WM_CLOSE:
         clearkybd();
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_SPEED] = NULL;
+        subwin[SUBWINDOW_SPEED].hwnd = NULL;
         updatemenu(MENUITEM_ADJUSTSPEED);
-        return TRUE;
-    case WM_DESTROY: // no need for acase
-        SubWindowPtr[SUBWINDOW_SPEED] = NULL;
-        return FALSE;
-    case WM_MOVE: // no need for acase
+    return TRUE;
+    case WM_DESTROY:
+        subwin[SUBWINDOW_SPEED].hwnd = NULL;
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
     }
     return TRUE;
 }
@@ -2615,7 +2623,7 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
     switch (Message)
     {
     case WM_INITDIALOG:
-        // remember SubWindowPtr[SUBWINDOW_SPRITES] isn't set up yet!
+        subwin[SUBWINDOW_SPRITES].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_SPRITEVIEWER, "Sprite/Character Editor/Viewer"));
      // setdlgtext(hwnd, IDL_WHICHSPRITE,   MSG_SPRITE,        "Sprite:");
@@ -2713,10 +2721,9 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         SendMessage(GetDlgItem(hwnd, IDC_WHICHSPRITE), TBM_SETPOS     ,  TRUE,              viewingsprite );
         DISCARD SetFocus(GetDlgItem(hwnd, IDC_MEMREGION));
 
-        move_subwindow(SUBWINDOW_SPRITES, hwnd);
-
+        move_subwindow(SUBWINDOW_SPRITES);
     return FALSE;
-    case WM_CTLCOLORSTATIC: // no need for acase
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         x = (gid - IDC_SPR_11) % 8;
         y = (gid - IDC_SPR_11) / 8;
@@ -2824,16 +2831,16 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
                     return (LRESULT) hSpriteBrush[8];
         }   }   }
     return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
-    acase WM_LBUTTONDBLCLK: // no need for acase
+    acase WM_LBUTTONDBLCLK:
         palettepen = sprviewcolour;
         edit_palette();
     acase WM_HSCROLL:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         if (gid == IDC_WHICHSPRITE)
         {   viewingsprite = SendMessage
-            (   GetDlgItem(SubWindowPtr[SUBWINDOW_SPRITES], IDC_WHICHSPRITE),
+            (   GetDlgItem(subwin[SUBWINDOW_SPRITES].hwnd, IDC_WHICHSPRITE),
                 TBM_GETPOS,
                 0,
                 0
@@ -2841,7 +2848,7 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
             update_spriteeditor(TRUE);
         }
     return FALSE;
-    acase WM_LBUTTONDOWN:
+    case WM_LBUTTONDOWN:
         SetCapture(hwnd);
         mousex = (int) (LOWORD(lParam));
         mousey = (int) (HIWORD(lParam));
@@ -2885,9 +2892,8 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
                 {   debug_edit(sprad[y], TRUE, FALSE);
                     break; // for speed
         }   }   }
-
     return TRUE;
-    case WM_MOUSEMOVE: // no need for acase
+    case WM_MOUSEMOVE:
         if (sprmousedown)
         {   mousex = (int) (LOWORD(lParam));
             mousey = (int) (HIWORD(lParam));
@@ -2904,13 +2910,13 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
                         break; // for speed
         }   }   }   }
     return TRUE;
-    case WM_LBUTTONUP: // no need for acase
+    case WM_LBUTTONUP:
         ReleaseCapture();
         sprmousedown = FALSE;
     return TRUE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_SPRITES] = NULL;
+        subwin[SUBWINDOW_SPRITES].hwnd = NULL;
         updatemenu(MENUITEM_SPRITEVIEWER);
     acase WM_DESTROY:
         for (i = 0; i < 9; i++)
@@ -2923,10 +2929,10 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         do_preview(TRUE);
         // UpdateWindow(GetDlgItem(hwnd, IDC_PREVIEW));
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
@@ -2934,58 +2940,22 @@ MODULE BOOL CALLBACK SpriteDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
 
 MODULE void clear_axes(HWND hwnd)
 {   int x, y;
-    HDC AxesRastPtr;
 
     for (y = 0; y < AXESHEIGHT; y++)
     {   for (x = 0; x < AXESWIDTH; x++)
-        {   canvasdisplay[CANVAS_AXES][(y * AXESWIDTH) + x] = EMURGBPEN_WHITE;
+        {   DRAWAXES(x, y, EMURGBPEN_WHITE);
     }   }
-
-    AxesRastPtr = GetDC(GetDlgItem(hwnd, IDC_AXES));
-    DISCARD StretchDIBits
-    (   AxesRastPtr,
-          0,            // dest leftx
-          0,            // dest topy
-        AXESWIDTH,      // dest width
-        AXESHEIGHT,     // dest height
-          0,            // source leftx
-          0,            // source topy
-        AXESWIDTH,      // source width
-        AXESHEIGHT,     // source height
-        canvasdisplay[CANVAS_AXES], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_AXES], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS, // format of data
-        SRCCOPY         // blit mode
-    );
-    ReleaseDC(GetDlgItem(hwnd, IDC_AXES), AxesRastPtr);
+    wpa8(CANVAS_AXES, 0, 0);
 }
 
 MODULE void clear_preview(HWND hwnd)
 {   int x, y;
-    HDC PreviewRastPtr;
 
     for (y = 0; y < PREVIEWHEIGHT; y++)
     {   for (x = 0; x < PREVIEWWIDTH; x++)
-        {   canvasdisplay[CANVAS_PREVIEW][(y * PREVIEWWIDTH) + x] = pencolours[colourset][machine == PHUNSY ? BLUE : GREY1];
+        {   DRAWPREVIEW(x, y, machine == PHUNSY ? BLUE : GREY1);
     }   }
-
-    PreviewRastPtr = GetDC(GetDlgItem(hwnd, IDC_PREVIEW));
-    DISCARD StretchDIBits
-    (   PreviewRastPtr,
-          0,            // dest leftx
-          0,            // dest topy
-        PREVIEWWIDTH,   // dest width
-        PREVIEWHEIGHT,  // dest height
-          0,            // source leftx
-          0,            // source topy
-        PREVIEWWIDTH,   // source width
-        PREVIEWHEIGHT,  // source height
-        canvasdisplay[CANVAS_PREVIEW], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_PREVIEW], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS, // format of data
-        SRCCOPY         // blit mode
-    );
-    ReleaseDC(GetDlgItem(hwnd, IDC_PREVIEW), PreviewRastPtr);
+    wpa8(CANVAS_PREVIEW, 0, 0);
 }
 
 EXPORT void setfont(HWND hwnd, int gid)
@@ -3004,20 +2974,19 @@ MODULE BOOL CALLBACK MusicDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
     switch (Message)
     {
     case WM_INITDIALOG:
-        SubWindowPtr[SUBWINDOW_MUSIC] = hwnd;
+        subwin[SUBWINDOW_MUSIC].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_MUSIC, "Musical Keyboard"));
 
-        move_subwindow(SUBWINDOW_MUSIC, hwnd);
-
-        return FALSE;
-    acase WM_ACTIVATE:
+        move_subwindow(SUBWINDOW_MUSIC);
+    return FALSE;
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_CLOSE:
         wheremusicmouse[0] =
         wheremusicmouse[1] = -2;
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_MUSIC] = NULL;
+        subwin[SUBWINDOW_MUSIC].hwnd = NULL;
         updatemenu(MENUITEM_MUSIC);
     acase WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
@@ -3045,18 +3014,18 @@ MODULE BOOL CALLBACK MusicDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
         EndPaint(hwnd, &localps);
         reghost = TRUE;
     return FALSE; // important!
-    case WM_KEYDOWN: // no need for acase
+    case WM_KEYDOWN:
         scancode = (lParam & 33488896) >> 16;
         handle_keydown(scancode);
     return FALSE;
-    case WM_KEYUP: // no need for acase
+    case WM_KEYUP:
         scancode = (lParam & 33488896) >> 16;
         handle_keyup(scancode);
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
@@ -3195,7 +3164,7 @@ EXPORT void ghost_bar(int whichbar)
     RECT localrect;
     int  i;
 
-    StaveRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_STAVE));
+    StaveRastPtr = GetDC(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_STAVE));
 
     for (i = 0; i < 4; i++)
     {   localrect.left   =  81 + (40 * whichbar);
@@ -3223,7 +3192,7 @@ EXPORT void ghost_bar(int whichbar)
         hBrush[EMUBRUSH_GREY]
     );
 
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MUSIC], IDC_STAVE), StaveRastPtr);
+    ReleaseDC(GetDlgItem(subwin[SUBWINDOW_MUSIC].hwnd, IDC_STAVE), StaveRastPtr);
 }
 
 MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -3236,7 +3205,7 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
     switch (Message)
     {
     case WM_INITDIALOG:
-        SubWindowPtr[SUBWINDOW_OUTPUT] = hwnd;
+        subwin[SUBWINDOW_OUTPUT].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL(      MSG_WA_CONSOLE   , "WinArcadia Output"));
         setdlgtext(hwnd, IDC_COPYSELECTION  , MSG_COPYSELECTEDTEXT, "Copy selected text");
@@ -3290,7 +3259,7 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         }
         DISCARD SendMessage(RichTextGadget, EM_SETCHARFORMAT, SCF_ALL, (LPARAM) &fgformat);
 
-        if (subwinx[SUBWINDOW_OUTPUT] == -1 && !fullscreen)
+        if (subwin[SUBWINDOW_OUTPUT].x == -1 && !fullscreen)
         {   int rightroom,
                 bottomroom;
 
@@ -3303,7 +3272,7 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
             elif (wintopy    >= OUTPUTHEIGHT) SetWindowPos(hwnd, NULL, winleftx               + 5, wintopy - OUTPUTHEIGHT + 5, 0, 0, SWP_NOSIZE | SWP_NOZORDER); // put at bottom
             // else don't move it
         } else
-        {   move_subwindow(SUBWINDOW_OUTPUT, hwnd);
+        {   move_subwindow(SUBWINDOW_OUTPUT);
         }
     return FALSE;
     case WM_ACTIVATE:
@@ -3325,7 +3294,7 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
     acase WM_CLOSE:
         logfile_close();
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_OUTPUT] = NULL;
+        subwin[SUBWINDOW_OUTPUT].hwnd = NULL;
     acase WM_COMMAND:
         gid = (int) LOWORD(wParam);
         switch (gid)
@@ -3366,25 +3335,17 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
     return FALSE; // important!
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_KEYDOWN: // no need for acase
-        scancode = (lParam & 33488896) >> 16;
-        if (scancode == SCAN_TAB)
-        {   SetActiveWindow(MainWindowPtr);
-        } else
-        {   handle_keydown(scancode);
-        }
-    return FALSE;
-    case WM_KEYUP: // no need for acase
+    case WM_KEYUP:
         scancode = (lParam & 33488896) >> 16;
         handle_keyup(scancode);
     return FALSE;
-    case WM_DRAWITEM: // no need for acase
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
     return TRUE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
@@ -3393,7 +3354,7 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
 EXPORT void open_output(FLAG clear)
 {   HMODULE hKernel32;
 
-    if (SubWindowPtr[SUBWINDOW_OUTPUT])
+    if (subwin[SUBWINDOW_OUTPUT].hwnd)
     {   return;
     }
 
@@ -3422,28 +3383,6 @@ EXPORT void open_output(FLAG clear)
         refreshkybd();
 }   }
    
-EXPORT void redraw_axes(void)
-{   FAST HDC AxesRastPtr;
-
-    AxesRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MONITOR_XVI], IDC_AXES));
-    DISCARD StretchDIBits
-    (   AxesRastPtr,
-        0,              // dest leftx
-        0,              // dest topy
-        AXESWIDTH,      // dest width
-        AXESHEIGHT,     // dest height
-        0,              // source leftx
-        0,              // source topy
-        AXESWIDTH,      // source width
-        AXESHEIGHT,     // source height
-        canvasdisplay[CANVAS_AXES], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_AXES], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS, // format of data
-        SRCCOPY         // blit mode
-    );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_MONITOR_XVI], IDC_AXES), AxesRastPtr);
-}
-
 EXPORT void setrasgads(int passedcpu)
 {   UBYTE t;
     int   i;
@@ -3455,7 +3394,7 @@ EXPORT void setrasgads(int passedcpu)
     for (i = 0; i <= 7; i++)
     {   RedrawWindow
         (   GetDlgItem
-            (   SubWindowPtr[SUBWINDOW_MONITOR_CPU],
+            (   subwin[SUBWINDOW_MONITOR_CPU].hwnd,
                 ibmgad[((passedcpu == 0) ? (MONGAD_RAS0) : (MONGAD_SLAVE_RAS0)) + i]
             ),
             NULL,
@@ -3476,55 +3415,55 @@ LRESULT CALLBACK RichEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return CallWindowProc(OldRichEditProc, hwnd, msg, wParam, lParam);
 }
 
-EXPORT void bu_enable(int subwin, int gid, BOOL logic)
-{   EnableWindow(GetDlgItem(SubWindowPtr[subwin], gid), logic);
+EXPORT void bu_enable(int whichsubwin, int gid, BOOL logic)
+{   EnableWindow(GetDlgItem(subwin[whichsubwin].hwnd, gid), logic);
 }
-EXPORT void bu_set(int subwin, int gid)
-{   SetDlgItemText(SubWindowPtr[subwin], gid, gtempstring);
+EXPORT void bu_set(int whichsubwin, int gid)
+{   SetDlgItemText(subwin[whichsubwin].hwnd, gid, gtempstring);
 }
-EXPORT void bu_set2(int subwin, int gid, STRPTR thestring)
-{   SetDlgItemText(SubWindowPtr[subwin], gid, thestring);
+EXPORT void bu_set2(int whichsubwin, int gid, STRPTR thestring)
+{   SetDlgItemText(subwin[whichsubwin].hwnd, gid, thestring);
 }
-EXPORT void bu_select(int subwin, int gid, BOOL logic)
-{   SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), BM_SETCHECK, logic ? BST_CHECKED : BST_UNCHECKED, 0);
+EXPORT void bu_select(int whichsubwin, int gid, BOOL logic)
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), BM_SETCHECK, logic ? BST_CHECKED : BST_UNCHECKED, 0);
 }
-EXPORT void cb_set(int subwin, int gid, BOOL logic)
-{   SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), BM_SETCHECK, logic ? BST_CHECKED : BST_UNCHECKED, 0);
+EXPORT void cb_set(int whichsubwin, int gid, BOOL logic)
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), BM_SETCHECK, logic ? BST_CHECKED : BST_UNCHECKED, 0);
 }
-EXPORT void cb_enable(int subwin, int gid, BOOL logic)
-{   EnableWindow(GetDlgItem(SubWindowPtr[subwin], gid), logic);
+EXPORT void cb_enable(int whichsubwin, int gid, BOOL logic)
+{   EnableWindow(GetDlgItem(subwin[whichsubwin].hwnd, gid), logic);
 }
-EXPORT void ch_set(int subwin, int gid, ULONG value)
-{   SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), CB_SETCURSEL, (WPARAM) value, (LPARAM)     0);
+EXPORT void ch_set(int whichsubwin, int gid, ULONG value)
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), CB_SETCURSEL, (WPARAM) value, (LPARAM)     0);
 }
-EXPORT void ch2_set(int subwin, int gid, ULONG value)
-{   SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), LB_SETCURSEL, (WPARAM) value, (LPARAM)     0);
+EXPORT void ch2_set(int whichsubwin, int gid, ULONG value)
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), LB_SETCURSEL, (WPARAM) value, (LPARAM)     0);
 }
-EXPORT void ra_set(int subwin, int firstgid, int lastgid, int value)
-{   CheckRadioButton(SubWindowPtr[subwin], firstgid, lastgid, firstgid + value);
+EXPORT void ra_set(int whichsubwin, int firstgid, int lastgid, int value)
+{   CheckRadioButton(subwin[whichsubwin].hwnd, firstgid, lastgid, firstgid + value);
 }
-EXPORT void ra_enable(int subwin, int gid, BOOL logic)
-{   EnableWindow(GetDlgItem(SubWindowPtr[subwin], gid), logic ? TRUE : FALSE);
+EXPORT void ra_enable(int whichsubwin, int gid, BOOL logic)
+{   EnableWindow(GetDlgItem(subwin[whichsubwin].hwnd, gid), logic ? TRUE : FALSE);
 }
-EXPORT void ra_enable2(int subwin, int gid, BOOL logic) { ; }
-EXPORT void sl_set(int subwin, int gid, ULONG value)
-{   SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), TBM_SETPOS  ,          TRUE , (LPARAM) value);
+EXPORT void ra_enable2(int whichsubwin, int gid, BOOL logic) { ; }
+EXPORT void sl_set(int whichsubwin, int gid, ULONG value)
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), TBM_SETPOS  ,          TRUE , (LPARAM) value);
 }
-EXPORT void sl_set2(int subwin, int gid, ULONG value1, ULONG value2)
-{   SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), TBM_SETRANGEMAX, FALSE, (LPARAM) value1); // don't use TBM_SETRANGE, because it only supports 16-bit arguments!
-    SendMessage(GetDlgItem(SubWindowPtr[subwin], gid), TBM_SETPOS     , TRUE , (LPARAM) value2);
+EXPORT void sl_set2(int whichsubwin, int gid, ULONG value1, ULONG value2)
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), TBM_SETRANGEMAX, FALSE, (LPARAM) value1); // don't use TBM_SETRANGE, because it only supports 16-bit arguments!
+    SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), TBM_SETPOS     , TRUE , (LPARAM) value2);
 }
-EXPORT void sl_enable(int subwin, int gid, BOOL logic)
-{   EnableWindow(GetDlgItem(SubWindowPtr[subwin], gid), logic ? TRUE : FALSE);
+EXPORT void sl_enable(int whichsubwin, int gid, BOOL logic)
+{   EnableWindow(GetDlgItem(subwin[whichsubwin].hwnd, gid), logic ? TRUE : FALSE);
 }
-EXPORT void st_set(int subwin, int gid)
-{   SetDlgItemText(SubWindowPtr[subwin], gid, gtempstring);
+EXPORT void st_set(int whichsubwin, int gid)
+{   SetDlgItemText(subwin[whichsubwin].hwnd, gid, gtempstring);
 }
-EXPORT void st_set2(int subwin, int gid, STRPTR thestring)
-{   SetDlgItemText(SubWindowPtr[subwin], gid, thestring);
+EXPORT void st_set2(int whichsubwin, int gid, STRPTR thestring)
+{   SetDlgItemText(subwin[whichsubwin].hwnd, gid, thestring);
 }
 
-EXPORT void handle_escdown(int scancode, HWND subwin)
+EXPORT void handle_escdown(int scancode, HWND whichsubwin)
 {   if (scancode == SCAN_LSHIFT)
     {   KeyMatrix[SCAN_LSHIFT / 8] |= (1 << (SCAN_LSHIFT % 8));
     } elif (scancode == SCAN_RSHIFT)
@@ -3538,8 +3477,8 @@ EXPORT void handle_escdown(int scancode, HWND subwin)
                 KeyMatrix[SCAN_RSHIFT / 8] &= ~(1 << (SCAN_RSHIFT % 8));
         }   }
         else
-        {   if   (subwin == SubWindowPtr[SUBWINDOW_TAPEDECK  ]) close_subwindow(SUBWINDOW_TAPEDECK  );
-            elif (subwin == SubWindowPtr[SUBWINDOW_INDUSTRIAL]) close_subwindow(SUBWINDOW_INDUSTRIAL);
+        {   if   (whichsubwin == subwin[SUBWINDOW_TAPEDECK  ].hwnd) close_subwindow(SUBWINDOW_TAPEDECK  );
+            elif (whichsubwin == subwin[SUBWINDOW_INDUSTRIAL].hwnd) close_subwindow(SUBWINDOW_INDUSTRIAL);
 }   }   }
 EXPORT void handle_escup(int scancode)
 {   if (scancode == SCAN_LSHIFT)
@@ -3602,17 +3541,56 @@ EXPORT void update_palette(FLAG full)
 
     if (full)
     {   for (i = 0; i < GUESTCOLOURS; i++)
-        {   DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PALETTE], IDC_PALETTE0 + i), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        {   DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PALETTE].hwnd, IDC_PALETTE0 + i), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
     }   }
     else
-    {   DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PALETTE], IDC_PALETTE0 + palettepen), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+    {   DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PALETTE].hwnd, IDC_PALETTE0 + palettepen), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
     }
-    DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PALETTE], IDC_PALETTEPREVIEW), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+    DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PALETTE].hwnd, IDC_PALETTEPREVIEW), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 
     checkcolours();
-    EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PALETTE], IDC_RESETPALETTE), resetdisabled ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(subwin[SUBWINDOW_PALETTE].hwnd, IDC_RESETPALETTE), resetdisabled ? FALSE : TRUE);
 
     update_spriteeditor(TRUE);
 
     already = FALSE;
+}
+
+/* Hovers are:
+1: GameInfo
+2: Memory
+3: Kybd
+4: XVIMonitor
+5: PSGsMonitor
+6: CPUMonitor
+7: Controls
+8: Opcodes
+*/
+
+EXPORT void wpa8(int whichcanvas, int destx, int desty)
+{   HDC  LocalRastPtr;
+    HWND hwnd;
+
+    if (whichcanvas == CANVAS_MAGNIFIER)
+    {   hwnd = MagnifierWindowPtr;
+    } else
+    {   hwnd = GetDlgItem(subwin[canvas[whichcanvas].subwindow].hwnd, canvas[whichcanvas].gid);
+    }
+    LocalRastPtr = GetDC(hwnd);
+    DISCARD StretchDIBits
+    (   LocalRastPtr,
+        destx,                         // dest leftx
+        desty,                         // dest topy
+        canvas[whichcanvas].nowwidth,  // dest width
+        canvas[whichcanvas].nowheight, // dest height
+        0,                             // source leftx
+        0,                             // source topy
+        canvas[whichcanvas].nowwidth,  // source width
+        canvas[whichcanvas].nowheight, // source height
+        canvas[whichcanvas].display,   // pointer to the bits
+        (const struct tagBITMAPINFO*) &(canvas[whichcanvas].bitmapinfo), // pointer to BITMAPINFO structure
+        DIB_RGB_COLORS,                // format of data
+        SRCCOPY                        // blit mode
+    );
+    ReleaseDC(hwnd, LocalRastPtr);
 }

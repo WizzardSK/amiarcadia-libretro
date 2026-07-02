@@ -74,7 +74,7 @@
     if (loginefficient) \
     {   nextopcode = memory[WRAPMEM(2)]; \
         if (nextopcode == (228 + (a)) && memory[WRAPMEM(3)] == 0) \
-        {   DISCARD getfriendly(WRAPMEM(2)); \
+        {   DISCARD number_to_friendly(WRAPMEM(2), (STRPTR) friendly, TRUE, 0, 15, TRUE); \
             zprintf \
             (   TEXTPEN_LOG, \
                 "Omit %s at %s.\n\n", \
@@ -301,6 +301,7 @@ EXPORT const STRPTR tokenname[LASTTOKEN - FIRSTTOKEN + 1][STYLES] = {
 
 // IMPORTED VARIABLES-----------------------------------------------------
 
+IMPORT       char                     v[3 + 8 + 1];
 IMPORT       int                      binbug_baudrate,
                                       binbug_biosver,
                                       cd2650_biosver,
@@ -398,6 +399,7 @@ MODULE FLAG    pausing = FALSE;
 MODULE UBYTE   after, before,
                nextopcode,
                oldpsl, oldpsu, oldr[7];
+MODULE TEXT    friendly3[FRIENDLYLENGTH + 1];
 
 // EXPORTED VARIABLES-----------------------------------------------------
 
@@ -424,8 +426,7 @@ EXPORT ULONG   asicreads[32768],
                samplewhere     = 0,
                tapelength      = 0;
 EXPORT TEXT    friendly2[FRIENDLYLENGTH + 1],
-               stringchar[19 + 1], // enough for "%1,1,1,1,1,1,1,1"
-               v_bin[3 + 8 + 1]; // enough for "'B'01010101"
+               stringchar[19 + 1]; // enough for "%1,1,1,1,1,1,1,1"
 EXPORT int     addr,
                interrupt_2650,
                justdone        = 0,
@@ -433,8 +434,7 @@ EXPORT int     addr,
                traceorstep     = FALSE,
                tt_scrn;
 EXPORT char    psubits[5 + 1],
-               pslbits[6 + 1],
-               v[2 + 1];
+               pslbits[6 + 1];
 EXPORT double  samplewhere_f   = 0.0,
                tapespeed;
 EXPORT STRPTR  timeunitstr1,
@@ -693,34 +693,34 @@ EXPORT void one_instruction(void)
     coverage[iar] |= COVERAGE_OPCODE;
     if (log_illegal)
     {   if (coverage[iar] & COVERAGE_OPERAND)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf(TEXTPEN_LOG, LLL(MSG_OPCODEOPERAND, "The byte at %s, now an opcode, has previously been an operand!\n\n"), friendly);
             set_pause(TYPE_LOG);
         }
         if ((memflags[iar] & (ASIC | NOREAD | READONCE | AUDIBLE | VISIBLE)) || iar != mirror_r[iar])
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf(TEXTPEN_LOG, "Opcode at %s is in an unusual memory region!\n\n", friendly);
         }
         if (table_size_2650[opcode] >= 2)
         {   coverage[WRAPMEM(1)] |= COVERAGE_OPERAND;
             if (coverage[WRAPMEM(1)] & COVERAGE_OPCODE)
-            {   DISCARD getfriendly(WRAPMEM(1));
+            {   DISCARD number_to_friendly(WRAPMEM(1), (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf(TEXTPEN_LOG, LLL(MSG_1STOPERANDOPCODE, "The byte at %s, now the 1st byte of an operand, has previously been an opcode!\n\n"), friendly);
                 set_pause(TYPE_LOG);
             }
-            if ((memflags[iar + 1] & (ASIC | NOREAD | READONCE | AUDIBLE | VISIBLE)) || iar + 1 != mirror_r[iar + 1])
-            {   DISCARD getfriendly(iar + 1);
+            if ((memflags[WRAPMEM(1)] & (ASIC | NOREAD | READONCE | AUDIBLE | VISIBLE)) || WRAPMEM(1) != mirror_r[WRAPMEM(1)])
+            {   DISCARD number_to_friendly(WRAPMEM(1), (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf(TEXTPEN_LOG, "Operand at %s is in an unusual memory region!\n\n", friendly);
             }
             if (table_size_2650[opcode] == 3)
             {   coverage[WRAPMEM(2)] |= COVERAGE_OPERAND;
                 if (coverage[WRAPMEM(2)] & COVERAGE_OPCODE)
-                {   DISCARD getfriendly(WRAPMEM(2));
+                {   DISCARD number_to_friendly(WRAPMEM(2), (STRPTR) friendly, TRUE, 0, 15, TRUE);
                     zprintf(TEXTPEN_LOG, LLL(MSG_2NDOPERANDOPCODE, "The byte at %s, now the 2nd byte of an operand, has previously been an opcode!\n\n"), friendly);
                     set_pause(TYPE_LOG);
                 }
-                if ((memflags[iar + 2] & (ASIC | NOREAD | READONCE | AUDIBLE | VISIBLE)) || iar + 2 != mirror_r[iar + 2])
-                {   DISCARD getfriendly(iar + 2);
+                if ((memflags[WRAPMEM(2)] & (ASIC | NOREAD | READONCE | AUDIBLE | VISIBLE)) || WRAPMEM(2) != mirror_r[WRAPMEM(2)])
+                {   DISCARD number_to_friendly(WRAPMEM(2), (STRPTR) friendly, TRUE, 0, 15, TRUE);
                     zprintf(TEXTPEN_LOG, "Operand at %s is in an unusual memory region!\n\n", friendly);
     }   }   }   }
     else
@@ -734,28 +734,26 @@ EXPORT void one_instruction(void)
     {   tracecpu_2650(TRUE, FALSE);
         saytrace();
         cpu_emu();
-        if (verbosity == 1)
+        if (verbosity == VERBOSITY_TABLE)
         {   table_trace();
-        } elif (verbosity == 2)
+        } elif (verbosity == VERBOSITY_MAXIMUM)
         {   view_cpu_2650(FALSE);
         }
-        if (verbosity >= 1 && step)
+        if (verbosity >= VERBOSITY_TABLE && step)
         {   view_next_2650();
         }
         update_monitor(FALSE);
-        if (trace && useguideray)
+        if (trace && !step && useguideray)
         {   draw_guide_ray(FALSE);
-        }
-        updatescreen();
-        if (trace && useguideray)
-        {   draw_guide_ray(TRUE);
-        }
-
-        if (step)
+            updatescreen();
+            draw_guide_ray(TRUE);
+        } elif (step)
         {   step = FALSE;
             traceorstep = (trace || step) ? TRUE : FALSE;
             memflags[iar] &= ~(STEPPOINT);
             emu_pause(); // this is recursive! :-(
+        } else
+        {   updatescreen();
         }
 
         if (!pausing)
@@ -787,7 +785,7 @@ MODULE __inline void cpu_emu(void)
     case 0:                                                 // LODZ r0
 #ifndef GAMER
         if (log_illegal)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
@@ -799,7 +797,7 @@ MODULE __inline void cpu_emu(void)
             set_pause(TYPE_LOG);
         }
         if (loginefficient)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
@@ -828,7 +826,7 @@ MODULE __inline void cpu_emu(void)
 #ifndef GAMER
         if (loginefficient)
         {   if (OPERAND == 0)
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     "Replace %s with %s at %s.\n\n",
@@ -881,7 +879,7 @@ MODULE __inline void cpu_emu(void)
              &&  (memflags[ea + 1] & NOWRITE) // reading from ROM
              && !(memflags[ea + 1] & ASIC)    // really
             ) // wrapping issues!
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 dec_to_hex(cpuread_2650((int) ea));
                 zprintf
                 (   TEXTPEN_LOG,
@@ -912,7 +910,7 @@ MODULE __inline void cpu_emu(void)
              &&  (memflags[ea + 1] & NOWRITE) // reading from ROM
              && !(memflags[ea + 1] & ASIC)    // really
             ) // wrapping issues!
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 dec_to_hex(cpuread_2650((int) ea));
                 zprintf
                 (   TEXTPEN_LOG,
@@ -937,7 +935,7 @@ MODULE __inline void cpu_emu(void)
         {   zprintf(TEXTPEN_TAPE, "Found start of block.\n");
         }
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -970,7 +968,7 @@ MODULE __inline void cpu_emu(void)
                  &&  (memflags[ea + 1] & NOWRITE) // reading from ROM
                  && !(memflags[ea + 1] & ASIC)    // really
                 ) // wrapping issues!
-                {   DISCARD getfriendly(iar);
+                {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                     dec_to_hex(OPERAND),
                     zprintf
                     (   TEXTPEN_LOG,
@@ -999,7 +997,7 @@ MODULE __inline void cpu_emu(void)
             psl = cpuread_2650((int) ea);
 #ifndef GAMER
             if (log_illegal && (psl & PSL_CC) == 0xC0)
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     LLL
@@ -1022,13 +1020,14 @@ MODULE __inline void cpu_emu(void)
         {
 #ifndef GAMER
             if (log_illegal)
-            {   zprintf
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+                zprintf
                 (   TEXTPEN_LOG,
                     LLL(
                         MSG_CPU_UNDEFINED,
-                        "Instruction at $%04X executed undefined opcode $%02X!\n\n"
+                        "Instruction at %s executed undefined opcode $%02X!\n\n"
                     ),
-                    (int) iar,
+                    friendly,
                     (int) opcode
                 );
             }
@@ -1054,13 +1053,14 @@ MODULE __inline void cpu_emu(void)
         {
 #ifndef GAMER
             if (log_illegal)
-            {   zprintf
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+                zprintf
                 (   TEXTPEN_LOG,
                     LLL(
                         MSG_CPU_UNDEFINED,
-                        "Instruction at $%04X executed undefined opcode $%02X!\n\n"
+                        "Instruction at %s executed undefined opcode $%02X!\n\n"
                     ),
-                    (int) iar,
+                    friendly,
                     (int) opcode
                 );
             }
@@ -1176,7 +1176,7 @@ MODULE __inline void cpu_emu(void)
     acase 44:                                               // EORA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -1205,17 +1205,14 @@ MODULE __inline void cpu_emu(void)
     case 51:                                                // REDC r3
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " %s!\n\n",
+                friendly,
                 opcodes[style][opcode].name
             );
         }
@@ -1229,19 +1226,15 @@ MODULE __inline void cpu_emu(void)
     case 54:                                                // RETE,lt
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " $%X (%s)!\n\n",
-                (long unsigned int) opcode,
-                                    opcodes[style][opcode].name
+                friendly,
+                opcodes[style][opcode].name
             );
         }
 #endif
@@ -1249,7 +1242,17 @@ MODULE __inline void cpu_emu(void)
         {
 #ifndef GAMER
             if (log_interrupts && (psu & PSU_II))
-            {   zprintf(TEXTPEN_LOG, LLL(MSG_INTERRUPTSENABLED, "%s at $%04X (rastline %d): interrupts are now disinhibited (enabled)."), opcodes[style][opcode].name, iar, cpuy);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+                zprintf
+                (   TEXTPEN_LOG,
+                    LLL(
+                        MSG_INTERRUPTSENABLED,
+                        "%s at %s (rastline %d): interrupts are now disinhibited (enabled)."
+                    ),
+                    opcodes[style][opcode].name,
+                    friendly,
+                    cpuy
+                );
                 zprintf(TEXTPEN_LOG, " ");
                 if (interrupt_2650)
                 {   zprintf(TEXTPEN_LOG, LLL(MSG_ANINTERRUPTPENDING, "An interrupt is pending!\n\n"));
@@ -1273,21 +1276,29 @@ MODULE __inline void cpu_emu(void)
     acase 55:                                               // RETE,un
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " $37 (RETE,un)!\n\n"
+                friendly,
+                opcodes[style][opcode].name
             );
         }
         if (log_interrupts && (psu & PSU_II))
-        {   zprintf(TEXTPEN_LOG, LLL(MSG_INTERRUPTSENABLED, "%s at $%04X (rastline %d): interrupts are now disinhibited (enabled)."), opcodes[style][opcode].name, iar, cpuy);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
+            (   TEXTPEN_LOG,
+                LLL(
+                    MSG_INTERRUPTSENABLED,
+                    "%s at %s (rastline %d): interrupts are now disinhibited (enabled)."
+                ),
+                opcodes[style][opcode].name,
+                friendly,
+                cpuy
+            );
             zprintf(TEXTPEN_LOG, " ");
             if (interrupt_2650)
             {   zprintf(TEXTPEN_LOG, LLL(MSG_ANINTERRUPTPENDING, "An interrupt is pending!\n\n"));
@@ -1320,7 +1331,7 @@ MODULE __inline void cpu_emu(void)
         if (loginefficient)
         {   nextopcode = memory[WRAPMEM(2)];
             if (nextopcode == 0x17) // RETC,un
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     LLL(
@@ -1353,7 +1364,7 @@ MODULE __inline void cpu_emu(void)
         if (loginefficient)
         {   nextopcode = memory[WRAPMEM(3)];
             if (nextopcode == 0x17) // RETC,un
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     LLL(
@@ -1377,7 +1388,7 @@ MODULE __inline void cpu_emu(void)
     acase 64:                                               // HALT
 #ifndef GAMER
         if (log_illegal && !halted)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf(TEXTPEN_LOG, "Instruction at %s executed HALT opcode!\n", friendly);
             if (psu & PSU_II)
             {   zprintf(TEXTPEN_LOG, "Warning: interrupts are inhibited!\n\n", friendly);
@@ -1429,7 +1440,7 @@ MODULE __inline void cpu_emu(void)
     acase 76:                                               // ANDA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -1494,17 +1505,14 @@ MODULE __inline void cpu_emu(void)
     case 87:                                                // REDE,r3
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " %s!\n\n",
+                friendly,
                 opcodes[style][opcode].name
             );
         }
@@ -1590,7 +1598,7 @@ MODULE __inline void cpu_emu(void)
     acase 108:                                              // IORA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -1619,17 +1627,14 @@ MODULE __inline void cpu_emu(void)
     case 115:                                               // REDD r3
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " %s!\n\n",
+                friendly,
                 opcodes[style][opcode].name
             );
         }
@@ -1641,7 +1646,7 @@ MODULE __inline void cpu_emu(void)
     acase 116:                                              // CPSU
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x07) != 7 && (OPERAND & psu & 0x07))
-        {   getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf(TEXTPEN_LOG, LLL(MSG_MODIFYINGSP, "%s is modifying the SP at %s.\n\n"), opcodes[style][opcode].name, friendly);
             set_pause(TYPE_LOG);
         }
@@ -1651,7 +1656,7 @@ MODULE __inline void cpu_emu(void)
             (   (!supercpu && (OPERAND & PSU_WRITABLE_A) == 0)
              || ( supercpu && (OPERAND & PSU_WRITABLE_B) == 0)
             )
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     "Omit %s at %s.\n\n",
@@ -1661,9 +1666,18 @@ MODULE __inline void cpu_emu(void)
                 set_pause(TYPE_LOG);
         }   }
         if (log_interrupts && (psu & PSU_II) && (OPERAND & PSU_II))
-        {   zprintf(TEXTPEN_LOG, LLL(MSG_INTERRUPTSENABLED, "%s at $%04X (rastline %d): interrupts are now disinhibited (enabled)."), opcodes[style][opcode].name, iar, cpuy);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
+            (   TEXTPEN_LOG,
+                LLL(
+                    MSG_INTERRUPTSENABLED,
+                    "%s at %s (rastline %d): interrupts are now disinhibited (enabled)."
+                ),
+                opcodes[style][opcode].name,
+                friendly,
+                cpuy
+            );
             zprintf(TEXTPEN_LOG, " ");
-            
             if (interrupt_2650)
             {   zprintf(TEXTPEN_LOG, LLL(MSG_ANINTERRUPTPENDING, "An interrupt is pending!\n\n"));
             } else
@@ -1676,7 +1690,8 @@ MODULE __inline void cpu_emu(void)
         {   psu &= (~(OPERAND & PSU_WRITABLE_A));
         }
 #ifdef DEBUGPSU
-        zprintf(TEXTPEN_VERBOSE, "Code at $%X wrote $%X to PSU at clock %d (frame %d, raster %d)!\n", iar, psu, cycles_2650, frames, cpuy);
+        DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+        zprintf(TEXTPEN_VERBOSE, "Code at %s wrote $%X to PSU at clock %d (frame %d, raster %d)!\n", friendly, psu, cycles_2650, frames, cpuy);
         zprintf(TEXTPEN_VERBOSE, "Active axis is now %s!\n", (psu & PSU_F) ? "vertical" : "horizontal");
 #endif
         TWO_BYTES;
@@ -1691,7 +1706,7 @@ MODULE __inline void cpu_emu(void)
 #ifndef GAMER
         if (loginefficient)
         {   if (OPERAND == 0)
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     "Omit %s at %s.\n\n",
@@ -1700,7 +1715,7 @@ MODULE __inline void cpu_emu(void)
                 );
                 set_pause(TYPE_LOG);
             } elif (OPERAND == 0xC0)
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     LLL(
@@ -1720,7 +1735,7 @@ MODULE __inline void cpu_emu(void)
     acase 118:                                              // PPSU
 #ifndef GAMER
         if (log_illegal && ((~(psu & 0x07)) & (OPERAND & 0x07)))
-        {   getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf(TEXTPEN_LOG, LLL(MSG_MODIFYINGSP, "%s is modifying the SP at %s.\n\n"), opcodes[style][opcode].name, friendly);
             set_pause(TYPE_LOG);
         }
@@ -1730,7 +1745,7 @@ MODULE __inline void cpu_emu(void)
             (   (!supercpu && (OPERAND & PSU_WRITABLE_A) == 0)
              || ( supercpu && (OPERAND & PSU_WRITABLE_B) == 0)
             )
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     "Omit %s at %s.\n\n",
@@ -1745,7 +1760,17 @@ MODULE __inline void cpu_emu(void)
         {   interrupt_2650 = FALSE; // any pending interrupts are cleared
 #ifndef GAMER
             if (log_interrupts)
-            {   zprintf(TEXTPEN_LOG, LLL(MSG_INTERRUPTSDISABLED, "%s at $%04X (rastline %d): interrupts are now inhibited (disabled).\n\n"), opcodes[style][opcode].name, iar, cpuy);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+                zprintf
+                (   TEXTPEN_LOG,
+                    LLL(
+                        MSG_INTERRUPTSDISABLED,
+                        "%s at %s (rastline %d): interrupts are now inhibited (disabled).\n\n"
+                    ),
+                    opcodes[style][opcode].name,
+                    friendly,
+                    cpuy
+                );
             }
 #endif
         }
@@ -1756,7 +1781,8 @@ MODULE __inline void cpu_emu(void)
         {   psu |= (OPERAND & PSU_WRITABLE_A);
         }
 #ifdef DEBUGPSU
-        zprintf(TEXTPEN_VERBOSE, "Code at $%X wrote $%X to PSU at clock %d (frame %d, raster %d)!\n", iar, psu, cycles_2650, frames, cpuy);
+        DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+        zprintf(TEXTPEN_VERBOSE, "Code at %s wrote $%X to PSU at clock %d (frame %d, raster %d)!\n", friendly, psu, cycles_2650, frames, cpuy);
         zprintf(TEXTPEN_VERBOSE, "Active axis is now %s!\n", (psu & PSU_F) ? "vertical" : "horizontal");
 #endif
         TWO_BYTES;
@@ -1765,7 +1791,7 @@ MODULE __inline void cpu_emu(void)
     acase 119:                                              // PPSL
 #ifndef GAMER
         if (loginefficient && OPERAND == 0)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Omit %s at %s.\n\n",
@@ -1778,7 +1804,7 @@ MODULE __inline void cpu_emu(void)
         psl |= OPERAND;
 #ifndef GAMER
         if (log_illegal && (psl & PSL_CC) == 0xC0)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL
@@ -1852,7 +1878,7 @@ MODULE __inline void cpu_emu(void)
         if (loginefficient)
         {   nextopcode = memory[WRAPMEM(2)];
             if (OPERAND == 1 && (nextopcode == 152 || nextopcode == 156)) // BCFR,eq or BCFA,eq
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     LLL(
@@ -1889,7 +1915,7 @@ MODULE __inline void cpu_emu(void)
     acase 140:                                              // ADDA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -1916,13 +1942,14 @@ MODULE __inline void cpu_emu(void)
     case 0x91:
 #ifndef GAMER
         if (log_illegal)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_UNDEFINED,
-                    "Instruction at $%04X executed undefined opcode $%02X!\n\n"
+                    "Instruction at %s executed undefined opcode $%02X!\n\n"
                 ),
-                (int) iar,
+                friendly,
                 (int) opcode
             );
             set_pause(TYPE_LOG);
@@ -1933,7 +1960,7 @@ MODULE __inline void cpu_emu(void)
     acase 146:                                              // LPSU
 #ifndef GAMER
         if (log_illegal && (r[0] & 0x07) != 0 && (r[0] & 0x07) != (psu & 0x07))
-        {   getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf(TEXTPEN_LOG, LLL(MSG_MODIFYINGSP, "%s is modifying the SP at %s.\n\n"), opcodes[style][opcode].name, friendly);
             set_pause(TYPE_LOG);
         }
@@ -1946,11 +1973,32 @@ MODULE __inline void cpu_emu(void)
                 }
                 interrupt_2650 = FALSE; // any pending interrupts are cleared
                 if (log_interrupts)
-                {   zprintf(TEXTPEN_LOG, LLL(MSG_INTERRUPTSDISABLED, "%s at $%04X (rastline %d): interrupts are now inhibited (disabled).\n\n"), opcodes[style][opcode].name, iar, cpuy);
+                {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+                    zprintf
+                    (   TEXTPEN_LOG,
+                        LLL(
+                            MSG_INTERRUPTSDISABLED,
+                            "%s at %s (rastline %d): interrupts are now inhibited (disabled).\n\n"
+                        ),
+                        opcodes[style][opcode].name,
+                        friendly,
+                        cpuy
+                    );
         }   }   }
         else
         {   if (log_interrupts && !(r[0] & PSU_II))
-            {   zprintf(TEXTPEN_LOG, LLL(MSG_INTERRUPTSENABLED, "%s at $%04X (rastline %d): interrupts are now disinhibited (enabled). "), opcodes[style][opcode].name, iar, cpuy);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+                zprintf
+                (   TEXTPEN_LOG,
+                    LLL(
+                        MSG_INTERRUPTSENABLED,
+                        "%s at %s (rastline %d): interrupts are now disinhibited (enabled)."
+                    ),
+                    opcodes[style][opcode].name,
+                    friendly,
+                    cpuy
+                );
+                zprintf(TEXTPEN_LOG, " ");
                 if (interrupt_2650)
                 {   zprintf(TEXTPEN_LOG, LLL(MSG_ANINTERRUPTPENDING, "An interrupt is pending!\n\n"));
                 } else
@@ -1964,7 +2012,8 @@ MODULE __inline void cpu_emu(void)
         {   psu |= (readreg(0) & PSU_WRITABLE_A);
         }
 #ifdef DEBUGPSU
-        zprintf(TEXTPEN_VERBOSE, "Code at $%X wrote $%X to PSU at clock %d (frame %d, raster %d)!\n", iar, psu, cycles_2650, frames, cpuy);
+        DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+        zprintf(TEXTPEN_VERBOSE, "Code at %s wrote $%X to PSU at clock %d (frame %d, raster %d)!\n", friendly, psu, cycles_2650, frames, cpuy);
         zprintf(TEXTPEN_VERBOSE, "Active axis is now %s!\n", (psu & PSU_F) ? "vertical" : "horizontal");
 #endif
         ONE_BYTE;
@@ -1979,7 +2028,7 @@ MODULE __inline void cpu_emu(void)
         psl = readreg(0);
 #ifndef GAMER
         if (log_illegal && (psl & PSL_CC) == 0xC0)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL
@@ -2027,7 +2076,7 @@ MODULE __inline void cpu_emu(void)
             ea = mirror_r[ea];
 #ifndef GAMER
             if (loginefficient && ea == (ULONG) WRAPMEM(2))
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     "Omit %s at %s.\n\n",
@@ -2055,7 +2104,7 @@ MODULE __inline void cpu_emu(void)
         {   BRA_EA();
 #ifndef GAMER
             if (loginefficient && ea == (ULONG) WRAPMEM(3))
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     "Omit %s at %s.\n\n",
@@ -2099,7 +2148,7 @@ MODULE __inline void cpu_emu(void)
         if (loginefficient)
         {   nextopcode = memory[WRAPMEM(2)];
             if (OPERAND == 1 && (nextopcode == 152 || nextopcode == 156)) // BCFR,eq or BCFA,eq
-            {   DISCARD getfriendly(iar);
+            {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
                     LLL(
@@ -2136,7 +2185,7 @@ MODULE __inline void cpu_emu(void)
     acase 172:                                              // SUBA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -2165,17 +2214,14 @@ MODULE __inline void cpu_emu(void)
     case 179:                                               // WRTC r3
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " %s!\n\n",
+                friendly,
                 opcodes[style][opcode].name
             );
         }
@@ -2242,7 +2288,7 @@ MODULE __inline void cpu_emu(void)
         ONE_BYTE;
 #ifndef GAMER
         if (loginefficient)
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Omit %s at %s.\n\n",
@@ -2286,7 +2332,7 @@ MODULE __inline void cpu_emu(void)
     acase 204:                                              // STRA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -2359,17 +2405,14 @@ MODULE __inline void cpu_emu(void)
     case 215:                                               // WRTE r3
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " %s!\n\n",
+                friendly,
                 opcodes[style][opcode].name
             );
         }
@@ -2453,7 +2496,7 @@ MODULE __inline void cpu_emu(void)
     acase 236:                                              // COMA,r0
 #ifndef GAMER
         if (log_illegal && (OPERAND & 0x60)) // indexed
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(MSG_OPERANDANDINDEX, "%s is used as an operand and index for %s at %s.\n\n"),
@@ -2482,17 +2525,14 @@ MODULE __inline void cpu_emu(void)
     case 243:                                               // WRTD r3
 #ifndef GAMER
         if (log_illegal && machine == ARCADIA)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_STRANGE,
-                    "Instruction at $%X executed strange opcode"
+                    "Instruction at %s executed strange opcode %s!\n\n"
                 ),
-                (long unsigned int) iar
-            );
-            zprintf
-            (   TEXTPEN_LOG,
-                " %s!\n\n",
+                friendly,
                 opcodes[style][opcode].name
             );
         }
@@ -2563,13 +2603,14 @@ MODULE __inline void cpu_emu(void)
     case 0xC7:
 #ifndef GAMER
         if (log_illegal)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_UNDEFINED,
-                    "Instruction at $%04X executed undefined opcode $%02X!\n\n"
+                    "Instruction at %s executed undefined opcode $%02X!\n\n"
                 ),
-                (int) iar,
+                friendly,
                 (int) opcode
             );
             set_pause(TYPE_LOG);
@@ -2604,7 +2645,7 @@ EXPORT void pushras(void)
         {   for (i = 0; i < sp; i++)
             {   zprintf(TEXTPEN_LOG, " ");
         }   }
-        DISCARD getfriendly(ea);
+        DISCARD number_to_friendly(ea, (STRPTR) friendly, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
             LLL(
@@ -2622,13 +2663,14 @@ EXPORT void pushras(void)
     {   psu &= ~(PSU_SP); // set SP to 0
 
         if (log_illegal || logsubroutines)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_SUBROUTINEOVERFLOW,
-                    "Stack overflow at $%X!\n\n"
+                    "Stack overflow at %s!\n\n"
                 ),
-                (unsigned int) iar
+                friendly
             );
             set_pause(TYPE_LOG);
     }   }
@@ -2645,13 +2687,14 @@ EXPORT void pullras(void)
     {   psu |= PSU_SP; // set SP to 7
 
         if (log_illegal || logsubroutines)
-        {   zprintf
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_UNDERFLOW,
-                    "Stack underflow at $%X!\n\n"
+                    "Stack underflow at %s!\n\n"
                 ),
-                (unsigned int) iar
+                friendly
             );
             set_pause(TYPE_LOG);
     }   }
@@ -2665,14 +2708,16 @@ EXPORT void pullras(void)
         {   for (i = 0; i < sp; i++)
             {   zprintf(TEXTPEN_LOG, " ");
         }   }
+        DISCARD number_to_friendly(ras[psu & PSU_SP], (STRPTR) friendly , TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly(iar              , (STRPTR) friendly2, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
             LLL(
                 MSG_CPU_RETURNING,
-                "Returning to $%X from subroutine or interrupt at $%X.\n\n"
+                "Returning to %s from subroutine or interrupt at %s.\n\n"
             ),
-            ras[psu & PSU_SP],
-            (unsigned int) iar // should use friendly instead
+            friendly,
+            friendly2
         );
         set_pause(TYPE_LOG);
     }
@@ -2703,15 +2748,16 @@ MODULE __inline void branch(int indirect)
      && (   !(memflags[iar] & BIOS) // we don't log the monitor calling itself
          || (machine == PIPBUG && pipbug_biosver == PIPBUG_PIPBUG2BIOS && iar >= 0x3 && iar <= 0x15) // zero page vector table
     )   )
-    {   DISCARD getfriendly(ea);
+    {   DISCARD number_to_friendly(ea , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly(iar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
             LLL(
                 MSG_CPU_LOGMONITOR,
-                "BIOS code at %s was called by game code at $%X.\n"
+                "BIOS code at %s was called by game code at %s.\n"
             ),
             friendly,
-            (unsigned int) iar
+            friendly2
         );
         switch (machine)
         {
@@ -2832,7 +2878,7 @@ MODULE void ABS_EA(void)
      && (int) ea >= WRAPMEM(2 - 64)
      && (int) ea <= WRAPMEM(2 + 63)
     )
-    {   DISCARD getfriendly(iar);
+    {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
             LLL(
@@ -2887,7 +2933,7 @@ MODULE void BRA_EA(void)
         (   ((ea & 0x1FFF) <=   63 || (ea & 0x1FFF) >= 0x1F80) // zero page
          && (opcode        == 0x1F || opcode        ==   0x3F) // BCTA,un or BSTA,un
         )
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
@@ -2900,7 +2946,7 @@ MODULE void BRA_EA(void)
             );
             set_pause(TYPE_LOG);
         } elif ((int) ea >= WRAPMEM(2 - 64) && (int) ea <= WRAPMEM(2 + 63))
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
@@ -2986,7 +3032,7 @@ MODULE void ZERO_EA(void)
 
 #ifndef GAMER
 MODULE void do_runtoloopend(void)
-{   DISCARD getfriendly(iar);
+{   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
     zprintf
     (   TEXTPEN_DEBUG,
         LLL(
@@ -2999,7 +3045,7 @@ MODULE void do_runtoloopend(void)
 }
 
 MODULE void logiar(void)
-{   DISCARD getfriendly(oldiar);
+{   DISCARD number_to_friendly(oldiar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
     zprintf
     (   TEXTPEN_LOG,
         LLL(
@@ -3200,17 +3246,19 @@ MODULE UBYTE cpuread_2650(int address)
 
     if (mirror_r[address] != address)
     {   if (logreadwrites && mirror_r[address] != address)
-        {   DISCARD getfriendly((int) mirror_r[address]);
+        {   DISCARD number_to_friendly((int) iar              , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly((int) address          , (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly((int) mirror_r[address], (STRPTR) friendly3, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_ENGINE_READMIRROR,
-                    "Instruction at $%X (raster %d) read from mirrored address $%X (resolves to %s)!\n\n"
+                    "Instruction at %s (raster %d) read from mirrored address %s (resolves to %s)!\n\n"
                 ),
-                (unsigned int) iar,
-                (long int)     cpuy,
-                (unsigned int) address,
-                               friendly
+                friendly,
+                (long int) cpuy,
+                friendly2,
+                friendly3
             );
             set_pause(TYPE_LOG);
         }
@@ -3219,8 +3267,9 @@ MODULE UBYTE cpuread_2650(int address)
     }
 
     if (log_illegal && (machine == ARCADIA || machine == INTERTON) && !(coverage[address] & COVERAGE_WRITE) && !(memflags[address] & NOWRITE))
-    {    getfriendly((int) address);
-         zprintf(TEXTPEN_LOG, "Uninitialized byte at %s has been read by code at $%X!\n\n", friendly, iar);
+    {    DISCARD number_to_friendly((int) address, (STRPTR) friendly,  TRUE, 0, 15, TRUE);
+         DISCARD number_to_friendly(      iar    , (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+         zprintf(TEXTPEN_LOG, "Uninitialized byte at %s has been read by code at %s!\n\n", friendly, friendly2);
          set_pause(TYPE_LOG);
     }
 
@@ -3316,13 +3365,14 @@ MODULE UBYTE cpuread_2650(int address)
              && ((memflags[address] & ASIC) || (address >= 0x1980 && address <= 0x19BF))
              && address != A_CHARLINE // because surely it is a valid technique to read CHARLINE; that is its purpose
             )
-            {   DISCARD getfriendly((int) address);
+            {   DISCARD number_to_friendly(      iar    , friendly , TRUE, 0, 15, TRUE);
+                DISCARD number_to_friendly((int) address, friendly2, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
-                    LLL(MSG_READDURINGREDRAW, "Instruction at $%X (raster %d) read from UVI address %s during redraw!\n\n"),
-                    (unsigned int) iar,
-                    (long int)     cpuy,
-                                   friendly
+                    LLL(MSG_READDURINGREDRAW, "Instruction at %s (raster %d) read from UVI address %s during redraw!\n\n"),
+                    friendly,
+                    (long int) cpuy,
+                    friendly2
                 );
                 set_pause(TYPE_LOG);
             }
@@ -3332,13 +3382,14 @@ MODULE UBYTE cpuread_2650(int address)
             (   (address == pvibase + PVI_P1PADDLE || address == pvibase + PVI_P2PADDLE)
              && !(memory[pvibase + PVI_SPRITECOLLIDE] & 0x40) // if VRST bit is clear (not in vertical retrace)
             )
-            {   DISCARD getfriendly((int) address);
+            {   DISCARD number_to_friendly(      iar    , friendly , TRUE, 0, 15, TRUE);
+                DISCARD number_to_friendly((int) address, friendly2, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_LOG,
-                    LLL(MSG_READDURINGREDRAW2, "Instruction at $%X (raster %d) read from PVI address %s during redraw!\n\n"), // redraw is the opposite of retrace
-                    (unsigned int) iar,
-                    (long int)     cpuy,
-                                   friendly
+                    LLL(MSG_READDURINGREDRAW2, "Instruction at %s (raster %d) read from PVI address %s during redraw!\n\n"), // redraw is the opposite of retrace
+                    friendly,
+                    (long int) cpuy,
+                    friendly2
                 );
                 set_pause(TYPE_LOG);
     }   }   }
@@ -3409,17 +3460,18 @@ MODULE UBYTE cpuread_2650(int address)
         }
 #ifndef GAMER
         if (logreadwrites)
-        {   DISCARD getfriendly(address);
+        {   DISCARD number_to_friendly(      iar    , friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly((int) address, friendly2, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_ENGINE_ILLEGALREAD,
-                    "Instruction at $%X (raster %d) is reading $%02X from unreadable address %s!\n\n"
+                    "Instruction at %s (raster %d) is reading $%02X from unreadable address %s!\n\n"
                 ),
-                (int) iar,
+                friendly,
                 cpuy,
                 (int) t,
-                friendly
+                friendly2
             );
             set_pause(TYPE_LOG);
         }
@@ -3481,7 +3533,6 @@ MODULE UBYTE cpuread_2650(int address)
          && conditional(&wp[address], 0, FALSE, 0)
         )
         {   // assert(disassembling);
-            DISCARD getfriendly(address);
             if (ISQWERTY)
             {   sprintf(stringchar, " [%s]", asciiname_short[t]);
             } elif (machine == ARCADIA)
@@ -3491,20 +3542,21 @@ MODULE UBYTE cpuread_2650(int address)
             } else
             {   sprintf(stringchar, " ['%c']", guestchar(t));
             }
-
-            number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0);
+            DISCARD number_to_friendly(      iar    , friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly((int) address, friendly2, TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly(      oldiar , friendly3, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_ENGINE_HITWP,
-                    "Instruction at $%X (raster %d) is reading $%X%s from %s! Previous IAR/PC was %s.\n" // yes, just one \n
+                    "Instruction at %s (raster %d) is reading $%X%s from %s! Previous IAR/PC was %s.\n" // yes, just one \n
                 ),
-                (unsigned int) iar,
-                (long int)     cpuy,
-                               t,
-                               stringchar,
-                               friendly,
-                               friendly2
+                friendly,
+                (long int) cpuy,
+                t,
+                stringchar,
+                friendly2,
+                friendly3
             );
             printed = TRUE;
             set_pause(TYPE_BP);
@@ -3560,18 +3612,20 @@ MODULE __inline void cpuwrite_2650(int address, UBYTE data)
     coverage[address] |= COVERAGE_WRITE;
     if (mirror_w[address] != address)
     {   if (logreadwrites)
-        {   DISCARD getfriendly((int) mirror_w[address]);
+        {   DISCARD number_to_friendly(      iar              , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly(      address          , (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly((int) mirror_w[address], (STRPTR) friendly3, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_WRITEMIRROR,
-                    "Instruction at $%X (raster %d) is writing $%X to mirrored address $%X (resolves to %s)!\n\n"
+                    "Instruction at %s (raster %d) is writing $%02X to mirrored address %s (resolves to %s)!\n\n"
                 ),
-                (long unsigned int) iar,
-                (long int)          cpuy,
-                                    data,
-                (long unsigned int) address,
-                                    friendly
+                friendly,
+                (long int) cpuy,
+                data,
+                friendly2,
+                friendly3
             );
             set_pause(TYPE_LOG);
         }
@@ -3666,13 +3720,15 @@ MODULE __inline void cpuwrite_2650(int address, UBYTE data)
      && memory[A_CHARLINE] <= 0xFC
      && ((memflags[address] & ASIC) || (address >= 0x1980 && address <= 0x19BF))
     )
-    {   DISCARD getfriendly((int) address);
+    {   DISCARD number_to_friendly(      iar    , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly((int) address, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
-            LLL(MSG_WROTEDURINGREDRAW, "Instruction at $%X (raster %d) wrote to UVI address %s during redraw!\n\n"),
-            (unsigned int) iar,
-            (long int)     cpuy,
-                           friendly
+            LLL(MSG_WROTEDURINGREDRAW, "Instruction at %s (raster %d) wrote $%02X to UVI address %s during redraw!\n\n"),
+            friendly,
+            (long int) cpuy,
+            data,
+            friendly2
         );
         set_pause(TYPE_LOG);
     }
@@ -3682,17 +3738,18 @@ MODULE __inline void cpuwrite_2650(int address, UBYTE data)
     {
 #ifndef GAMER
         if (logreadwrites && (memflags[address] & NOWRITE))
-        {   DISCARD getfriendly(address);
+        {   DISCARD number_to_friendly(iar    , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+            DISCARD number_to_friendly(address, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_CPU_ILLEGALWRITE,
-                    "Instruction at $%X (raster %d) is attempting to write $%X to unwritable address %s!\n\n"
+                    "Instruction at %s (raster %d) is attempting to write $%02X to unwritable address %s!\n\n"
                 ),
-                (int) iar,
+                friendly,
                 (int) cpuy,
-                      data,
-                      friendly
+                data,
+                friendly2
             );
             set_pause(TYPE_LOG);
         }
@@ -3709,7 +3766,6 @@ MODULE __inline void cpuwrite_2650(int address, UBYTE data)
      && conditional(&wp[address], data, TRUE, 0)
     )
     {   // assert(!disassembling);
-        DISCARD getfriendly(address);
         if (ISQWERTY)
         {   sprintf(stringchar, " [%s]", asciiname_short[data]);
         } elif (machine == ARCADIA)
@@ -3720,19 +3776,21 @@ MODULE __inline void cpuwrite_2650(int address, UBYTE data)
         {   sprintf(stringchar, " ['%c']", guestchar(data));
         }
 
-        number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0);
+        DISCARD number_to_friendly(iar    , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly(address, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly(oldiar , (STRPTR) friendly3, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
             LLL
             (   MSG_CPU_HITWP,
-                "Instruction at $%X (raster %d) is writing $%X%s to %s! Previous IAR/PC was %s.\n\n"
+                "Instruction at %s (raster %d) is writing $%X%s to %s! Previous IAR/PC was %s.\n\n"
             ),
-            (int) iar,
+            friendly,
             (int) cpuy,
-                  data,
-                  stringchar,
-                  friendly,
-                  friendly2
+            data,
+            stringchar,
+            friendly2,
+            friendly3
         );
         set_pause(TYPE_BP);
     }
@@ -3971,7 +4029,8 @@ MODULE void check_handler(void)
     done = FALSE;
     if ((oldpsu & 0x7F) != (psu & 0x7F))
     {   done = TRUE;
-        zprintf(TEXTPEN_LOG, "PSU has not been restored correctly at $%X (old $%02X vs. new $%02X):\n", iar, oldpsu, psu);
+        DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+        zprintf(TEXTPEN_LOG, "PSU has not been restored correctly at %s (old $%02X vs. new $%02X):\n", friendly, oldpsu, psu);
         // game cannot set Sense bit
         if ((oldpsu & 0x40) != (psu & 0x40)) zprintf(TEXTPEN_LOG, " F (Flag) bit is different.\n");
         // II bit will always be clear in both
@@ -3981,7 +4040,8 @@ MODULE void check_handler(void)
     }
     if (oldpsl != psl)
     {   done = TRUE;
-        zprintf(TEXTPEN_LOG, "PSL has not been restored correctly at $%X (old $%02X vs. new $%02X):\n", iar, oldpsl, psl);
+        DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+        zprintf(TEXTPEN_LOG, "PSL has not been restored correctly at %s (old $%02X vs. new $%02X):\n", friendly, oldpsl, psl);
         if ((oldpsl & 0xC0) != (psl & 0xC0)) zprintf(TEXTPEN_LOG, " CC (Condition Code) is different.\n");
         if ((oldpsl & 0x20) != (psl & 0x20)) zprintf(TEXTPEN_LOG, " IDC (Inter-Digit Carry) bit is different.\n");
         if ((oldpsl & 0x10) != (psl & 0x10)) zprintf(TEXTPEN_LOG, " RS (Register Select) bit is different.\n");
@@ -3993,7 +4053,8 @@ MODULE void check_handler(void)
     for (i = 0; i < 7; i++)
     {   if (oldr[i] != r[i])
         {   done = TRUE;
-            zprintf(TEXTPEN_LOG, "R%d has not been restored correctly at $%X (old $%02X vs. new $%02X)!\n", i, iar, oldr[i], r[i]);
+            DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
+            zprintf(TEXTPEN_LOG, "R%d has not been restored correctly at %s (old $%02X vs. new $%02X)!\n", i, friendly, oldr[i], r[i]);
     }   }
     // We could also check for corruption of the Return Address Stack
 
@@ -4019,19 +4080,20 @@ MODULE __inline UBYTE readreg(int whichreg)
             } else
             {   stringchar[0] = EOS;
             }
-            number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0);
+            number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+            number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 LLL(
                     MSG_ENGINE_HITWP,
-                    "Instruction at $%X (raster %d) is reading $%X%s from %s! Previous IAR/PC was %s.\n" // yes, just one \n
+                    "Instruction at %s (raster %d) is reading $%X%s from %s! Previous IAR/PC was %s.\n" // yes, just one \n
                 ),
-                (unsigned int) iar,
-                (long int)     cpuy,
-                               t,
-                               stringchar,
-                               tokenname[whichreg][style], // this only works if registers are the first tokens
-                               friendly2
+                friendly,
+                (long int) cpuy,
+                t,
+                stringchar,
+                tokenname[whichreg][style], // this only works if registers are the first tokens
+                friendly2
             );
             zprintf(TEXTPEN_LOG, "\n");
             set_pause(TYPE_BP);
@@ -4050,27 +4112,27 @@ MODULE __inline void writereg(int whichreg, UBYTE data)
      && (watchwrites == WATCH_ALL || data != r[whichreg])
      && conditional(&wp[TOKEN_R0 + whichreg], data, TRUE, 0)
     )
-    {   DISCARD getfriendly(TOKEN_R0 + whichreg);
-        if (ISQWERTY)
+    {   if (ISQWERTY)
         {   sprintf(stringchar, " [%s]", asciiname_short[data]);
         } elif (machine != INTERTON)
         {   sprintf(stringchar, " ['%c']", guestchar(data));
         } else
         {   stringchar[0] = EOS;
         }
-        number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0);
+        DISCARD number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
             LLL
             (   MSG_CPU_HITWP,
-                "Instruction at $%X (raster %d) is writing $%X%s to %s! Previous IAR/PC was %s.\n\n"
+                "Instruction at %s (raster %d) is writing $%X%s to %s! Previous IAR/PC was %s.\n\n"
             ),
-            (int) iar,
+            friendly,
             (int) cpuy,
-                  data,
-                  stringchar,
-                  tokenname[whichreg][style], // this only works if registers are the first tokens
-                  friendly2
+            data,
+            stringchar,
+            tokenname[whichreg][style], // this only works if registers are the first tokens
+            friendly2
         );
         set_pause(TYPE_BP);
     }
@@ -4083,7 +4145,7 @@ MODULE __inline void writereg(int whichreg, UBYTE data)
 MODULE void checkabsbranch(void)
 {   if (loginefficient)
     {   if (ea == (ULONG) WRAPMEM(3)) // any jump to the next opcode
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Omit %s at %s.\n\n",
@@ -4095,7 +4157,7 @@ MODULE void checkabsbranch(void)
         (   memory[ea] == opcode -  8 // BCTA,cc (28..31) -> RETC,cc (20..23): suggest RETC,cc
          || memory[ea] ==          23 // BCTA,cc (28..31) -> RETC,UN (    23): suggest RETC,cc
         )
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Replace %s with %s at %s.\n\n",
@@ -4108,7 +4170,7 @@ MODULE void checkabsbranch(void)
         (   memory[ea] == opcode + 24 // BCTA,cc (28..31) -> RETE,cc (52..55): suggest RETE,cc
          || memory[ea] ==          23 // BCTA,cc (28..31) -> RETE,UN (    55): suggest RETE,cc
         )
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Replace %s with %s at %s.\n\n",
@@ -4122,7 +4184,7 @@ MODULE void checkabsbranch(void)
 MODULE void checkrelbranch(void)
 {   if (loginefficient)
     {   if (ea == (ULONG) WRAPMEM(2)) // any jump to the next opcode
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Omit %s at %s.\n\n",
@@ -4135,7 +4197,7 @@ MODULE void checkrelbranch(void)
             (   memory[ea] == 23 // ZBRR (155) -> RETC,un (23): suggest RETC,un (23)
              || memory[ea] == 55 // ZBRR (155) -> RETE,un (55): suggest RETE,un (55)
             )
-            DISCARD getfriendly(iar);
+            DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Replace %s with %s at %s.\n\n",
@@ -4148,7 +4210,7 @@ MODULE void checkrelbranch(void)
         (   memory[ea] == opcode -  4 // BCTR,cc (24..27) -> RETC,cc (20..23): suggest RETC,cc
          || memory[ea] ==          23 // BCTR,cc (24..27) -> RETC,UN (    23): suggest RETC,cc
         )
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Replace %s with %s at %s.\n\n",
@@ -4161,7 +4223,7 @@ MODULE void checkrelbranch(void)
         (   memory[ea] == opcode + 28 // BCTR,cc (24..27) -> RETE,cc (52..55): suggest RETE,cc
          || memory[ea] ==          23 // BCTR,cc (24..27) -> RETE,UN (    55): suggest RETE,cc
         )
-        {   DISCARD getfriendly(iar);
+        {   DISCARD number_to_friendly(iar, (STRPTR) friendly, TRUE, 0, 15, TRUE);
             zprintf
             (   TEXTPEN_LOG,
                 "Replace %s with %s at %s.\n\n",
@@ -4214,8 +4276,8 @@ EXPORT void checkstep(void)
         }
         if (memflags[iar] & BREAKPOINT)
         {   if (conditional(&bp[iar], 0, FALSE, 0))
-            {   DISCARD getfriendly(iar);
-                number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0);
+            {   DISCARD number_to_friendly(iar   , (STRPTR) friendly , TRUE, 0, 15, TRUE);
+                DISCARD number_to_friendly(oldiar, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
                 zprintf
                 (   TEXTPEN_DEBUG,
                     LLL(
@@ -4243,13 +4305,14 @@ MODULE void logindirectbios(void)
      && !(memflags[iar] & BIOS) // we don't log the monitor calling itself
      &&  (memflags[ea ] & BIOS)
     )
-    {   DISCARD getfriendly(ea);
+    {   DISCARD number_to_friendly(ea, (STRPTR) friendly , TRUE, 0, 15, TRUE);
+        DISCARD number_to_friendly(ea, (STRPTR) friendly2, TRUE, 0, 15, TRUE);
         zprintf
         (   TEXTPEN_LOG,
-            LLL(MSG_VECTORCALLED, "%s vector at %s was called by game code at $%X.\n"),
+            LLL(MSG_VECTORCALLED, "%s vector at %s was called by game code at %s.\n"),
             "P1 DOS",
             friendly,
-            (unsigned int) iar
+            friendly2
         );
         switch (machine)
         {

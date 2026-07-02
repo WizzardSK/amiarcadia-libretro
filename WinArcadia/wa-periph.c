@@ -81,7 +81,7 @@ IMPORT       int                   angles,
                                    cd2650_dosver,
                                    cd2650_userdrives,
                                    colourset,
-                                   diskbyte,
+                                   diskblocksize,
                                    drive_mode,
                                    headerlength,
                                    lockhoriz,
@@ -98,8 +98,6 @@ IMPORT       int                   angles,
                                    players,
                                    pongspeed,
                                    pong_variant,
-                                   printerwidth_view,
-                                   printerheight_view,
                                    prtscrolly,
                                    prtunit,
                                    recmode,
@@ -112,6 +110,7 @@ IMPORT       int                   angles,
                                    tapeframe,
                                    tapekind,
                                    tapemode,
+                                   twin_userdrives,
                                    watchreads,
                                    watchwrites,
                                    viewingdrive;
@@ -119,24 +118,19 @@ IMPORT       double                mechpower_kw,
                                    elecpower_kw,
                                    samplewhere_f;
 IMPORT       UBYTE*                TapeCopy;
-IMPORT       ULONG*                canvasdisplay[CANVASES];
 IMPORT       FILE*                 TapeHandle;
 IMPORT const STRPTR                mdcrfwdstr[8],
                                    mdcrrevstr[4];
 IMPORT       HBRUSH                hBrush[EMUBRUSHES];
 IMPORT       HICON                 spinicon[2];
 IMPORT       HINSTANCE             InstancePtr;
-IMPORT       HWND                  SubWindowPtr[SUBWINDOWS],
-                                   TipsPtr[SUBWINDOWS];
-IMPORT       struct DriveStruct    drive[DRIVES_MAX];
-IMPORT       struct IOPortStruct   ioport[258];
-IMPORT       struct MachineStruct  machines[MACHINES];
-IMPORT const struct MemMapToStruct memmap_to[MEMMAPS];
-IMPORT       struct PrinterStruct  printer[2];
-IMPORT       struct
-{   BITMAPINFOHEADER Header;
-    DWORD            Colours[3];
-} CanvasBitMapInfo[CANVASES];
+IMPORT       struct CanvasStruct    canvas[CANVASES];
+IMPORT       struct DriveStruct     drive[DRIVES_MAX];
+IMPORT       struct IOPortStruct    ioport[258];
+IMPORT       struct MachineStruct   machines[MACHINES];
+IMPORT const struct MemMapToStruct  memmap_to[MEMMAPS];
+IMPORT       struct PrinterStruct   printer[2];
+IMPORT       struct SubWindowStruct subwin[SUBWINDOWS];
 
 // MODULE VARIABLES-------------------------------------------------------
 
@@ -181,6 +175,68 @@ MODULE const int taperesource[TAPEIMAGES] =
   IDB_ANIMREC3,       // 33
 };
 
+MODULE const struct
+{   const int xedge,     yedge,     //                  sector line (extended to edge of square)
+              xarcstart, yarcstart, // just beyond      sector line (extended to edge of square)
+              xarcend,   yarcend,   // just before next sector line (extended to edge of square)
+              xstart,    ystart,    // sector line end
+              xend,      yend;      // sector line start
+} binbug_sectorpoint[BINBUG_SECTORS] = {
+{ 107,   0, 106,   0,  25,   0, 107,   5, 107,  85 }, // sector  1
+{  24,   0,  23,   0,   0,  70,  45,  27,  94,  90 }, // sector  2
+{   0,  71,   0,  72,   0, 142,  11,  75,  86, 100 }, // sector  3
+{   0, 143,   0, 144,  23, 214,  11, 139,  86, 114 }, // sector  4
+{  24, 214,  25, 214, 106, 214,  45, 187,  94, 124 }, // sector  5
+{ 107, 214, 108, 214, 189, 214, 107, 209, 107, 129 }, // sector  6
+{ 190, 214, 191, 214, 214, 144, 169, 187, 120, 124 }, // sector  7
+{ 214, 143, 214, 142, 214,  72, 203, 139, 128, 114 }, // sector  8
+{ 214,  71, 214,  70, 191,   0, 203,  75, 128, 100 }, // sector  9
+{ 190,   0, 189,   0, 108,   0, 169,  27, 120,  90 }, // sector 10
+}, cd2650_sectorpoint[CD2650_SECTORS] = {
+{ 107,   0, 106,   0,  22,   0, 107,   5, 107,  84 }, // sector 1
+{  43-22,0,  20,   0,   0,  79,  43,  28,  92,  89 }, // sector 2
+{   0,  80,   0,  81,   0, 163,   8,  82,  85, 101 }, // sector 3
+{   0, 164,   0, 165,  59, 214,  18, 155,  87, 118 }, // sector 4
+{  60, 214,  61, 214, 152, 214,  67, 201,  98, 128 }, // sector 5
+{ 153, 214, 154, 214, 214, 165, 147, 201, 116, 128 }, // sector 6
+{ 214, 164, 214, 163, 214,  81, 196, 155, 127, 118 }, // sector 7
+{ 214,  80, 214,  79, 197,   0, 206,  82, 129, 101 }, // sector 8
+{ 196,   0, 195,   0, 108,   0, 173,  28, 122,  89 }, // sector 9
+}, twin_sectorpoint[TWIN_SECTORS] = {
+{ 164,   0, 163,   0, 132,   0, 164,   5, 164, 120 }, //  0
+{ 131,   0, 130,   0,  91,   0, 133,   8, 155, 121 },
+{  90,   0,  89,   0,  50,   0,  99,  19, 146, 124 },
+{  49,   0,  48,   0,   1,   0,  73,  34, 139, 128 },
+{   0,   0,   0,   1,   0,  48,  52,  52, 133, 133 },
+{   0,  49,   0,  50,   0,  89,  34,  73, 128, 139 },
+{   0,  90,   0,  91,   0, 130,  19,  99, 124, 146 },
+{   0, 131,   0, 132,   0, 163,   8, 133, 121, 155 },
+{   0, 164,   0, 165,   0, 196,   5, 164, 120, 164 },
+{   0, 197,   0, 198,   0, 237,   8, 195, 121, 173 },
+{   0, 238,   0, 239,   0, 278,  19, 229, 124, 182 }, // 10
+{   0, 279,   0, 280,   0, 327,  34, 255, 128, 189 },
+{   0, 328,   1, 328,  48, 328,  52, 276, 133, 195 },
+{  49, 328,  50, 328,  89, 328,  73, 294, 139, 200 },
+{  90, 328,  91, 328, 130, 328,  99, 309, 146, 204 },
+{ 131, 328, 132, 328, 163, 328, 133, 320, 155, 207 },
+{ 164, 328, 165, 328, 196, 328, 164, 323, 164, 208 },
+{ 197, 328, 198, 328, 237, 328, 195, 320, 173, 207 },
+{ 238, 328, 239, 328, 278, 328, 229, 309, 182, 204 },
+{ 279, 328, 280, 328, 327, 328, 255, 294, 189, 200 },
+{ 328, 328, 328, 327, 328, 280, 276, 276, 195, 195 }, // 20
+{ 328, 279, 328, 278, 328, 239, 294, 255, 200, 189 },
+{ 328, 238, 328, 237, 328, 198, 309, 229, 204, 182 },
+{ 328, 197, 328, 196, 328, 165, 320, 195, 207, 173 },
+{ 328, 164, 328, 163, 328, 132, 323, 164, 208, 164 },
+{ 328, 131, 328, 130, 328,  91, 320, 133, 207, 155 },
+{ 328,  90, 328,  89, 328,  50, 309,  99, 204, 146 },
+{ 328,  49, 328,  48, 328,   1, 294,  73, 200, 139 },
+{ 328,   0, 327,   0, 280,   0, 276,  52, 195, 133 },
+{ 279,   0, 278,   0, 239,   0, 255,  34, 189, 128 },
+{ 238,   0, 237,   0, 198,   0, 229,  19, 182, 124 }, // 30
+{ 197,   0, 196,   0, 165,   0, 195,   8, 173, 121 }, // 31
+};
+
 // MODULE FUNCTIONS-------------------------------------------------------
 
 LRESULT CALLBACK TapeEditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -207,26 +263,21 @@ EXPORT void open_floppydrive(FLAG needupdate)
     }
 
     if (needupdate)
-    {   dir_disk(TRUE, 0);
-        if (machine == TWIN)
-        {   dir_disk(TRUE, 1);
-    }   }
+    {   dir_disk(TRUE, viewingdrive);
+    }
     oldspinning = FALSE; // needed even if it actually is spinning
     switch (machine)
     {
     case  BINBUG:
     case  CD2650:
         open_subwindow(SUBWINDOW_FLOPPYDRIVE, MAKEINTRESOURCE(IDD_FLOPPYDRIVE_BINBUG), FloppyDriveDlgProc);
+        make_tips(SUBWINDOW_FLOPPYDRIVE, 256, ID_DISK_0);
     acase TWIN:
         open_subwindow(SUBWINDOW_FLOPPYDRIVE, MAKEINTRESOURCE(IDD_FLOPPYDRIVES_TWIN ), FloppyDriveDlgProc);
+        make_tips(SUBWINDOW_FLOPPYDRIVE, 128, ID_DISK_0);
     }
-    make_tips(SUBWINDOW_FLOPPYDRIVE, 256, ID_DISK_0);
-    if (machine == TWIN)
-    {   update_floppydrive(3, 0);
-        update_floppydrive(3, 1);
-    } else
-    {   update_floppydrive(3, viewingdrive);
-}   }
+    update_floppydrive(TRUE, viewingdrive);
+}
 
 EXPORT void open_industrial(void)
 {   if (machine != PIPBUG)
@@ -312,7 +363,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
     switch (Message)
     {
     case WM_INITDIALOG:
-        SubWindowPtr[SUBWINDOW_PRINTER] = hwnd;
+        subwin[SUBWINDOW_PRINTER].hwnd = hwnd;
 
         if (machine == TWIN)
         {   SetWindowText(hwnd, LLL(              MSG_HAIL_C306    , "Centronics Model 306C Printer Output"));
@@ -327,19 +378,19 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             setdlgtext(   hwnd, IDC_RIBBON_BLUE , MSG_LABEL_BLUE   , "Blue"                                 );
 
             DISCARD CheckRadioButton
-            (   SubWindowPtr[SUBWINDOW_PRINTER],
+            (   subwin[SUBWINDOW_PRINTER].hwnd,
                 IDC_PRINTERUNIT_1ST,
                 IDC_PRINTERUNIT_2ND,
                 IDC_PRINTERUNIT_1ST + prtunit // prtunit is 0..1
             );
             DISCARD CheckRadioButton
-            (   SubWindowPtr[SUBWINDOW_PRINTER],
+            (   subwin[SUBWINDOW_PRINTER].hwnd,
                 IDC_DEFCPL_80,
                 IDC_DEFCPL_132,
                 IDC_DEFCPL_80 + printer[prtunit].condensed // condensed is 0..1
             );
             DISCARD CheckRadioButton
-            (   SubWindowPtr[SUBWINDOW_PRINTER],
+            (   subwin[SUBWINDOW_PRINTER].hwnd,
                 IDC_RIBBON_BLACK,
                 IDC_RIBBON_BLUE,
                 IDC_RIBBON_BLACK + printer[prtunit].ribbon // ribbon is 0..3
@@ -352,7 +403,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             setdlgtext(   hwnd, IDL_PRINTERCPL,      MSG_PRINTERCPL,   "Characters per Line"               );
 
             DISCARD CheckRadioButton
-            (   SubWindowPtr[SUBWINDOW_PRINTER],
+            (   subwin[SUBWINDOW_PRINTER].hwnd,
                 IDC_PRINTERCPL_16,
                 IDC_PRINTERCPL_32,
                 IDC_PRINTERCPL_16 + narrowprinter // narrowprinter is 0..1
@@ -388,7 +439,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         {   ShowWindow(GetDlgItem(hwnd, IDC_CANDY3), SW_SHOW);
         }
 
-        move_subwindow(SUBWINDOW_PRINTER, hwnd);
+        move_subwindow(SUBWINDOW_PRINTER);
 
         change_printer();
         // can't do update_printer() in WM_INITDIALOG
@@ -399,7 +450,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         }
     acase WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_PRINTER] = NULL;
+        subwin[SUBWINDOW_PRINTER].hwnd = NULL;
     acase WM_DRAWITEM:
         switch (wParam)
         {
@@ -453,7 +504,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 IDC_DEFCPL_80 + printer[prtunit].condensed
             );
             DISCARD CheckRadioButton
-            (   SubWindowPtr[SUBWINDOW_PRINTER],
+            (   subwin[SUBWINDOW_PRINTER].hwnd,
                 IDC_RIBBON_BLACK,
                 IDC_RIBBON_BLUE,
                 IDC_RIBBON_BLACK + printer[prtunit].ribbon // ribbon is 0..3
@@ -475,7 +526,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         case IDC_RIBBON_BLUE:
             printer[prtunit].ribbon = gid - IDC_RIBBON_BLACK;
             DISCARD CheckRadioButton
-            (   SubWindowPtr[SUBWINDOW_PRINTER],
+            (   subwin[SUBWINDOW_PRINTER].hwnd,
                 IDC_RIBBON_BLACK,
                 IDC_RIBBON_BLUE,
                 IDC_RIBBON_BLACK + printer[prtunit].ribbon // ribbon is 0..3
@@ -492,7 +543,7 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             eachpage = neweachpage;
         }
     return TRUE;
-    case WM_LBUTTONDBLCLK: // no need for acase
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         mousex = (int) LOWORD(lParam); // pixels -> dialog units
         mousey = (int) HIWORD(lParam); // pixels -> dialog units
@@ -509,24 +560,23 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             ShowWindow(GetDlgItem(hwnd, IDC_CANDY3), SW_SHOW);
         }
     return FALSE;
-    case WM_PAINT: // no need for acase
-        SubWindowPtr[SUBWINDOW_PRINTER] = hwnd;
+    case WM_PAINT:
         BeginPaint(hwnd, &localps);
         update_printer();
         EndPaint(hwnd, &localps);
     return FALSE; // important!
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_KEYDOWN: // no need for acase
+    case WM_KEYDOWN:
         scancode = (lParam & 33488896) >> 16;
         handle_keydown(scancode);
     return FALSE;
-    case WM_KEYUP: // no need for acase
+    case WM_KEYUP:
         scancode = (lParam & 33488896) >> 16;
         handle_keyup(scancode);
     return FALSE;
-    case WM_VSCROLL: // no need for acase
+    case WM_VSCROLL:
         switch (LOWORD(wParam))
         {
         case SB_THUMBPOSITION:
@@ -588,51 +638,33 @@ MODULE BOOL CALLBACK PrinterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 } else
                 {   prtscrolly += C306PRINTERY;
             }   }
-            DISCARD SetScrollPos(GetDlgItem(SubWindowPtr[SUBWINDOW_PRINTER], IDC_PRINTERVSCROLL), SB_CTL, prtscrolly, TRUE);
+            DISCARD SetScrollPos(GetDlgItem(subwin[SUBWINDOW_PRINTER].hwnd, IDC_PRINTERVSCROLL), SB_CTL, prtscrolly, TRUE);
             change_printer();
             update_printer();
         }
     return TRUE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
 }
 
 EXPORT void update_printer(void)
-{   TRANSIENT HDC PrinterRastPtr;
-
-    if
-    (   !SubWindowPtr[SUBWINDOW_PRINTER]
-     || !GetDlgItem(SubWindowPtr[SUBWINDOW_PRINTER], IDC_PRINTER)
+{   if
+    (   !subwin[SUBWINDOW_PRINTER].hwnd
+     || !GetDlgItem(subwin[SUBWINDOW_PRINTER].hwnd, IDC_PRINTER)
     )
     {   return; // important!
     }
 
-    PrinterRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_PRINTER], IDC_PRINTER));
-    DISCARD StretchDIBits
-    (   PrinterRastPtr,
-        0,                  // dest leftx
-        0,                  // dest topy
-        printerwidth_view,  // dest width
-        printerheight_view, // dest height
-        0,                  // source leftx
-        0,                  // source topy
-        printerwidth_view,  // source width
-        printerheight_view, // source height
-        canvasdisplay[CANVAS_PRINTER], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_PRINTER], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS,     // format of data
-        SRCCOPY             // blit mode
-    );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_PRINTER], IDC_PRINTER), PrinterRastPtr);
+    wpa8(CANVAS_PRINTER, 0, 0);
 
     if (printer[prtunit].page > 999)
     {   strcpy(gtempstring, "###");
     } else
     {   sprintf(gtempstring, "%d", printer[prtunit].page);
     }
-    SetDlgItemText(SubWindowPtr[SUBWINDOW_PRINTER], IDC_PAGE, gtempstring);
+    SetDlgItemText(subwin[SUBWINDOW_PRINTER].hwnd, IDC_PAGE, gtempstring);
 }
 
 EXPORT void update_floppytips(void)
@@ -749,11 +781,11 @@ EXPORT void update_floppytips(void)
 
         ti.cbSize   = sizeof(TOOLINFO);
         ti.uFlags   = TTF_SUBCLASS | TTF_CENTERTIP;
-        ti.hwnd     = SubWindowPtr[SUBWINDOW_FLOPPYDRIVE];
+        ti.hwnd     = subwin[SUBWINDOW_FLOPPYDRIVE].hwnd;
         ti.uId      = i;
         ti.hinst    = InstancePtr;
         ti.lpszText = tempstring; // this gets copied
-        SendMessage(TipsPtr[SUBWINDOW_FLOPPYDRIVE], TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
+        SendMessage(subwin[SUBWINDOW_FLOPPYDRIVE].tips, TTM_UPDATETIPTEXT, 0, (LPARAM) (LPTOOLINFO) &ti);
 }   }
 
 EXPORT void edit_dips(void)
@@ -796,6 +828,8 @@ MODULE BOOL CALLBACK TapeDeckDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_TAPEDECK].hwnd = hwnd;
+
         setdlgtext(hwnd, IDL_POSITION        , MSG_HAIL_POSITION, "Position"               );
         setdlgtext(hwnd, IDL_SKEWING         , MSG_HAIL_SKEWING , "Skewing"                );
         setdlgtext(hwnd, IDL_INTERFACE       , MSG_INTERFACE    , "Interface"              );
@@ -902,10 +936,9 @@ MODULE BOOL CALLBACK TapeDeckDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             (LONG) TapeEditProc
         );
 
-        move_subwindow(SUBWINDOW_TAPEDECK, hwnd);
-
+        move_subwindow(SUBWINDOW_TAPEDECK);
     return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
@@ -1075,7 +1108,7 @@ MODULE BOOL CALLBACK TapeDeckDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         {   DeleteObject(tapeimage[i]);
         }
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_TAPEDECK] = NULL;
+        subwin[SUBWINDOW_TAPEDECK].hwnd = NULL;
         updatemenu(MENUITEM_TAPEDECK);
     return TRUE;
     case WM_CTLCOLORSTATIC:
@@ -1093,7 +1126,7 @@ MODULE BOOL CALLBACK TapeDeckDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
                                   }
             default:                  SetBkColor((HDC) wParam, EMUPEN_GREEN ); return (LRESULT) hBrush[EMUBRUSH_GREEN];
             }
-        case IDC_MDCRSTATUS:
+        case IDC_MDCRSTATUS: // no need for acase
             if (mdcrblocks == 0)
             {   SetBkColor((HDC) wParam, EMUPEN_WHITE);
                 return (LRESULT) hBrush[EMUBRUSH_WHITE];
@@ -1112,66 +1145,21 @@ MODULE BOOL CALLBACK TapeDeckDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         return TRUE;
         }
     case WM_DESTROY: // no need for acase
-        SubWindowPtr[SUBWINDOW_TAPEDECK] = NULL;
+        subwin[SUBWINDOW_TAPEDECK].hwnd = NULL;
         SetWindowLong(GetDlgItem(hwnd, IDC_SKEW2), GWL_WNDPROC, (LONG) wpOldTapeEditProc);
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_PAINT: // no need for acase
-        SubWindowPtr[SUBWINDOW_TAPEDECK] = hwnd;
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
         update_tapedeck(TRUE);
         DISCARD EndPaint(hwnd, &localps);
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
-}
-
-EXPORT void redraw_roll(int whichunit)
-{   FAST HDC RollRastPtr;
-
-    RollRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_ROLL2 : IDC_ROLL));
-    DISCARD StretchDIBits
-    (   RollRastPtr,
-        0,               // dest leftx
-        0,               // dest topy
-        ROLLWIDTH,       // dest width
-        ROLLHEIGHT,      // dest height
-        0,               // source leftx
-        0,               // source topy
-        ROLLWIDTH,       // source width
-        ROLLHEIGHT,      // source height
-        canvasdisplay[whichunit ? CANVAS_ROLL2 : CANVAS_ROLL1], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[whichunit ? CANVAS_ROLL2 : CANVAS_ROLL1], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS,  // format of data
-        SRCCOPY          // blit mode
-    );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], IDC_ROLL), RollRastPtr);
-}
-
-EXPORT void redraw_waveform(void)
-{   FAST HDC WaveformRastPtr;
-
-    WaveformRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_WAVEFORM));
-    DISCARD StretchDIBits
-    (   WaveformRastPtr,
-        0,               // dest leftx
-        0,               // dest topy
-        WAVEFORMWIDTH,   // dest width
-        WAVEFORMHEIGHT,  // dest height
-        0,               // source leftx
-        0,               // source topy
-        WAVEFORMWIDTH,   // source width
-        WAVEFORMHEIGHT,  // source height
-        canvasdisplay[CANVAS_WAVE], // pointer to the bits
-        (const struct tagBITMAPINFO*) &CanvasBitMapInfo[CANVAS_WAVE], // pointer to BITMAPINFO structure
-        DIB_RGB_COLORS,  // format of data
-        SRCCOPY          // blit mode
-    );
-    ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_WAVEFORM), WaveformRastPtr);
 }
 
 LRESULT CALLBACK TapeEditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -1184,7 +1172,7 @@ LRESULT CALLBACK TapeEditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
         case VK_TAB:
         case VK_RETURN:
-            GetWindowText(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_SKEW2), skewstring, 4 + 1);
+            GetWindowText(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_SKEW2), skewstring, 4 + 1);
             temp = atoi(skewstring);
             if (temp < -96)
             {   temp = -96;
@@ -1192,9 +1180,9 @@ LRESULT CALLBACK TapeEditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {   temp = 96;
             }
             stcl_d(skewstring, temp);
-            SetDlgItemText(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_SKEW2, skewstring);
+            SetDlgItemText(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_SKEW2, skewstring);
             tapeskewage = (UBYTE) (128 + temp);
-            SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_SKEW), TBM_SETPOS, TRUE, temp);
+            SendMessage(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_SKEW), TBM_SETPOS, TRUE, temp);
             update_waveform();
         return 0; // indicate that we processed the message
     }   }
@@ -1218,6 +1206,8 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_PAPERTAPE].hwnd = hwnd;
+
         setdlgtext(hwnd, IDL_POSITION         , MSG_HAIL_POSITION  , "Position"           );
         setdlgtext(hwnd, IDC_CREATEPAPERTAPE  , MSG_CREATEPAPERTAPE, "Create papertape...");
         setdlgtext(hwnd, IDC_INSERTPAPERTAPE  , MSG_INSERTPAPERTAPE, "Insert papertape...");
@@ -1254,9 +1244,9 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
             rollrect[1].top      = thepoint.y;
         }
 
-        move_subwindow(SUBWINDOW_PAPERTAPE, hwnd);
+        move_subwindow(SUBWINDOW_PAPERTAPE);
     return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
@@ -1381,7 +1371,7 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
     acase WM_CLOSE:
         clearkybd();
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_PAPERTAPE] = NULL;
+        subwin[SUBWINDOW_PAPERTAPE].hwnd = NULL;
         updatemenu(MENUITEM_PAPERTAPE);
     return TRUE;
     case WM_CTLCOLORSTATIC:
@@ -1414,13 +1404,12 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
         return TRUE;
         }
     case WM_DESTROY: // no need for acase
-        SubWindowPtr[SUBWINDOW_PAPERTAPE] = NULL;
+        subwin[SUBWINDOW_PAPERTAPE].hwnd = NULL;
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_PAINT: // no need for acase
-        SubWindowPtr[SUBWINDOW_PAPERTAPE] = hwnd;
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
         update_papertape(0, TRUE);
         if (machine == TWIN)
@@ -1428,15 +1417,15 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
         }
         DISCARD EndPaint(hwnd, &localps);
     return FALSE;
-    case WM_KEYDOWN: // no need for acase
+    case WM_KEYDOWN:
         scancode = (lParam & 33488896) >> 16;
         handle_keydown(scancode);
     return FALSE;
-    case WM_KEYUP: // no need for acase
+    case WM_KEYUP:
         scancode = (lParam & 33488896) >> 16;
         handle_keyup(scancode);
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
@@ -1453,6 +1442,8 @@ MODULE BOOL CALLBACK IndustrialDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_INDUSTRIAL].hwnd = hwnd;
+
         sprintf
         (   gtempstring,
             "%s: ",
@@ -1582,10 +1573,10 @@ MODULE BOOL CALLBACK IndustrialDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
 
         SendMessage(    GetDlgItem(hwnd, IDC_PERIPHERAL       ), CB_SETCURSEL  , (WPARAM) pipbug_periph, (LPARAM) 0);
 
-        move_subwindow(SUBWINDOW_INDUSTRIAL, hwnd);
+        move_subwindow(SUBWINDOW_INDUSTRIAL);
         SetFocus(hwnd);
     return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_HSCROLL:
         if (lParam == (long) GetDlgItem(hwnd, IDC_PITCHSPEED))
@@ -1666,7 +1657,7 @@ MODULE BOOL CALLBACK IndustrialDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
                 open_industrial();
             }
         acase IDC_TOGGLESUBWINDOW:
-            if (SubWindowPtr[SUBWINDOW_PRINTER])
+            if (subwin[SUBWINDOW_PRINTER].hwnd)
             {   close_subwindow(SUBWINDOW_PRINTER);
             } else
             {   tools_printer();
@@ -1707,22 +1698,21 @@ MODULE BOOL CALLBACK IndustrialDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
     acase WM_CLOSE:
         clearkybd();
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_INDUSTRIAL] = NULL;
+        subwin[SUBWINDOW_INDUSTRIAL].hwnd = NULL;
         updatemenu(MENUITEM_INDUSTRIAL);
     return TRUE;
-    case WM_DESTROY: // no need for acase
-        SubWindowPtr[SUBWINDOW_INDUSTRIAL] = NULL;
+    case WM_DESTROY:
+        subwin[SUBWINDOW_INDUSTRIAL].hwnd = NULL;
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_PAINT: // no need for acase
-        SubWindowPtr[SUBWINDOW_INDUSTRIAL] = hwnd;
+    case WM_PAINT:
         BeginPaint(hwnd, &localps);
         update_industrial(TRUE);
         DISCARD EndPaint(hwnd, &localps);
     return FALSE; // important!
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
@@ -1737,9 +1727,11 @@ MODULE BOOL CALLBACK SI50DIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         do_autopause(wParam, lParam);
     acase WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+        subwin[SUBWINDOW_DIPS].hwnd = NULL;
         updatemenu(MENUITEM_DIPSWITCHES);
     acase WM_INITDIALOG:
+        subwin[SUBWINDOW_DIPS].hwnd = hwnd;
+
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_S_DIPS, "Signetics Instructor 50 DIP Switches"));
         setdlgtext(hwnd, IDL_PARALLELIO,           MSG_PARALLELIO,    "Parallel I/O"          );
         setdlgtext(hwnd, IDC_PARALLEL_MEMMAPPED,   MSG_MEMORYIO,      "Memory $0FFF"          );
@@ -1752,17 +1744,16 @@ MODULE BOOL CALLBACK SI50DIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         setdlgtext(hwnd, IDC_INTSELECTOR_ACLINE,   MSG_ACLINE,        "A.C. Line"             );
         setdlgtext(hwnd, IDC_INTSELECTOR_KYBD,     MSG_KEYBOARD,      "Keyboard"              );
 
-        SubWindowPtr[SUBWINDOW_DIPS] = hwnd;
         si50_updatedips(TRUE);
 
-        move_subwindow(SUBWINDOW_DIPS, hwnd);
+        move_subwindow(SUBWINDOW_DIPS);
     return TRUE;
-    case WM_COMMAND: // no need for acase
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDOK:
             DestroyWindow(hwnd);
-            SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+            subwin[SUBWINDOW_DIPS].hwnd = NULL;
             updatemenu(MENUITEM_DIPSWITCHES);
         acase IDC_INTERRUPTS_DIRECT:    s_id = INTDIR_DIRECT;
         acase IDC_INTERRUPTS_INDIRECT:  s_id = INTDIR_INDIRECT;
@@ -1786,10 +1777,10 @@ MODULE BOOL CALLBACK SI50DIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 
         si50_updatedips(FALSE);
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
 
@@ -1805,7 +1796,7 @@ MODULE BOOL CALLBACK ZaccariaDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam,
     case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_INITDIALOG:
-        SubWindowPtr[SUBWINDOW_DIPS] = hwnd;
+        subwin[SUBWINDOW_DIPS].hwnd = hwnd;
 
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_G_DIPS, "Zaccaria DIP Switches"));
 
@@ -1859,12 +1850,11 @@ MODULE BOOL CALLBACK ZaccariaDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam,
         zaccaria_ghostdips();
         zaccaria_updatedips();
 
-        move_subwindow(SUBWINDOW_DIPS, hwnd);
-
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+        move_subwindow(SUBWINDOW_DIPS);
+    return TRUE;
+    case WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+        subwin[SUBWINDOW_DIPS].hwnd = NULL;
         updatemenu(MENUITEM_DIPSWITCHES);
     acase WM_COMMAND:
         gid = (int) LOWORD(wParam);
@@ -1877,7 +1867,7 @@ MODULE BOOL CALLBACK ZaccariaDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam,
             {
             case IDOK:
                 DestroyWindow(hwnd);
-                SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+                subwin[SUBWINDOW_DIPS].hwnd = NULL;
                 updatemenu(MENUITEM_DIPSWITCHES);
             acase IDC_COLLISIONS:
                 // assert(memmap == MEMMAP_LASERBATTLE || memmap == MEMMAP_LAZARIAN);
@@ -1907,12 +1897,12 @@ MODULE BOOL CALLBACK ZaccariaDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam,
                 } else
                 {   update_gridval(0);
         }   }   }
-        return FALSE;
-    case WM_MOVE: // no need for acase
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
     }
 
     return TRUE;
@@ -1926,6 +1916,8 @@ MODULE BOOL CALLBACK PongDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
     case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_INITDIALOG:
+        subwin[SUBWINDOW_DIPS].hwnd = hwnd;
+
         setdlgtext(hwnd, IDL_BATS,           MSG_BATSIZE         , "Bat size (F4)"         );
         setdlgtext(hwnd, IDC_BATS_SHORT,     MSG_BATSIZE_SHORT   , "Short"                 );
         setfont(hwnd, IDC_BATS_SHORTTALL);
@@ -2005,15 +1997,13 @@ MODULE BOOL CALLBACK PongDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         SendMessage(GetDlgItem(hwnd, IDC_ROBOTRIGHT), TBM_SETRANGE, FALSE, MAKELONG(0, ROBOTSPEED_INFINITE));
         SendMessage(GetDlgItem(hwnd, IDC_ROBOTRIGHT), TBM_SETPOS,   TRUE,  robotspeed[1]);
 
-        SubWindowPtr[SUBWINDOW_DIPS] = hwnd;
         pong_updatedips();
 
-        move_subwindow(SUBWINDOW_DIPS, hwnd);
-
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+        move_subwindow(SUBWINDOW_DIPS);
+    return TRUE;
+    case WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+        subwin[SUBWINDOW_DIPS].hwnd = NULL;
         updatemenu(MENUITEM_DIPSWITCHES);
     acase WM_HSCROLL:
         if (lParam == (long) GetDlgItem(hwnd, IDC_ROBOTLEFT))
@@ -2036,7 +2026,7 @@ MODULE BOOL CALLBACK PongDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         {
         case IDOK:
             DestroyWindow(hwnd);
-            SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+            subwin[SUBWINDOW_DIPS].hwnd = NULL;
             updatemenu(MENUITEM_DIPSWITCHES);
         acase IDC_PONGMACHINE_1976: pong_machine = PONGMACHINE_1976; calc_margins(); draw_margins(); resize(size, TRUE); redrawscreen();
         acase IDC_PONGMACHINE_1977: pong_machine = PONGMACHINE_1977; calc_margins(); draw_margins(); resize(size, TRUE); redrawscreen();
@@ -2088,12 +2078,12 @@ MODULE BOOL CALLBACK PongDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         }   }
 
         pong_updatedips();
-        return FALSE;
-    case WM_MOVE: // no need for acase
+    return FALSE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
     }
 
     return TRUE;
@@ -2106,26 +2096,26 @@ MODULE BOOL CALLBACK MalzakDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
         do_autopause(wParam, lParam);
     acase WM_CLOSE:
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+        subwin[SUBWINDOW_DIPS].hwnd = NULL;
         updatemenu(MENUITEM_DIPSWITCHES);
     acase WM_INITDIALOG:
+        subwin[SUBWINDOW_DIPS].hwnd = hwnd;
+
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_M_DIPS, "Malzak 2 DIP Switches"));
         setdlgtext(hwnd, IDL_TESTSWITCH, MSG_SWITCH,  "Test Switch (F4)");
         setdlgtext(hwnd, IDC_SWITCH_1,   MSG_SWITCH1, "1 (normal play)");
         setdlgtext(hwnd, IDC_SWITCH_4,   MSG_SWITCH4, "4 (change settings)");
 
-        SubWindowPtr[SUBWINDOW_DIPS] = hwnd;
         malzak2_updatedips();
 
-        move_subwindow(SUBWINDOW_DIPS, hwnd);
-
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+        move_subwindow(SUBWINDOW_DIPS);
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDOK:
             DestroyWindow(hwnd);
-            SubWindowPtr[SUBWINDOW_DIPS] = NULL;
+            subwin[SUBWINDOW_DIPS].hwnd = NULL;
             updatemenu(MENUITEM_DIPSWITCHES);
         acase IDC_SWITCH_1:
             memory[0x1400 + PVI_P1PADDLE] = 0xF0;
@@ -2136,12 +2126,12 @@ MODULE BOOL CALLBACK MalzakDIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, L
         acase IDC_SWITCH_4:
             memory[0x1400 + PVI_P1PADDLE] = 0x00;
         }
-        return TRUE;
-    case WM_MOVE: // no need for acase
+    return TRUE;
+    case WM_MOVE:
         reset_fps();
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
     }
 
     return TRUE;
@@ -2155,18 +2145,20 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
                           temp,
                           viewbyte,
                           viewing,
-                          whichdrive;
+                          whichdrive,
+                          whichpen;
     FAST      LONG        gid;
     FAST      HICON       localhicon;
     FAST      PAINTSTRUCT localps;
     FAST      POINT       thepoint;
     FAST      RECT        localrect;
-    PERSIST   int         howmany;
     PERSIST   RECT        diskrect[256];
 
     switch (Message)
     {
     case WM_INITDIALOG:
+        subwin[SUBWINDOW_FLOPPYDRIVE].hwnd = hwnd;
+
         setdlgtext(hwnd, IDC_CREATEDISK      , MSG_CREATEDISK   , "Create disk"    );
         setdlgtext(hwnd, IDC_VERBOSEDISK     , MSG_VERBOSETAPE  , "Verbose output?");
         setdlgtext(hwnd, IDC_INSERTDISK      , MSG_INSERTDISK   , "Insert disk..." );
@@ -2178,10 +2170,10 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
         setdlgtext(hwnd, IDL_SECTOR          , MSG_SECTOR       , "Sector:"        );
         setdlgtext(hwnd, IDL_BYTE            , MSG_BYTE         , "Byte: $"        );
         setdlgtext(hwnd, IDL_BLOCKCONTENTS   , MSG_BLOCKCONTENTS, "Sector Contents");
-        setdlgtext(hwnd, IDL_VIEWDISKAS      , MSG_VIEWAS       , "View as"        );
+        setdlgtext(hwnd, IDL_VIEWDISKAS      , MSG_VIEWAS2      , "View as:"       );
         setdlgtext(hwnd, IDC_VIEWDISKAS_HEX  , MSG_HEXADECIMAL2 , "Hexadecimal"    );
         setdlgtext(hwnd, IDC_VIEWDISKAS_CHARS, MSG_CHARACTERS   , "Characters"     );
-        setdlgtext(hwnd, IDL_FILENAME1       , MSG_FILENAME     , "Filename:"      );
+        setdlgtext(hwnd, IDL_FILENAME        , MSG_FILENAME     , "Filename:"      );
 
         SendMessage(GetDlgItem(hwnd, IDC_VERBOSEDISK  ), BM_SETCHECK, verbosedisk ? BST_CHECKED : BST_UNCHECKED, 0);
 
@@ -2190,7 +2182,6 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
         case BINBUG:
             setdlgtext(hwnd, IDL_DRIVE        , MSG_DRIVE         , "Drive:"         );
             SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT ), BM_SETCHECK, drive[viewingdrive].writeprotect ? BST_CHECKED : BST_UNCHECKED, 0);
-            howmany = 256;
             diskicon = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_DISKEMPTY_525));
             localhicon = LoadImage(InstancePtr, MAKEINTRESOURCE(memmap_to[memmap].icon), IMAGE_ICON, 32, 32, 0);
             SendMessage(GetDlgItem(hwnd, IDL_GLYPH      ), STM_SETICON    , (WPARAM) localhicon, (LPARAM) 0);
@@ -2198,9 +2189,8 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             spinicon[0] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_BINBUG_DIM ), IMAGE_ICON, 48, 48, 0);
             spinicon[1] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_BINBUG_GLOW), IMAGE_ICON, 48, 48, 0);
         acase CD2650:
-            setdlgtext(hwnd, IDL_DRIVE        , MSG_DRIVE         , "Drive:"         );
+            setdlgtext(hwnd, IDL_DRIVE         , MSG_DRIVE        , "Drive:"         );
             SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT ), BM_SETCHECK, drive[viewingdrive].writeprotect ? BST_CHECKED : BST_UNCHECKED, 0);
-            howmany = 256;
             diskicon = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_DISKEMPTY_525));
             localhicon = LoadImage(InstancePtr, MAKEINTRESOURCE(memmap_to[memmap].icon), IMAGE_ICON, 32, 32, 0);
             SendMessage(GetDlgItem(hwnd, IDL_GLYPH      ), STM_SETICON    , (WPARAM) localhicon, (LPARAM) 0);
@@ -2208,35 +2198,17 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             spinicon[0] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_CD2650_DIM ), IMAGE_ICON, 48, 48, 0);
             spinicon[1] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_CD2650_GLOW), IMAGE_ICON, 48, 48, 0);
         acase TWIN:
-            setdlgtext(hwnd, IDC_CREATEDISK2   , MSG_CREATEDISK   , "Create disk"    );
-            setdlgtext(hwnd, IDC_INSERTDISK2   , MSG_INSERTDISK   , "Insert disk..." );
-            setdlgtext(hwnd, IDC_UPDATEDISK2   , MSG_UPDATEDISK   , "Update disk..." );
-            setdlgtext(hwnd, IDC_EJECTDISK2    , MSG_EJECTDISK    , "Eject disk"     );
             setdlgtext(hwnd, IDL_CLUSTER       , MSG_CLUSTER      , "Cluster:"       );
-            setdlgtext(hwnd, IDC_WRITEPROTECT2 , MSG_WRITEPROTECT , "Write protect?" );
-            setdlgtext(hwnd, IDL_HEADPOSITION2 , MSG_HEADPOSITION , "Head Position"  );
-            setdlgtext(hwnd, IDL_TRACK2        , MSG_TRACK        , "Track:"         );
-            setdlgtext(hwnd, IDL_CLUSTER2      , MSG_CLUSTER      , "Cluster:"       );
-            setdlgtext(hwnd, IDL_SECTOR2       , MSG_SECTOR       , "Sector:"        );
-            setdlgtext(hwnd, IDL_BYTE2         , MSG_BYTE         , "Byte: $"        );
-            setdlgtext(hwnd, IDL_BLOCKCONTENTS2, MSG_BLOCKCONTENTS, "Sector Contents");
-            setdlgtext(hwnd, IDC_SWAPDISKS     , MSG_SWAPDISKS    , "Swap disks"     );
-            setdlgtext(hwnd, IDL_1STDRIVE      , MSG_1STDRIVE     , "1st Drive"      );
-            setdlgtext(hwnd, IDL_2NDDRIVE      , MSG_2NDDRIVE     , "2nd Drive"      );
-            setdlgtext(hwnd, IDL_FILENAME2     , MSG_FILENAME     , "Filename:"      );
-            SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT ), BM_SETCHECK, drive[0].writeprotect ? BST_CHECKED : BST_UNCHECKED, 0);
-            SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT2), BM_SETCHECK, drive[1].writeprotect ? BST_CHECKED : BST_UNCHECKED, 0);
-            howmany = 128;
+            SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT ), BM_SETCHECK, drive[viewingdrive].writeprotect ? BST_CHECKED : BST_UNCHECKED, 0);
             diskicon = (HICON) LoadBitmap(InstancePtr, MAKEINTRESOURCE(IDB_DISKEMPTY_8  ));
             SendMessage(GetDlgItem(hwnd, IDC_DISKREGION1), TBM_SETRANGE   , FALSE, MAKELONG(0, TWIN_DISKBLOCKS - 1));
-            SendMessage(GetDlgItem(hwnd, IDC_DISKREGION2), TBM_SETRANGE   , FALSE, MAKELONG(0, TWIN_DISKBLOCKS - 1));
-            SendMessage(GetDlgItem(hwnd, IDC_DISKREGION2), TBM_SETPAGESIZE,     0,                                1);
+            SendMessage(GetDlgItem(hwnd, IDC_DISKREGION1), TBM_SETPAGESIZE,     0,                                1);
             spinicon[0] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_TWIN_DIM ), IMAGE_ICON, 48, 48, 0);
             spinicon[1] = LoadImage(InstancePtr, MAKEINTRESOURCE(IDI_GLYPH_TWIN_GLOW), IMAGE_ICON, 48, 48, 0);
         }
         SendMessage(    GetDlgItem(hwnd, IDC_DISKREGION1), TBM_SETPAGESIZE,     0,                                1);
 
-        for (i = 0; i < 256; i++) // not howmany
+        for (i = 0; i < diskblocksize; i++)
         {   GetWindowRect(GetDlgItem(hwnd, ID_DISK_0 + i), &localrect);
             thepoint.x        = localrect.left;
             thepoint.y        = localrect.top;
@@ -2258,20 +2230,23 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             viewdiskas ? IDC_VIEWDISKAS_CHARS : IDC_VIEWDISKAS_HEX
         );
 
-        if (machine != TWIN)
-        {   for (whichdrive = 0; whichdrive < machines[machine].drives; whichdrive++)
-            {   sprintf(gtempstring, "%d", whichdrive);
-                SendMessage(GetDlgItem(hwnd, IDC_DRIVE ), LB_ADDSTRING, 0, (LPARAM) gtempstring);
-                sprintf(gtempstring, "%d", whichdrive + 1);
-                SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_ADDSTRING, 0, (LPARAM) gtempstring);
-            }
-            SendMessage(    GetDlgItem(hwnd, IDC_DRIVE ), LB_SETCURSEL, (WPARAM) viewingdrive, 0); // ordinal number in list
-            SendMessage(    GetDlgItem(hwnd, IDC_DRIVES), LB_SETCURSEL, (WPARAM) ((machine == BINBUG) ? (binbug_userdrives - 1) : (cd2650_userdrives - 1)), 0); // ordinal number in list
+        for (whichdrive = 0; whichdrive < machines[machine].drives; whichdrive++)
+        {   sprintf(gtempstring, "%d", whichdrive);
+            SendMessage(GetDlgItem(hwnd, IDC_DRIVE ), LB_ADDSTRING, 0, (LPARAM) gtempstring);
+            sprintf(gtempstring, "%d", whichdrive + 1);
+            SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_ADDSTRING, 0, (LPARAM) gtempstring);
+        }
+        SendMessage(    GetDlgItem(hwnd, IDC_DRIVE ), LB_SETCURSEL, (WPARAM) viewingdrive, 0); // ordinal number in list
+        switch (machine)
+        {
+        case  BINBUG: SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_SETCURSEL, (WPARAM) (binbug_userdrives - 1), 0); // ordinal number in list
+        acase TWIN:   SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_SETCURSEL, (WPARAM) (  twin_userdrives - 1), 0); // ordinal number in list
+        acase CD2650: SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_SETCURSEL, (WPARAM) (cd2650_userdrives - 1), 0); // ordinal number in list
         }
 
-        move_subwindow(SUBWINDOW_FLOPPYDRIVE, hwnd);
+        move_subwindow(SUBWINDOW_FLOPPYDRIVE);
     return FALSE;
-    case WM_ACTIVATE: // no need for acase
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
     acase WM_COMMAND:
         gid = (LONG) LOWORD(wParam);
@@ -2282,42 +2257,16 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             {
             case  BINBUG: binbug_create_disk(viewingdrive);
             acase CD2650: cd2650_create_disk(viewingdrive);
-            acase TWIN:   twin_create_disk(0);
+            acase TWIN:   twin_create_disk(  viewingdrive);
             }
-        acase IDC_CREATEDISK2:
-            twin_create_disk(1);
         acase IDC_INSERTDISK:
-            if (machine == TWIN)
-            {   load_disk(TRUE, 0, TRUE);
-            } else
-            {   load_disk(TRUE, viewingdrive, TRUE);
-            }
-        acase IDC_INSERTDISK2:
-            load_disk(TRUE, 1, TRUE);
+            load_disk(TRUE, viewingdrive, TRUE);
         acase IDC_UPDATEDISK:
-            if (machine == TWIN)
-            {   update_disk(0);
-            } else
-            {   update_disk(viewingdrive);
-            }
-        acase IDC_UPDATEDISK2:
-            update_disk(1);
+            update_disk(viewingdrive);
         acase IDC_EJECTDISK:
-            if (machine == TWIN)
-            {   drive[0].inserted = FALSE;
-                // play_ambient_sample(SAMPLE_EJECTDISK);
-                update_floppydrive(3, 0);
-            } else
-            {   drive[viewingdrive].inserted = FALSE;
-                // play_ambient_sample(SAMPLE_EJECTDISK);
-                update_floppydrive(3, viewingdrive);
-            }
-        acase IDC_EJECTDISK2:
-            drive[1].inserted = FALSE;
+            drive[viewingdrive].inserted = FALSE;
             // play_ambient_sample(SAMPLE_EJECTDISK);
-            update_floppydrive(3, 1);
-        acase IDC_SWAPDISKS:
-            twin_swapdisks();
+            update_floppydrive(TRUE, viewingdrive);
         acase IDC_VERBOSEDISK:
             if (SendMessage(GetDlgItem(hwnd, IDC_VERBOSEDISK), BM_GETCHECK, 0, 0) == BST_CHECKED)
             {   verbosedisk = TRUE;
@@ -2326,25 +2275,13 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             }
         acase IDC_WRITEPROTECT:
             if (SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT), BM_GETCHECK, 0, 0) == BST_CHECKED)
-            {   drive[(machine == TWIN) ? 0 : viewingdrive].writeprotect = TRUE;
+            {   drive[viewingdrive].writeprotect = TRUE;
             } else
-            {   drive[(machine == TWIN) ? 0 : viewingdrive].writeprotect = FALSE;
-            }
-        acase IDC_WRITEPROTECT2:
-            if (SendMessage(GetDlgItem(hwnd, IDC_WRITEPROTECT2), BM_GETCHECK, 0, 0) == BST_CHECKED)
-            {   drive[1].writeprotect = TRUE;
-            } else
-            {   drive[1].writeprotect = FALSE;
+            {   drive[viewingdrive].writeprotect = FALSE;
             }
         acase IDC_PLATTER:
-            if (    machine == TWIN && !drive[0].inserted)
-            {   load_disk(TRUE, 0, TRUE);
-            } elif (machine != TWIN && !drive[viewingdrive].inserted)
+            if (!drive[viewingdrive].inserted)
             {   load_disk(TRUE, viewingdrive, TRUE);
-            }
-        acase IDC_PLATTER2:
-            if (!drive[1].inserted)
-            {   load_disk(TRUE, 1, TRUE);
             }
         acase IDC_VIEWDISKAS_HEX:
         case IDC_VIEWDISKAS_CHARS:
@@ -2355,37 +2292,43 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
                 IDC_VIEWDISKAS_CHARS,
                 viewdiskas ? IDC_VIEWDISKAS_CHARS : IDC_VIEWDISKAS_HEX
             );
-            if (machine == TWIN)
-            {   update_floppydrive(2, 0);
-                update_floppydrive(2, 1);
-            } else
-            {   update_floppydrive(2, viewingdrive);
-            }
+            update_floppydrive(TRUE, viewingdrive);
         acase IDC_DRIVE:
             if (HIWORD(wParam) == LBN_SELCHANGE)
             {   temp = SendMessage(GetDlgItem(hwnd, IDC_DRIVE), LB_GETCURSEL, 0, 0);
                 if
                 (   machine == BINBUG && temp >= binbug_userdrives
                  || machine == CD2650 && temp >= cd2650_userdrives
+                 || machine == TWIN   && temp >=   twin_userdrives
                 )
                 {   SendMessage(   GetDlgItem(hwnd, IDC_DRIVE), LB_SETCURSEL, (WPARAM) viewingdrive, 0); // ordinal number in list
                 } elif (viewingdrive != temp)
                 {   viewingdrive = temp;
-                    update_floppydrive(3, viewingdrive);
+                    update_floppydrive(TRUE, viewingdrive);
             }   }
         acase IDC_DRIVES:
             if (HIWORD(wParam) == LBN_SELCHANGE)
-            {   if (machine == BINBUG)
-                {   binbug_userdrives = SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_GETCURSEL, 0, 0) + 1;
+            {   switch (machine)
+                {
+                case BINBUG:
+                    binbug_userdrives = SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_GETCURSEL, 0, 0) + 1;
                     if ((int) curdrive >= binbug_userdrives)
                     {   curdrive = binbug_userdrives - 1;
                     }
                     if (viewingdrive >= binbug_userdrives)
                     {   viewingdrive = binbug_userdrives - 1;
-                        update_floppydrive(3, viewingdrive);
-                }   }
-                else
-                {   // assert(machine == CD2650);
+                        update_floppydrive(TRUE, viewingdrive);
+                    }
+                acase TWIN:
+                    twin_userdrives = SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_GETCURSEL, 0, 0) + 1;
+                    if ((int) curdrive >= twin_userdrives)
+                    {   curdrive = twin_userdrives - 1;
+                    }
+                    if (viewingdrive >= twin_userdrives)
+                    {   viewingdrive = twin_userdrives - 1;
+                        update_floppydrive(TRUE, viewingdrive);
+                    }
+                acase CD2650:
                     cd2650_userdrives = SendMessage(GetDlgItem(hwnd, IDC_DRIVES), LB_GETCURSEL, 0, 0) + 1;
                     if (cd2650_dosver == DOS_P1DOS)
                     {   memory[0x60BE] = cd2650_userdrives - 1;
@@ -2396,7 +2339,7 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
                     }
                     if (viewingdrive >= cd2650_userdrives)
                     {   viewingdrive = cd2650_userdrives - 1;
-                        update_floppydrive(3, viewingdrive);
+                        update_floppydrive(TRUE, viewingdrive);
         }   }   }   }
     acase WM_DRAWITEM:
         switch (wParam)
@@ -2404,91 +2347,47 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
         case IDC_CREATEDISK:
         case IDC_INSERTDISK:
         case IDC_UPDATEDISK:
-        case IDC_CREATEDISK2:
-        case IDC_INSERTDISK2:
-        case IDC_UPDATEDISK2:
             drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
         }
     return TRUE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         clearkybd();
         if (diskicon)
         {   DeleteObject(diskicon);
             diskicon = NULL;
         }
         DestroyWindow(hwnd);
-        SubWindowPtr[SUBWINDOW_FLOPPYDRIVE] = NULL;
+        subwin[SUBWINDOW_FLOPPYDRIVE].hwnd = NULL;
         updatemenu(MENUITEM_FLOPPYDRIVE);
         DeleteObject(spinicon[0]);
         DeleteObject(spinicon[1]);
     return TRUE;
-    case WM_LBUTTONDOWN: // no need for acase
+    case WM_LBUTTONDOWN:
     case WM_MBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
         mousex = (int) LOWORD(lParam);
         mousey = (int) HIWORD(lParam);
-        switch (machine)
-        {
-        case BINBUG:
-        case CD2650:
-            for (i = 0; i < 256; i++)
-            {   if
-                (   mousex >= diskrect[i].left
-                 && mousex <= diskrect[i].right
-                 && mousey >= diskrect[i].top
-                 && mousey <= diskrect[i].bottom
-                )
-                {   viewbyte = drive[viewingdrive].viewstart + i;
-                    if (drive[viewingdrive].flags[viewbyte / 8] &   (1 << (viewbyte % 8)))
-                    {   drive[viewingdrive].flags[viewbyte / 8] &= ~(1 << (viewbyte % 8));
-                    } else
-                    {   drive[viewingdrive].flags[viewbyte / 8] |=  (1 << (viewbyte % 8));
-                        if (!watchreads && !watchwrites)
-                        {   zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_WPWARNING, "Warning: watching of reads and writes is currently turned off! (WR and WW to enable.)\n"));
-                    }   }
-                    update_floppydrive(2, viewingdrive);
-                    break; // for speed
-            }   }
-        acase TWIN:
-            for (i = 0; i < 128; i++)
-            {   if
-                (   mousex >= diskrect[i].left
-                 && mousex <= diskrect[i].right
-                 && mousey >= diskrect[i].top
-                 && mousey <= diskrect[i].bottom
-                )
-                {   viewbyte = drive[0].viewstart + i;
-                    if (drive[0].flags[viewbyte / 8] &   (1 << (viewbyte % 8)))
-                    {   drive[0].flags[viewbyte / 8] &= ~(1 << (viewbyte % 8));
-                    } else
-                    {   drive[0].flags[viewbyte / 8] |=  (1 << (viewbyte % 8));
-                        if (!watchreads && !watchwrites)
-                        {   zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_WPWARNING, "Warning: watching of reads and writes is currently turned off! (WR and WW to enable.)\n"));
-                    }   }
-                    update_floppydrive(2, 0);
-                    break; // for speed
-            }   }
-            for (i = 128; i < 256; i++)
-            {   if
-                (   mousex >= diskrect[i].left
-                 && mousex <= diskrect[i].right
-                 && mousey >= diskrect[i].top
-                 && mousey <= diskrect[i].bottom
-                )
-                {   viewbyte = drive[1].viewstart + i - 128;
-                    if (drive[1].flags[viewbyte / 8] &   (1 << (viewbyte % 8)))
-                    {   drive[1].flags[viewbyte / 8] &= ~(1 << (viewbyte % 8));
-                    } else
-                    {   drive[1].flags[viewbyte / 8] |=  (1 << (viewbyte % 8));
-                        if (!watchreads && !watchwrites)
-                        {   zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_WPWARNING, "Warning: watching of reads and writes is currently turned off! (WR and WW to enable.)\n"));
-                    }   }
-                    update_floppydrive(2, 1);
-                    break; // for speed
-        }   }   }
+        for (i = 0; i < diskblocksize; i++)
+        {   if
+            (   mousex >= diskrect[i].left
+             && mousex <= diskrect[i].right
+             && mousey >= diskrect[i].top
+             && mousey <= diskrect[i].bottom
+            )
+            {   viewbyte = drive[viewingdrive].viewstart + i;
+                if (drive[viewingdrive].flags[viewbyte / 8] &   (1 << (viewbyte % 8)))
+                {   drive[viewingdrive].flags[viewbyte / 8] &= ~(1 << (viewbyte % 8));
+                } else
+                {   drive[viewingdrive].flags[viewbyte / 8] |=  (1 << (viewbyte % 8));
+                    if (!watchreads && !watchwrites)
+                    {   zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_WPWARNING, "Warning: watching of reads and writes is currently turned off! (WR and WW to enable.)\n"));
+                }   }
+                update_floppydrive(TRUE, viewingdrive);
+                break; // for speed
+        }   }
     return FALSE;
-    case WM_CTLCOLORSTATIC: // no need for acase
+    case WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         switch (gid)
         {
@@ -2496,149 +2395,428 @@ MODULE BOOL CALLBACK FloppyDriveDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
         case IDC_CLUSTER:
         case IDC_SECTOR:
         case IDC_BYTE:
-        case IDC_TRACK2:
-        case IDC_CLUSTER2:
-        case IDC_SECTOR2:
-        case IDC_BYTE2:
-            switch (drive_mode)
+            whichpen = getdiskmodecolour();
+            SetBkColor((HDC) wParam, whichpen);
+            switch (whichpen)
             {
-            case DRIVEMODE_IDLE:    SetBkColor((HDC) wParam, EMUPEN_BLUE  ); return (LRESULT) hBrush[EMUBRUSH_BLUE];
-            case DRIVEMODE_READING: SetBkColor((HDC) wParam, EMUPEN_GREEN ); return (LRESULT) hBrush[EMUBRUSH_GREEN];
-            case DRIVEMODE_WRITING: SetBkColor((HDC) wParam, EMUPEN_RED   ); return (LRESULT) hBrush[EMUBRUSH_RED];
+            case EMUPEN_BLUE:       return (LRESULT) hBrush[EMUBRUSH_BLUE];
+            case EMUPEN_GREEN:      return (LRESULT) hBrush[EMUBRUSH_GREEN];
+            case EMUPEN_RED:        return (LRESULT) hBrush[EMUBRUSH_RED];
             }
-        acase IDC_FILENAME1:
-            if (machine == TWIN)
-            {   if (drive[0].inserted)
-                {   viewing = get_viewing_cluster(0);
-                    if (viewing == -1)
-                    {                   SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-                    } else switch (drive[0].bam[viewing])
-                    {
-                    case BAM_LOST:      SetBkColor((HDC) wParam, EMUPEN_GREY  ); return (LRESULT) hBrush[EMUBRUSH_GREY]; // ideally EMU#?_BLACK but text would be illegible
-                    case BAM_DIR:       SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-                    case BAM_FILE:      SetBkColor((HDC) wParam, EMUPEN_PINK  ); return (LRESULT) hBrush[EMUBRUSH_PINK];
-                    case BAM_FREE:      SetBkColor((HDC) wParam, EMUPEN_CYAN  ); return (LRESULT) hBrush[EMUBRUSH_CYAN];
-            }   }   }
-            else
-            {   if (drive[viewingdrive].inserted)
-                {   viewing = get_viewing_cluster(viewingdrive);
-                    switch (drive[viewingdrive].bam[viewing])
-                    {
-                    case BAM_LOST:      SetBkColor((HDC) wParam, EMUPEN_GREY  ); return (LRESULT) hBrush[EMUBRUSH_GREY]; // ideally EMU#?_BLACK but text would be illegible
-                    case BAM_DIR:       SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-                    case BAM_FILE:      SetBkColor((HDC) wParam, EMUPEN_PINK  ); return (LRESULT) hBrush[EMUBRUSH_PINK];
-                    case BAM_FREE:      SetBkColor((HDC) wParam, EMUPEN_CYAN  ); return (LRESULT) hBrush[EMUBRUSH_CYAN];
-            }   }   }
-        acase IDC_FILENAME2:
-            // assert(machine == TWIN);
-            if (drive[1].inserted)
-            {   viewing = get_viewing_cluster(1);
-                if (viewing == -1)
-                {                   SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-                } else switch (drive[1].bam[viewing])
-                {
-                case BAM_LOST:      SetBkColor((HDC) wParam, EMUPEN_GREY  ); return (LRESULT) hBrush[EMUBRUSH_GREY]; // ideally EMU#?_BLACK but text would be illegible
-                case BAM_DIR:       SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-                case BAM_FILE:      SetBkColor((HDC) wParam, EMUPEN_PINK  ); return (LRESULT) hBrush[EMUBRUSH_PINK];
-                case BAM_FREE:      SetBkColor((HDC) wParam, EMUPEN_CYAN  ); return (LRESULT) hBrush[EMUBRUSH_CYAN];
-            }   }
+        acase IDC_FILENAME:
+            whichpen = getdiskclustercolour(drive[viewingdrive].viewstart);
+            SetBkColor((HDC) wParam, whichpen);
+            switch (whichpen)
+            {
+            case EMUPEN_GREY:       return (LRESULT) hBrush[EMUBRUSH_GREY];
+            case EMUPEN_PURPLE:     return (LRESULT) hBrush[EMUBRUSH_PURPLE];
+            case EMUPEN_PINK:       return (LRESULT) hBrush[EMUBRUSH_PINK];
+            case EMUPEN_CYAN:       return (LRESULT) hBrush[EMUBRUSH_CYAN];
+            }
         adefault:
             if (gid >= ID_DISK_0 && gid <= ID_DISK_255)
-            {   gid -= ID_DISK_0;
-                if (machine == TWIN)
-                {   whichdrive = (gid <= 127) ? 0 : 1;
-                } else
-                {   whichdrive = viewingdrive;
-                }
-                if (!drive[whichdrive].inserted)
-                {   break;
-                }
-                viewing = get_viewing_cluster(whichdrive);
-                get_disk_byte(whichdrive, TRUE);
-                switch (machine)
+            {   whichpen = getdiskbytecolour(drive[viewingdrive].viewstart + gid - ID_DISK_0);
+                SetBkColor((HDC) wParam, whichpen); 
+                switch (whichpen)
                 {
-                case  BINBUG: viewbyte = drive[whichdrive].viewstart + gid;
-                acase TWIN:   viewbyte = drive[whichdrive].viewstart + gid - (whichdrive * 128);
-                acase CD2650: viewbyte = drive[whichdrive].viewstart + gid;
-                }
-
-                if (viewbyte == diskbyte)
-                {   switch (drive_mode)
-                    {
-                    case DRIVEMODE_IDLE:          SetBkColor((HDC) wParam, EMUPEN_BLUE  ); return (LRESULT) hBrush[EMUBRUSH_BLUE];
-                    case DRIVEMODE_READING:       SetBkColor((HDC) wParam, EMUPEN_GREEN ); return (LRESULT) hBrush[EMUBRUSH_GREEN];
-                    case DRIVEMODE_WRITING:       SetBkColor((HDC) wParam, EMUPEN_RED   ); return (LRESULT) hBrush[EMUBRUSH_RED];
-                }   } // implied else
-
-                if (drive[whichdrive].flags[viewbyte / 8] & (1 << (viewbyte % 8)))
-                {                                 SetBkColor((HDC) wParam, EMUPEN_ORANGE); return (LRESULT) hBrush[EMUBRUSH_ORANGE];
-                }
-
-                switch (machine)
-                {
-                case BINBUG: if (gid     <=  1) { SetBkColor((HDC) wParam, EMUPEN_YELLOW); return (LRESULT) hBrush[EMUBRUSH_YELLOW]; }
-                case TWIN:   if (viewing == -1) { SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE]; }
-                }
-
-                switch (drive[whichdrive].bam[viewing])
-                {
-                case BAM_LOST:                    SetBkColor((HDC) wParam, EMUPEN_GREY  ); return (LRESULT) hBrush[EMUBRUSH_GREY];
-                case BAM_DIR:                     SetBkColor((HDC) wParam, EMUPEN_PURPLE); return (LRESULT) hBrush[EMUBRUSH_PURPLE];
-                case BAM_FILE:                    SetBkColor((HDC) wParam, EMUPEN_PINK  ); return (LRESULT) hBrush[EMUBRUSH_PINK];
-                case BAM_FREE:                    SetBkColor((HDC) wParam, EMUPEN_CYAN  ); return (LRESULT) hBrush[EMUBRUSH_CYAN];
+                case EMUPEN_GREY:   return (LRESULT) hBrush[EMUBRUSH_GREY];
+                case EMUPEN_BLUE:   return (LRESULT) hBrush[EMUBRUSH_BLUE];
+                case EMUPEN_GREEN:  return (LRESULT) hBrush[EMUBRUSH_GREEN];
+                case EMUPEN_YELLOW: return (LRESULT) hBrush[EMUBRUSH_YELLOW];
+                case EMUPEN_ORANGE: return (LRESULT) hBrush[EMUBRUSH_ORANGE];
+                case EMUPEN_RED:    return (LRESULT) hBrush[EMUBRUSH_RED];
+                case EMUPEN_PURPLE: return (LRESULT) hBrush[EMUBRUSH_PURPLE];
+                case EMUPEN_PINK:   return (LRESULT) hBrush[EMUBRUSH_PINK];
+                case EMUPEN_CYAN:   return (LRESULT) hBrush[EMUBRUSH_CYAN];
         }   }   }
     acase WM_DESTROY:
-        SubWindowPtr[SUBWINDOW_FLOPPYDRIVE] = NULL;
+        subwin[SUBWINDOW_FLOPPYDRIVE].hwnd = NULL;
     return FALSE;
-    case WM_MOVE: // no need for acase
+    case WM_MOVE:
         reset_fps();
     return FALSE;
-    case WM_PAINT: // no need for acase
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
-        if (machine == TWIN)
-        {   update_floppydrive(3, 0);
-            update_floppydrive(3, 1);
-        } else
-        {   update_floppydrive(3, viewingdrive);
-        }
+        update_floppydrive(TRUE, viewingdrive);
         DISCARD EndPaint(hwnd, &localps);
     return FALSE; // important!
     case WM_HSCROLL:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
         if (gid == IDC_DISKREGION1)
-        {   if (machine == TWIN)
-            {   drive[0].viewstart = SendMessage
-                (   GetDlgItem(hwnd, IDC_DISKREGION1),
-                    TBM_GETPOS,
-                    0,
-                    0
-                ) * howmany; // because LOWORD(lParam) is not always correct
-                update_floppydrive(2, 0);
-            } else
-            {   drive[viewingdrive].viewstart = SendMessage
-                (   GetDlgItem(hwnd, IDC_DISKREGION1),
-                    TBM_GETPOS,
-                    0,
-                    0
-                ) * howmany; // because LOWORD(lParam) is not always correct
-                update_floppydrive(2, viewingdrive);
-        }   }
-        elif (gid == IDC_DISKREGION2)
-        {   drive[1].viewstart = SendMessage
-            (   GetDlgItem(hwnd, IDC_DISKREGION2),
+        {   drive[viewingdrive].viewstart = SendMessage
+            (   GetDlgItem(hwnd, IDC_DISKREGION1),
                 TBM_GETPOS,
                 0,
                 0
-            ) * howmany; // because LOWORD(lParam) is not always correct
-            update_floppydrive(2, 1);
+            ) * diskblocksize; // because LOWORD(lParam) is not always correct
+            update_floppydrive(FALSE, viewingdrive);
         }
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
     }
     return TRUE;
 }
 
 EXPORT void im_set(int whichsubwin, int gid, int whichimage)
-{   SendMessage(GetDlgItem(SubWindowPtr[whichsubwin], gid), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) tapeimage[whichimage]);
+{   SendMessage(GetDlgItem(subwin[whichsubwin].hwnd, gid), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) tapeimage[whichimage]);
+}
+
+EXPORT void draw_platter(FLAG all, UBYTE oldtrack, UBYTE oldsector)
+{   FAST int      i,
+                  localsector,
+                  localtrack;
+    FAST HDC      DiskRastPtr;
+    FAST HPEN     CyanPen, PinkPen, PurplePen, BlackPen, GreenPen, OrangePen, RedPen, WhitePen;
+    FAST double   angle,
+                  byte_offset,
+                  linelength;
+    FAST int      amount;
+    FAST COLORREF whichcolour;
+
+    if (all)
+    {   SendMessage(GetDlgItem(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, IDC_PLATTER ), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) diskicon);
+    }
+
+    if (!drive[viewingdrive].inserted)
+    {   return;
+    }
+
+    DiskRastPtr = GetDC(GetDlgItem(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, IDC_PLATTER));
+    RedPen    = CreatePen(PS_SOLID, 1, EMUPEN_RED);
+    GreenPen  = CreatePen(PS_SOLID, 1, EMUPEN_DARKGREEN);
+    OrangePen = CreatePen(PS_SOLID, 1, EMUPEN_DARKORANGE);
+    CyanPen   = CreatePen(PS_SOLID, 1, EMUPEN_CYAN);
+    PinkPen   = CreatePen(PS_SOLID, 1, EMUPEN_PINK);
+    PurplePen = CreatePen(PS_SOLID, 1, EMUPEN_PURPLE);
+    BlackPen  = CreatePen(PS_SOLID, 1, EMUPEN_BLACK);
+    WhitePen  = CreatePen(PS_SOLID, 1, EMUPEN_WHITE);
+
+    switch (machine)
+    {
+    case TWIN:
+        if (all)
+        {   // Tracks-----------------------------------------------------
+            for (i = 0; i < TWIN_DISKBLOCKS; i++) // 2464
+            {   localtrack  = i / TWIN_SECTORS;
+                localsector = i % TWIN_SECTORS;
+                if (localtrack == 0) // first track is reserved
+                {   SelectObject(DiskRastPtr, PurplePen);
+                } else
+                {   switch (drive[viewingdrive].bam[(i - 32) / 8])
+                    {
+                    case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
+                    acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                    acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                    acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+                }   }
+#ifdef TESTSECTORLAYOUT
+                SetPixel(DiskRastPtr, twin_sectorpoint[localsector].xarcstart, twin_sectorpoint[localsector].yarcstart, 0x000000FF); // red  ($00BBGGRR format)
+                SetPixel(DiskRastPtr, twin_sectorpoint[localsector].xarcend,   twin_sectorpoint[localsector].yarcend,   0x00FF0000); // blue ($00BBGGRR format)
+#endif
+                Arc
+                (   DiskRastPtr,
+                      5 + (localtrack * 3 / 2),
+                      5 + (localtrack * 3 / 2),
+                    324 - (localtrack * 3 / 2),
+                    324 - (localtrack * 3 / 2),
+                    twin_sectorpoint[localsector].xarcstart,
+                    twin_sectorpoint[localsector].yarcstart,
+                    twin_sectorpoint[localsector].xarcend,
+                    twin_sectorpoint[localsector].yarcend
+                );
+            }
+
+            // Sectors----------------------------------------------------
+#ifdef TESTSECTORLAYOUT
+            SelectObject(DiskRastPtr, OrangePen);
+#else
+            SelectObject(DiskRastPtr, BlackPen);
+#endif
+            for (i = 0; i < TWIN_SECTORS; i++)
+            {
+#ifdef TESTSECTORLAYOUT
+                MoveToEx(DiskRastPtr, twin_sectorpoint[i].xedge,  twin_sectorpoint[i].yedge,  NULL);
+#else
+                MoveToEx(DiskRastPtr, twin_sectorpoint[i].xstart, twin_sectorpoint[i].ystart, NULL);
+#endif
+                LineTo(  DiskRastPtr, twin_sectorpoint[i].xend  , twin_sectorpoint[i].yend);
+        }   }
+        else
+        {
+#ifdef DISKLINE
+            byte_offset = (drive[viewingdrive].sector * 128) + drive[viewingdrive].blockoffset;
+            angle = (byte_offset / 4096.0) * 2 * PI;
+            linelength = 10.0 + ((92.0 * (TWIN_TRACKS - drive[viewingdrive].track)) / TWIN_TRACKS);
+            SetROP2(DiskRastPtr, R2_XORPEN);
+            SelectObject(DiskRastPtr, WhitePen);
+            MoveToEx(DiskRastPtr, 107, 107, NULL);
+            LineTo(DiskRastPtr, (int) (107 - (linelength * sin(angle))), (int) (107 - (linelength * cos(angle))));
+            SetROP2(DiskRastPtr, R2_COPYPEN);
+#endif
+
+            if (oldtrack == 0) // first track is reserved
+            {   SelectObject(DiskRastPtr, PurplePen);
+            } else
+            {   switch (drive[viewingdrive].bam[(((oldtrack * TWIN_SECTORS) + oldsector) - 32) / 8])
+                {
+                case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
+                acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+            }   }
+            Arc
+            (   DiskRastPtr,
+                  5 + (oldtrack * 3 / 2),
+                  5 + (oldtrack * 3 / 2),
+                324 - (oldtrack * 3 / 2),
+                324 - (oldtrack * 3 / 2),
+                twin_sectorpoint[oldsector].xarcstart,
+                twin_sectorpoint[oldsector].yarcstart,
+                twin_sectorpoint[oldsector].xarcend,
+                twin_sectorpoint[oldsector].yarcend
+            );
+
+            switch (drive_mode)
+            {
+            case  DRIVEMODE_READING: SelectObject(DiskRastPtr, GreenPen);
+            acase DRIVEMODE_WRITING: SelectObject(DiskRastPtr, RedPen);
+            acase DRIVEMODE_IDLE:
+                switch (drive[viewingdrive].bam[(((drive[viewingdrive].track * TWIN_SECTORS) + drive[viewingdrive].sector) - 32) / 8])
+                {
+                case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
+                acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+            }   }
+            Arc
+            (   DiskRastPtr,
+                  5 + (drive[viewingdrive].track * 3 / 2),
+                  5 + (drive[viewingdrive].track * 3 / 2),
+                324 - (drive[viewingdrive].track * 3 / 2),
+                324 - (drive[viewingdrive].track * 3 / 2),
+                twin_sectorpoint[drive[viewingdrive].sector].xarcstart,
+                twin_sectorpoint[drive[viewingdrive].sector].yarcstart,
+                twin_sectorpoint[drive[viewingdrive].sector].xarcend,
+                twin_sectorpoint[drive[viewingdrive].sector].yarcend
+            );
+        }
+    acase BINBUG:
+        if (all)
+        {   // Tracks-----------------------------------------------------
+            for (i = 0; i < BINBUG_DISKBLOCKS; i++)
+            {   localtrack  =  i / BINBUG_SECTORS;
+                localsector = (i % BINBUG_SECTORS) + 1;
+                switch (drive[viewingdrive].bam[i])
+                {
+                case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
+                acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+                }
+#ifdef TESTSECTORLAYOUT
+                SetPixel(DiskRastPtr, binbug_sectorpoint[localsector - 1].xarcstart, binbug_sectorpoint[localsector - 1].yarcstart, 0x000000FF); // red  ($00BBGGRR format)
+                SetPixel(DiskRastPtr, binbug_sectorpoint[localsector - 1].xarcend,   binbug_sectorpoint[localsector - 1].yarcend,   0x00FF0000); // blue ($00BBGGRR format)
+#endif
+                Arc
+                (   DiskRastPtr,
+                      5 + (localtrack * 2),
+                      5 + (localtrack * 2),
+                    210 - (localtrack * 2),
+                    210 - (localtrack * 2),
+                    binbug_sectorpoint[localsector - 1].xarcstart,
+                    binbug_sectorpoint[localsector - 1].yarcstart,
+                    binbug_sectorpoint[localsector - 1].xarcend,
+                    binbug_sectorpoint[localsector - 1].yarcend
+                );
+            }
+
+            // Sectors----------------------------------------------------
+#ifdef TESTSECTORLAYOUT
+            SelectObject(DiskRastPtr, OrangePen);
+#else
+            SelectObject(DiskRastPtr, BlackPen);
+#endif
+            for (i = 0; i < BINBUG_SECTORS; i++)
+            {
+#ifdef TESTSECTORLAYOUT
+                MoveToEx(DiskRastPtr, binbug_sectorpoint[i].xedge,  binbug_sectorpoint[i].yedge,  NULL);
+#else
+                MoveToEx(DiskRastPtr, binbug_sectorpoint[i].xstart, binbug_sectorpoint[i].ystart, NULL);
+#endif
+                LineTo(  DiskRastPtr, binbug_sectorpoint[i].xend,   binbug_sectorpoint[i].yend);
+        }   }
+        else
+        {
+#ifdef DISKLINE
+            byte_offset = ((drive[viewingdrive].sector - 1) * 256) + drive[viewingdrive].blockoffset;
+            angle = (byte_offset / 2560.0) * 2.0 * PI;
+            linelength = 10.0 + ((92.0 * (BINBUG_TRACKS - drive[viewingdrive].track)) / BINBUG_TRACKS);
+            SetROP2(DiskRastPtr, R2_XORPEN);
+            SelectObject(DiskRastPtr, WhitePen);
+            MoveToEx(DiskRastPtr, 107, 107, NULL);
+            LineTo(DiskRastPtr, (int) (107 - (linelength * sin(angle))), (int) (107 - (linelength * cos(angle))));
+            SetROP2(DiskRastPtr, R2_COPYPEN);
+#endif
+
+            switch (drive[viewingdrive].bam[(oldtrack * BINBUG_SECTORS) + oldsector - 1])
+            {
+            case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
+            acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+            acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+            acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+            }
+            Arc
+            (   DiskRastPtr,
+                  5 + (oldtrack * 2),
+                  5 + (oldtrack * 2),
+                210 - (oldtrack * 2),
+                210 - (oldtrack * 2),
+                binbug_sectorpoint[oldsector - 1].xarcstart,
+                binbug_sectorpoint[oldsector - 1].yarcstart,
+                binbug_sectorpoint[oldsector - 1].xarcend,
+                binbug_sectorpoint[oldsector - 1].yarcend
+            );
+
+            switch (drive_mode)
+            {
+            case  DRIVEMODE_READING: SelectObject(DiskRastPtr, GreenPen);
+            acase DRIVEMODE_WRITING: SelectObject(DiskRastPtr, RedPen);
+            acase DRIVEMODE_IDLE:
+                switch (drive[viewingdrive].bam[(drive[viewingdrive].track * BINBUG_SECTORS) + drive[viewingdrive].sector - 1])
+                {
+                case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
+                acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+            }   }
+            Arc
+            (   DiskRastPtr,
+                  5 + (drive[viewingdrive].track * 2),
+                  5 + (drive[viewingdrive].track * 2),
+                210 - (drive[viewingdrive].track * 2),
+                210 - (drive[viewingdrive].track * 2),
+                binbug_sectorpoint[drive[viewingdrive].sector - 1].xarcstart,
+                binbug_sectorpoint[drive[viewingdrive].sector - 1].yarcstart,
+                binbug_sectorpoint[drive[viewingdrive].sector - 1].xarcend,
+                binbug_sectorpoint[drive[viewingdrive].sector - 1].yarcend
+            );
+        }
+    acase CD2650:
+        if (all)
+        {   // Tracks-----------------------------------------------------
+            for (i = 0; i < CD2650_DISKBLOCKS; i++)
+            {   localtrack  =  i / CD2650_SECTORS;
+                localsector = (i % CD2650_SECTORS) + 1;
+                switch (drive[viewingdrive].bam[i])
+                {
+                case  BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+                }
+#ifdef TESTSECTORLAYOUT
+                SetPixel(DiskRastPtr, cd2650_sectorpoint[localsector - 1].xarcstart, cd2650_sectorpoint[localsector - 1].yarcstart, 0x000000FF); // red  ($00BBGGRR format)
+                SetPixel(DiskRastPtr, cd2650_sectorpoint[localsector - 1].xarcend,   cd2650_sectorpoint[localsector - 1].yarcend,   0x00FF0000); // blue ($00BBGGRR format)
+#endif
+                amount = (localtrack * 2) + ((localtrack * 2) / 7);
+                Arc
+                (   DiskRastPtr,
+                      5 + amount,
+                      5 + amount,
+                    210 - amount,
+                    210 - amount,
+                    cd2650_sectorpoint[localsector - 1].xarcstart,
+                    cd2650_sectorpoint[localsector - 1].yarcstart,
+                    cd2650_sectorpoint[localsector - 1].xarcend,
+                    cd2650_sectorpoint[localsector - 1].yarcend
+                );
+            }
+
+            // Sectors----------------------------------------------------
+#ifdef TESTSECTORLAYOUT
+            SelectObject(DiskRastPtr, OrangePen);
+#else
+            SelectObject(DiskRastPtr, BlackPen);
+#endif
+            for (i = 0; i < CD2650_SECTORS; i++)
+            {
+#ifdef TESTSECTORLAYOUT
+                MoveToEx(DiskRastPtr, cd2650_sectorpoint[i].xedge,  cd2650_sectorpoint[i].yedge,  NULL);
+#else
+                MoveToEx(DiskRastPtr, cd2650_sectorpoint[i].xstart, cd2650_sectorpoint[i].ystart, NULL);
+#endif
+                LineTo(  DiskRastPtr, cd2650_sectorpoint[i].xend,   cd2650_sectorpoint[i].yend);
+        }   }
+        else
+        {
+#ifdef DISKLINE
+            byte_offset = ((drive[viewingdrive].sector - 1) * 256) + drive[viewingdrive].blockoffset;
+            angle = (byte_offset / 2304.0) * 2 * PI;
+            linelength = 10.0 + ((92.0 * (CD2650_TRACKS - drive[viewingdrive].track)) / CD2650_TRACKS);
+            SetROP2(DiskRastPtr, R2_XORPEN);
+            SelectObject(DiskRastPtr, WhitePen);
+            MoveToEx(DiskRastPtr, 107, 107, NULL);
+            LineTo(DiskRastPtr, (int) (107 - (linelength * sin(angle))), (int) (107 - (linelength * cos(angle))));
+            SetROP2(DiskRastPtr, R2_COPYPEN);
+#endif
+
+            switch (drive[viewingdrive].bam[(oldtrack * CD2650_SECTORS) + oldsector - 1])
+            {
+            case  BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+            acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+            acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+            }
+            amount = (oldtrack * 2) + ((oldtrack * 2) / 7);
+            Arc
+            (   DiskRastPtr,
+                  5 + amount,
+                  5 + amount,
+                210 - amount,
+                210 - amount,
+                cd2650_sectorpoint[oldsector - 1].xarcstart,
+                cd2650_sectorpoint[oldsector - 1].yarcstart,
+                cd2650_sectorpoint[oldsector - 1].xarcend,
+                cd2650_sectorpoint[oldsector - 1].yarcend
+            );
+
+            switch (drive_mode)
+            {
+            case  DRIVEMODE_READING: SelectObject(DiskRastPtr, GreenPen);
+            acase DRIVEMODE_WRITING: SelectObject(DiskRastPtr, RedPen);
+            acase DRIVEMODE_IDLE:
+                switch (drive[viewingdrive].bam[(drive[viewingdrive].track * CD2650_SECTORS) + drive[viewingdrive].sector - 1])
+                {
+                case  BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
+                acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
+                acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
+            }   }
+            amount = (drive[viewingdrive].track * 2) + ((drive[viewingdrive].track * 2) / 7);
+            Arc
+            (   DiskRastPtr,
+                  5 + amount,
+                  5 + amount,
+                210 - amount,
+                210 - amount,
+                cd2650_sectorpoint[drive[viewingdrive].sector - 1].xarcstart,
+                cd2650_sectorpoint[drive[viewingdrive].sector - 1].yarcstart,
+                cd2650_sectorpoint[drive[viewingdrive].sector - 1].xarcend,
+                cd2650_sectorpoint[drive[viewingdrive].sector - 1].yarcend
+            );
+    }   }
+
+    ReleaseDC(GetDlgItem(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, IDC_PLATTER), DiskRastPtr);
+    DeleteObject(CyanPen);
+    DeleteObject(PinkPen);
+    DeleteObject(PurplePen);
+    DeleteObject(BlackPen);
+    DeleteObject(GreenPen);
+    DeleteObject(RedPen);
+    DeleteObject(WhitePen);
+    DeleteObject(OrangePen);
+}
+
+EXPORT void setdrivegad(int gid, int whichpen)
+{   // assert(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd);
+
+    SetDlgItemText(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, gid, gtempstring);
 }

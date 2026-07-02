@@ -33,8 +33,8 @@
 <string name="savescreenshot">Save screenshot as GIF</string>
 <string name="savedscreenshot">Saved screenshot as GIF</string>
 <string name="colours_pure">Colours: Pure</string>
-<string name="colours_uvi">Colours: UVI</string>
-<string name="colours_pvi">Colours: PVI</string>
+<string name="colours_uvi">Colours: UVI (for Arcadia)</string>
+<string name="colours_pvi">Colours: PVI (for Interton/Elektor)</string>
 <string name="colours_greyscale">Colours: Greyscale</string>
 <string name="artefacts">Artefacts</string>
 <string name="stretching_off">Stretching: Off</string>

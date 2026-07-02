@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                             hardymoved        = false,
                             softmoved         = false;
     public  static int      nextscrnshot      = 1,
-                            hiscore[]         = new int[51 + 6],
+                            hiscore[]         = new int[52 + 6],
                             autofire          = 0,
                             availwidth,
                             availheight,
@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                                    progressstr,
                                    trackerstr,
                                    username   = "",
-                                   hiscoredate[] = new String[51 + 6];
+                                   hiscoredate[] = new String[52 + 6];
     public  static String[]        keystring;
     private long            newtime,
                             waitfor,
@@ -339,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         for (i = 0; i < 12; i++)
         {   hardkeys[i] = softkeys[i] = false;
         }
-        for (i = 0; i < 51 + 6; i++)
+        for (i = 0; i < 52 + 6; i++)
         {   hiscore[i] = 0;
             hiscoredate[i] = "";
         }
@@ -1241,14 +1241,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         try (FileInputStream fis = openFileInput("DroidArcadia.hgh"))
         {   rc = fis.read();
-            if (rc == 5) // version byte (5 means V4.5+)
-            {   for (i = 0; i < 51 + 6; i++)
+            if (rc == 6) // version byte (6 means V4.55+)
+            {   for (i = 0; i < 52 + 6; i++)
                 {   rc =  fis.read() * 65536;
                     rc += fis.read() *   256;
                     rc += fis.read();
                     hiscore[i] = rc;
                 }
-                for (i = 0; i < 51 + 6; i++)
+                for (i = 0; i < 52 + 6; i++)
                 {   byte[] buffer = new byte[8 + 1];
                     int bytesread = fis.read(buffer);
                     if (bytesread == -1)
@@ -1257,21 +1257,44 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                     }
                     hiscoredate[i] = new String(buffer, 0, 8).trim();
                 }
-                // Toast.makeText(MainActivity.this, "Loaded high score table V5.", Toast.LENGTH_SHORT).show();
-            } else if (rc == 4) // version byte (4 means V4.41-4,42 beta 2)
-            {   for (i = 0; i < 51 + 6; i++)
+                // Toast.makeText(MainActivity.this, "Loaded high score table V6.", Toast.LENGTH_SHORT).show();
+            } else if (rc == 5) // version byte (5 means V4.5-4.54)
+            {   for (i = 0; i <= 25; i++)
                 {   rc =  fis.read() * 65536;
                     rc += fis.read() *   256;
                     rc += fis.read();
                     hiscore[i] = rc;
-                    hiscoredate[i] = "-";
                 }
-                // Toast.makeText(MainActivity.this, "Loaded high score table V4.", Toast.LENGTH_SHORT).show();
+                for (i = 0; i <= 25; i++)
+                {   byte[] buffer = new byte[8 + 1];
+                    int bytesread = fis.read(buffer);
+                    if (bytesread == -1)
+                    {   Toast.makeText(MainActivity.this, "Error loading high score table!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    hiscoredate[i] = new String(buffer, 0, 8).trim();
+                }
+                for (i = 26; i < 51 + 6; i++)
+                {   rc =  fis.read() * 65536;
+                    rc += fis.read() *   256;
+                    rc += fis.read();
+                    hiscore[i + 1] = rc;
+                }
+                for (i = 26; i < 51 + 6; i++)
+                {   byte[] buffer = new byte[8 + 1];
+                    int bytesread = fis.read(buffer);
+                    if (bytesread == -1)
+                    {   Toast.makeText(MainActivity.this, "Error loading high score table!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    hiscoredate[i + 1] = new String(buffer, 0, 8).trim();
+                }
+                // Toast.makeText(MainActivity.this, "Loaded high score table V5.", Toast.LENGTH_SHORT).show();
             }
 
             fis.close();
 
-            for (i = 0; i < 51 + 6; i++)
+            for (i = 0; i < 52 + 6; i++)
             {   sethiscore(i, hiscore[i], hiscoredate[i]);
         }   }
         catch (IOException e)
@@ -1281,19 +1304,19 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private void savehs()
     {   int i, j;
     
-        for (i = 0; i < 51 + 6; i++)
+        for (i = 0; i < 52 + 6; i++)
         {   hiscore[i] = gethiscore(i);
             hiscoredate[i] = gethiscoredate(i);
         }
         
         try (FileOutputStream fos = openFileOutput("DroidArcadia.hgh", MODE_PRIVATE);)
-        {   fos.write(5); // version byte (5 means V4.5+)
-            for (i = 0; i < 51 + 6; i++)
+        {   fos.write(6); // version byte (6 means V4.55+)
+            for (i = 0; i < 52 + 6; i++)
             {   fos.write( hiscore[i] / 65536);
                 fos.write((hiscore[i] % 65536) / 256);
                 fos.write( hiscore[i]   % 256);
             }
-            for (i = 0; i < 51 + 6; i++)
+            for (i = 0; i < 52 + 6; i++)
             {   byte[] strBytes = new byte[8 + 1];
                 byte[] strBytesData = hiscoredate[i].getBytes();
                 System.arraycopy(strBytesData, 0, strBytes, 0, Math.min(strBytesData.length, 8));
@@ -1304,7 +1327,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
             fos.close();
 
-            for (i = 0; i < 51 + 6; i++)
+            for (i = 0; i < 52 + 6; i++)
             {   sethiscore(i, hiscore[i], hiscoredate[i]);
         }   }
         catch (IOException e)

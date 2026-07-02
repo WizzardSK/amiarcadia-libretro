@@ -1311,13 +1311,32 @@ MODULE void ie_emuinput(void)
         } else
         {   memory[0x1F00 + PVI_P1PADDLE + player] = hx[player];
         }
-        if   (hy[player] <=  64) setpaddle(player, paddleup);
-        elif (hy[player] >= 192) setpaddle(player, paddledown);
-        if   (hx[player] <=  64) setpaddle(player, paddleleft);
-        elif (hx[player] >= 192) setpaddle(player, paddleright);
-    }
+        if (whichgame != -1)
+        {   if   (hy[player] <=  64) setpaddle(player, known[whichgame].paddleup);
+            elif (hy[player] >= 192) setpaddle(player, known[whichgame].paddledown);
+            if   (hx[player] <=  64) setpaddle(player, known[whichgame].paddleleft);
+            elif (hx[player] >= 192) setpaddle(player, known[whichgame].paddleright);
+    }   }
 
-    if (console_start) { memory[IE_CONSOLE] |= 0x40;                                       console_start--; } // START
+    if (console_start)
+    {   memory[IE_CONSOLE] |= 0x40;
+        console_start--; // START
+        if (whichgame != -1 && known[whichgame].startkey != -1)
+        {   switch (known[whichgame].startkey)
+            {
+            case  GUESTKEY_1:  memory[IE_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x80;
+            acase GUESTKEY_2:  memory[IE_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x80;
+            acase GUESTKEY_3:  memory[IE_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x80;
+            acase GUESTKEY_4:  memory[IE_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x40;
+            acase GUESTKEY_5:  memory[IE_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x40;
+            acase GUESTKEY_6:  memory[IE_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x40;
+            acase GUESTKEY_7:  memory[IE_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x20;
+            acase GUESTKEY_8:  memory[IE_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x20;
+            acase GUESTKEY_9:  memory[IE_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x20;
+            acase GUESTKEY_CL: memory[IE_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x10;
+            acase GUESTKEY_0:  memory[IE_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x10;
+            acase GUESTKEY_EN: memory[IE_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x10;
+    }   }   }
     if (console_a    ) { memory[IE_CONSOLE] |= 0x80;                                       console_a--;     } // A
     if (console_b    ) { memory[IE_CONSOLE] |= 0x20;                                       console_b--;     } // B
     if (console_reset) { if (machine == ELEKTOR) memory[IE_CONSOLE] |= 0x10; else iar = 0; console_reset--; } // RESET
@@ -1328,18 +1347,18 @@ MODULE void ie_emuinput(void)
 MODULE void setpaddle(int player, int which)
 {   switch (which)
     {
-    case   0: memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x10; // "0"
-    acase  1: memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x80; // "1"
-    acase  2: memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x80; // "2"
-    acase  3: memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x80; // "3"
-    acase  4: memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x40; // "4"
-    acase  5: memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x40; // "5"
-    acase  6: memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x40; // "6"
-    acase  7: memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x20; // "7"
-    acase  8: memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x20; // "8"
-    acase  9: memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x20; // "9"
-    acase 10: memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x10; // "Cl"
-    acase 11: memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x10; // "En"
+    case  GUESTKEY_1:  memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x80;
+    acase GUESTKEY_4:  memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x40;
+    acase GUESTKEY_7:  memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x20;
+    acase GUESTKEY_CL: memory[IE_P1LEFTKEYS   + (player * 4)] |= 0x10;
+    acase GUESTKEY_2:  memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x80;
+    acase GUESTKEY_5:  memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x40;
+    acase GUESTKEY_8:  memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x20;
+    acase GUESTKEY_0:  memory[IE_P1MIDDLEKEYS + (player * 4)] |= 0x10;
+    acase GUESTKEY_3:  memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x80;
+    acase GUESTKEY_6:  memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x40;
+    acase GUESTKEY_9:  memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x20;
+    acase GUESTKEY_EN: memory[IE_P1RIGHTKEYS  + (player * 4)] |= 0x10;
 }   }
 
 EXPORT void set_retuning(void)

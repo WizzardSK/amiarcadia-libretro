@@ -18,15 +18,13 @@
 
 // 3. EXPORTED VARIABLES -------------------------------------------------
 
-EXPORT       FLAG                    ChannelOpened[TOTALCHANNELS];
 EXPORT       UBYTE                   SilenceBuffer8[SILENCEBUFSIZE],
                                      SilenceBuffer16[SILENCEBUFSIZE * 2];
 EXPORT       int                     speakable = FALSE;
 
 // 4. IMPORTED VARIABLES -------------------------------------------------
 
-IMPORT       FLAG                    guestplaying[TOTALCHANNELS],
-                                     timeout;
+IMPORT       FLAG                    timeout;
 IMPORT       UBYTE                   SoundBuffer[GUESTCHANNELS][SOUNDLENGTH * 2];
 IMPORT       ULONG                   cycles_2650,
                                      paused,
@@ -45,16 +43,13 @@ IMPORT       int                     ambient,
                                      SoundLength[GUESTCHANNELS],
                                      usespeech;
 IMPORT       WCHAR                   voicename[80 + 1];
-IMPORT       FILE*                   WAVHandle[TOTALCHANNELS];
+IMPORT       struct ChannelStruct    channel[TOTALCHANNELS];
 IMPORT       struct DriveStruct      drive[DRIVES_MAX];
 IMPORT       struct LangStruct       langs[LANGUAGES];
 IMPORT       struct MachineStruct    machines[MACHINES];
-IMPORT const FLAG                    loopable[TOTALCHANNELS];
 
 // 5. MODULE VARIABLES ---------------------------------------------------
 
-MODULE       HWAVEOUT                hChannel[TOTALCHANNELS];
-MODULE       WAVEHDR                 ChannelHdr[TOTALCHANNELS];
 MODULE       ISpVoice*               gpIVTxt   = NULL;
 
 MODULE const DWORD convvolume[8 + 1] = { 0x00000000,
@@ -117,31 +112,31 @@ EXPORT void open_channels(int howmany)
         l_WaveFormatEx.cbSize              = sizeof(WAVEFORMATEX); // needed for Windows 7!
         l_WaveFormatEx.nAvgBytesPerSec     = l_WaveFormatEx.nSamplesPerSec * l_WaveFormatEx.nBlockAlign;
 
-        memset(&hChannel[i], 0, sizeof(HWAVEOUT));
+        memset(&(channel[i].handle), 0, sizeof(HWAVEOUT));
         DISCARD waveOutOpen
-        (   &hChannel[i],
+        (   &(channel[i].handle),
             WAVE_MAPPER,
             &l_WaveFormatEx,
             0,
             0,
             CALLBACK_NULL
         );
-        ChannelOpened[i] = TRUE;
+        channel[i].opened = TRUE;
 }   }
 
 EXPORT void sound_stop(int guestchan)
 {   write_wav(guestchan, TRUE);
 
-    if (guestplaying[guestchan])
-    {   guestplaying[guestchan] = FALSE;
+    if (channel[guestchan].playing)
+    {   channel[guestchan].playing = FALSE;
 
 #ifdef DEBUGSOUND
         zprintf(TEXTPEN_VERBOSE, "sound_stop(%d) at cycle %u.\n", guestchan, cycles_2650);
 #endif
 
         write_wav(guestchan, FALSE);
-        DISCARD waveOutReset(hChannel[guestchan]);
-        DISCARD waveOutUnprepareHeader(hChannel[guestchan], &ChannelHdr[guestchan], sizeof(WAVEHDR));
+        DISCARD waveOutReset(channel[guestchan].handle);
+        DISCARD waveOutUnprepareHeader(channel[guestchan].handle, &(channel[guestchan].header), sizeof(WAVEHDR));
     }
 #ifdef DEBUGSOUND
     else zprintf(TEXTPEN_VERBOSE, "sound_stop(%d) at cycle %u, but was already stopped!\n", guestchan, cycles_2650);
@@ -149,10 +144,10 @@ EXPORT void sound_stop(int guestchan)
 }
 
 EXPORT void sound_close(int guestchan)
-{   if (ChannelOpened[guestchan])
+{   if (channel[guestchan].opened)
     {   sound_stop(guestchan);
-        DISCARD waveOutClose(hChannel[guestchan]);
-        ChannelOpened[guestchan] = FALSE;
+        DISCARD waveOutClose(channel[guestchan].handle);
+        channel[guestchan].opened = FALSE;
 }   }
 
 EXPORT void load_samples(void)
@@ -165,15 +160,14 @@ EXPORT void load_samples(void)
          && ((TheLocalHandle = fopen(samp[i].filename, "rb")))
         )
         {   samp[i].filebase = malloc(samp[i].filesize); // should really check return code
-#ifdef SCALEVOLUME
-            samp[i].scaledbase = malloc(samp[i].filesize); // should really check return code
-#endif
             DISCARD fread(samp[i].filebase, samp[i].filesize, 1, TheLocalHandle); // should really check return code
             DISCARD fclose(TheLocalHandle);
             // TheLocalHandle = NULL;
             samp[i].bodysize = samp[i].filesize - 44;
             samp[i].bodybase = samp[i].filebase + 44;
-
+#ifdef SCALEVOLUME
+            samp[i].scaledbase = malloc(samp[i].bodysize); // should really check return code
+#endif
 #ifdef DEBUGSOUND
             zprintf
             (   TEXTPEN_VERBOSE,
@@ -195,7 +189,7 @@ EXPORT void play_any(int guestchan, float hertz, int volume)
 
     if
     (   !sound
-     || !ChannelOpened[guestchan]
+     || !channel[guestchan].opened
      || (guestchan >= GUESTCHANNELS && !samp[guestchan - GUESTCHANNELS].filebase)
     )
     {
@@ -212,19 +206,20 @@ EXPORT void play_any(int guestchan, float hertz, int volume)
     {
 #ifdef SCALEVOLUME
         for (i = 0; i < samp[guestchan - GUESTCHANNELS].bodysize; i++)
-        {   samp[guestchan - GUESTCHANNELS].scaledbase[i] = (samp[guestchan - GUESTCHANNELS].bodybase[i] * hostvolume) / 8;
-            ChannelHdr[guestchan].lpData     = samp[guestchan - GUESTCHANNELS].scaledbase;
+        {     samp[guestchan - GUESTCHANNELS].scaledbase[i] =
+           (((samp[guestchan - GUESTCHANNELS].bodybase[  i] - 128) * hostvolume) / 8) + 128;
         }
+        channel[guestchan].header.lpData         = samp[guestchan - GUESTCHANNELS].scaledbase;
 #else
-        ChannelHdr[guestchan].lpData         = samp[guestchan - GUESTCHANNELS].bodybase;
+        channel[guestchan].header.lpData         = samp[guestchan - GUESTCHANNELS].bodybase;
 #endif
-        ChannelHdr[guestchan].dwBufferLength = samp[guestchan - GUESTCHANNELS].bodysize;
-        if (loopable[guestchan])
-        {   ChannelHdr[guestchan].dwFlags    = WHDR_BEGINLOOP | WHDR_ENDLOOP;
-            ChannelHdr[guestchan].dwLoops    = ~0; // loop almost indefinitely
+        channel[guestchan].header.dwBufferLength = samp[guestchan - GUESTCHANNELS].bodysize;
+        if (channel[guestchan].loopable)
+        {   channel[guestchan].header.dwFlags    = WHDR_BEGINLOOP | WHDR_ENDLOOP;
+            channel[guestchan].header.dwLoops    = ~0; // loop almost indefinitely
         } else
-        {   ChannelHdr[guestchan].dwFlags    = 0;
-            ChannelHdr[guestchan].dwLoops    = 1;
+        {   channel[guestchan].header.dwFlags    = 0;
+            channel[guestchan].header.dwLoops    = 1;
     }   }
     else
     {   // assert(volume >= 1 && volume <= 15);
@@ -234,25 +229,25 @@ EXPORT void play_any(int guestchan, float hertz, int volume)
         {   // assert(guestchan >= FIRSTGUESTNOISE && guestchan <= LASTGUESTNOISE);
             generate_noise(guestchan, (double) hertz, volume);
         }
-        ChannelHdr[guestchan].lpData         = SoundBuffer[guestchan];
+        channel[guestchan].header.lpData         = SoundBuffer[guestchan];
         // assert(bitrate % 8 == 0);
-        ChannelHdr[guestchan].dwBufferLength = (DWORD) SoundLength[guestchan] * bitrate / 8;
-        ChannelHdr[guestchan].dwFlags        = WHDR_BEGINLOOP | WHDR_ENDLOOP;
-        ChannelHdr[guestchan].dwLoops        = ~0; // loop almost indefinitely
+        channel[guestchan].header.dwBufferLength = (DWORD) SoundLength[guestchan] * bitrate / 8;
+        channel[guestchan].header.dwFlags        = WHDR_BEGINLOOP | WHDR_ENDLOOP;
+        channel[guestchan].header.dwLoops        = ~0; // loop almost indefinitely
     }
-    ChannelHdr[guestchan].dwBytesRecorded = 0;
-    ChannelHdr[guestchan].dwUser          = 0;
-    ChannelHdr[guestchan].lpNext          = NULL;
-    ChannelHdr[guestchan].reserved        = (unsigned long) NULL;
-    DISCARD waveOutPrepareHeader(hChannel[guestchan], &ChannelHdr[guestchan], sizeof(WAVEHDR));
+    channel[guestchan].header.dwBytesRecorded = 0;
+    channel[guestchan].header.dwUser          = 0;
+    channel[guestchan].header.lpNext          = NULL;
+    channel[guestchan].header.reserved        = (unsigned long) NULL;
+    DISCARD waveOutPrepareHeader(channel[guestchan].handle, &(channel[guestchan].header), sizeof(WAVEHDR));
 
 #ifndef SCALEVOLUME
-    DISCARD waveOutSetVolume(hChannel[guestchan], convvolume[hostvolume]); // 16 bits for left channel, then 16 bits for right channel
+    DISCARD waveOutSetVolume(channel[guestchan].handle, convvolume[hostvolume]); // 16 bits for left channel, then 16 bits for right channel
 #endif
 
-    DISCARD waveOutWrite(hChannel[guestchan], &ChannelHdr[guestchan], sizeof(WAVEHDR));
+    DISCARD waveOutWrite(channel[guestchan].handle, &(channel[guestchan].header), sizeof(WAVEHDR));
 
-    guestplaying[guestchan] = TRUE;
+    channel[guestchan].playing = TRUE;
 }
 
 EXPORT void speech_init(void)
@@ -312,9 +307,9 @@ EXPORT void sound_preinit(void)
         samp[i].bodybase   = NULL;
     }
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   hChannel[i]        = NULL;
-        WAVHandle[i]       = NULL;
-        ChannelOpened[i]   = FALSE;
+    {   channel[i].handle    = NULL;
+        channel[i].WAVHandle = NULL;
+        channel[i].opened    = FALSE;
     }
     memset(SilenceBuffer16,    0, SILENCEBUFSIZE * 2);
     memset(SilenceBuffer8,  0x80, SILENCEBUFSIZE);
@@ -324,9 +319,9 @@ EXPORT void sound_die(void)
 {   int i;
 
     for (i = 0; i < TOTALCHANNELS; i++)
-    {   if (ChannelOpened[i])
-        {   DISCARD waveOutClose(hChannel[i]);
-            // ChannelOpened[i] = FALSE;
+    {   if (channel[i].opened)
+        {   waveOutClose(channel[i].handle);
+            // channel[i].opened = FALSE;
     }   }
     for (i = 0; i < SAMPLES; i++)
     {   if (samp[i].filebase)

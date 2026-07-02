@@ -96,6 +96,7 @@ IMPORT       int                  ambient,
                                   cpux,
                                   cpuy,
                                   debugdrive,
+                                  diskblocksize,
                                   drawmode,
                                   drive_mode,
                                   drive_idmode,
@@ -125,22 +126,21 @@ IMPORT       int                  ambient,
                                   watchreads,
                                   watchwrites,
                                   whichgame;
-IMPORT       MEMFLAG              memflags[ALLTOKENS];
-IMPORT       struct DriveStruct   drive[DRIVES_MAX];
-IMPORT       struct MachineStruct machines[MACHINES];
-IMPORT       struct PrinterStruct printer[2];
-IMPORT       struct RTCStruct     rtc;
+IMPORT       MEMFLAG                  memflags[ALLTOKENS];
+IMPORT       struct DriveStruct       drive[DRIVES_MAX];
+IMPORT       struct MachineStruct     machines[MACHINES];
+IMPORT       struct PrinterStruct     printer[2];
+IMPORT       struct RTCStruct         rtc;
+IMPORT       struct SubWindowStruct   subwin[SUBWINDOWS];
 IMPORT const struct CodeCommentStruct codecomment[];
 
 #ifdef AMIGA
     IMPORT   struct Catalog*      CatalogPtr;
-    IMPORT   struct Window*       SubWindowPtr[SUBWINDOWS];
 #endif
 #ifdef WIN32
     IMPORT   int                  CatalogPtr; // APTR doesn't work
     IMPORT   struct LangStruct    langs[LANGUAGES];
-    IMPORT   HWND                 MainWindowPtr,
-                                  SubWindowPtr[SUBWINDOWS];
+    IMPORT   HWND                 MainWindowPtr;
 #endif
 
 // EXPORTED VARIABLES-----------------------------------------------------
@@ -353,6 +353,8 @@ EXPORT void cd2650_setmemmap(void)
         drive[i].inserted    = FALSE;
     }
     trackreg = 0;
+
+    diskblocksize = CD2650_BLOCKSIZE;
 
     if (cd2650_biosver == CD2650_IPL)
     {   cd2650_create_disk(0); // because it won't even boot without DOS available on disk
@@ -570,12 +572,13 @@ EXPORT void cd2650_writeport(int port, UBYTE data)
                     sound_stop(GUESTCHANNELS + SAMPLE_GRIND);
                     sound_stop(GUESTCHANNELS + SAMPLE_SPIN);
                     drive[curdrive].headloaded = drive[curdrive].spinning = FALSE;
-                    update_floppydrive(1, curdrive);
+                    update_floppydrive(FALSE, curdrive);
                     timeoutat = (ULONG) -1;
                     if (verbosedisk)
                     {   zprintf(TEXTPEN_VERBOSE, "Spun down drive #%d due to drive change.\n", curdrive);
                 }   }
                 curdrive = data;
+                viewingdrive = curdrive;
         }   }
         elif (verbosedisk)
         {   zprintf(TEXTPEN_VERBOSE, "Code at $%X attempted to change drive unit from %d to %d!\n", iar, curdrive, data);
@@ -583,7 +586,7 @@ EXPORT void cd2650_writeport(int port, UBYTE data)
         RESETTIMEOUT;
         if (viewingdrive != (int) curdrive)
         {   viewingdrive = curdrive;
-            update_floppydrive(3, viewingdrive);
+            update_floppydrive(TRUE, viewingdrive);
         }
     acase 0xFC:
     case 0xFD:
@@ -642,25 +645,17 @@ EXPORT void cd2650_writeport(int port, UBYTE data)
     logport(port, data, TRUE);
 
     if
-    (   drive[curdrive].track  != oldtrack
-     || drive[curdrive].sector != oldsector
-    )
-    {   if (viewingdrive != (int) curdrive)
-        {   viewingdrive = curdrive;
-            update_floppydrive(3, viewingdrive);
-        } else
-        {   update_floppydrive(2, viewingdrive);
-    }   }
-    elif
-    (   drivestatus                 != oldstatus
-     || drive_mode                  != oldmode
+    (   drive[curdrive].track       != oldtrack
+     || drive[curdrive].sector      != oldsector
      || drive[curdrive].blockoffset != oldoffset
+     || drivestatus                 != oldstatus
+     || drive_mode                  != oldmode
     )
     {   if (viewingdrive != (int) curdrive)
         {   viewingdrive = curdrive;
-            update_floppydrive(3, viewingdrive);
+            update_floppydrive(TRUE, viewingdrive);
         } else
-        {   update_floppydrive(1, viewingdrive);
+        {   update_floppydrive(FALSE, viewingdrive);
 }   }   }
 
 EXPORT UBYTE cd2650_readport(int port)
@@ -720,15 +715,15 @@ EXPORT UBYTE cd2650_readport(int port)
     if
     (   drive[curdrive].track       != oldtrack
      || drive[curdrive].sector      != oldsector
+     || drive[curdrive].blockoffset != oldoffset
      || drivestatus                 != oldstatus
      || drive_mode                  != oldmode
-     || drive[curdrive].blockoffset != oldoffset
     )
     {   if (viewingdrive != (int) curdrive)
         {   viewingdrive = curdrive;
-            update_floppydrive(3, viewingdrive);
+            update_floppydrive(TRUE, viewingdrive);
         } else
-        {   update_floppydrive(1, viewingdrive);
+        {   update_floppydrive(FALSE, viewingdrive);
     }   }
 
     return t;
@@ -1511,7 +1506,7 @@ EXPORT void cd2650_dir_disk(FLAG quiet, int whichdrive)
     }
 
     viewingdrive = whichdrive;
-    update_floppydrive(3, viewingdrive);
+    update_floppydrive(TRUE, viewingdrive);
 }
 
 EXPORT FLAG cd2650_load_disk(FLAG wantasl, int whichdrive)
@@ -1579,7 +1574,7 @@ EXPORT FLAG cd2650_load_disk(FLAG wantasl, int whichdrive)
 
     drive[whichdrive].inserted = TRUE;
     cd2650_dir_disk(TRUE, whichdrive);
-    if (!SubWindowPtr[SUBWINDOW_FLOPPYDRIVE])
+    if (!subwin[SUBWINDOW_FLOPPYDRIVE].hwnd)
     {   open_floppydrive(FALSE);
     }
 
@@ -1744,7 +1739,7 @@ EXPORT void cd2650_changebios(void)
     {   if (cd2650_vdu == VDU_ASCII)
         {   cd2650_vdu = VDU_LOWERCASE;
     }   }
-    changemachine(CD2650, memmap, TRUE, TRUE, TRUE); // calls cd2650_updatecharset()
+    changemachine(CD2650, memmap, TRUE, 2, TRUE); // calls cd2650_updatecharset()
     updatemenus();
     engine_reset();
     redrawscreen(); // important!

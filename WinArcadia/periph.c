@@ -42,10 +42,12 @@
 
 // EXPORTED VARIABLES-----------------------------------------------------
 
-EXPORT     FLAG           oldspinning;
+EXPORT     FLAG           disk_oor, // means out of range
+                          oldspinning;
 EXPORT     UBYTE          papertapebyte[2];
 EXPORT     ULONG          papertapelength[2] = { 0, 0 },
                           papertapewhere[ 2] = { 0, 0 };
+EXPORT     int            diskblocksize;
 #ifdef WIN32
     EXPORT HICON          spinicon[2];
 #endif
@@ -59,14 +61,14 @@ IMPORT     TEXT           fn_tape[4][MAX_PATH + 1],
                           tapetitlestring[40 + MAX_PATH + 1];
 IMPORT     UBYTE          tapebyte,
                           tapeskewage;
-IMPORT     ULONG          papertapeprotect[2],
+IMPORT     ULONG          curdrive,
+                          papertapeprotect[2],
                           samplewhere,
                           tapelength,
                           tape_hz,
                           tapewriteprotect,
                           viewdiskas;
-IMPORT     int            diskbyte,
-                          drive_mode,
+IMPORT     int            drive_mode,
                           machine,
                           mdcrblock,
                           mdcrblocks,
@@ -82,34 +84,30 @@ IMPORT     int            diskbyte,
                           tapemode,
                           viewingdrive,
                           wsm;
-IMPORT const UWORD        fileoffset[78];
-IMPORT struct DriveStruct   drive[DRIVES_MAX];
-IMPORT struct MachineStruct machines[MACHINES];
+IMPORT const UWORD            fileoffset[78];
+IMPORT struct DriveStruct     drive[DRIVES_MAX];
+IMPORT struct MachineStruct   machines[MACHINES];
+IMPORT struct SubWindowStruct subwin[SUBWINDOWS];
 #ifdef WIN32
-    IMPORT int             CatalogPtr; // APTR doesn't work
-    IMPORT HICON           diskicon;
-    IMPORT HWND            hStatusBar,
-                           MainWindowPtr,
-                           SubWindowPtr[SUBWINDOWS];
+    IMPORT int                CatalogPtr; // APTR doesn't work
+    IMPORT HICON              diskicon;
+    IMPORT HWND               hStatusBar,
+                              MainWindowPtr;
 #endif
 #ifdef AMIGA
-    IMPORT        int      driveglyph_x, driveglyph_y,
-                           bloxwidth,
-                           bloxheight;
-    IMPORT        LONG     emupens[EMUBRUSHES];
-    IMPORT        ULONG    emulongpens[EMUBRUSHES],
-                           tiptag1;
-    IMPORT        ULONG*   bloxlongptr[2][BLOXHEIGHT];
-    IMPORT struct Catalog* CatalogPtr;
-    IMPORT struct Gadget*  gadgets[GIDS + 1];
-    IMPORT struct Image*   images[IMAGES];
-    IMPORT struct Window  *MainWindowPtr,
-                          *SubWindowPtr[SUBWINDOWS];
+    IMPORT        int         driveglyph_x, driveglyph_y;
+    IMPORT        LONG        emupens[EMUBRUSHES];
+    IMPORT        ULONG       emulongpens[EMUBRUSHES],
+                              tiptag1;
+    IMPORT struct Catalog*    CatalogPtr;
+    IMPORT struct Gadget*     gadgets[GIDS + 1];
+    IMPORT struct Image*      images[IMAGES];
+    IMPORT struct Window*     MainWindowPtr;
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
 
-MODULE     UBYTE           blockcontents[256];
+MODULE     UBYTE              blockcontents[256];
 
 MODULE const STRPTR mdcrstatestr[5] = {
 "Idle",            // 0 MDCRSTATE_IDLE
@@ -133,71 +131,11 @@ MODULE const STRPTR mdcrstatestr[5] = {
 ": B number",      // 3 MDCRREVSTATE_BNUM
 };
 
-#ifdef WIN32
-MODULE const struct
-{   const int xedge,     yedge,     //                  sector line (extended to edge of square)
-              xarcstart, yarcstart, // just beyond      sector line (extended to edge of square)
-              xarcend,   yarcend,   // just before next sector line (extended to edge of square)
-              xstart,    ystart,    // sector line end
-              xend,      yend;      // sector line start
-} binbug_sectorpoint[BINBUG_SECTORS] = {
-{ 107,   0, 106,   0,  25,   0, 107,   5, 107,  85 }, // sector  1
-{  24,   0,  23,   0,   0,  70,  45,  27,  94,  90 }, // sector  2
-{   0,  71,   0,  72,   0, 142,  11,  75,  86, 100 }, // sector  3
-{   0, 143,   0, 144,  23, 214,  11, 139,  86, 114 }, // sector  4
-{  24, 214,  25, 214, 106, 214,  45, 187,  94, 124 }, // sector  5
-{ 107, 214, 108, 214, 189, 214, 107, 209, 107, 129 }, // sector  6
-{ 190, 214, 191, 214, 214, 144, 169, 187, 120, 124 }, // sector  7
-{ 214, 143, 214, 142, 214,  72, 203, 139, 128, 114 }, // sector  8
-{ 214,  71, 214,  70, 191,   0, 203,  75, 128, 100 }, // sector  9
-{ 190,   0, 189,   0, 108,   0, 169,  27, 120,  90 }, // sector 10
-}, cd2650_sectorpoint[CD2650_SECTORS] = {
-{ 107,   0, 106,   0,  22,   0, 107,   5, 107,  84 }, // sector 1
-{  43-22,0,  20,   0,   0,  79,  43,  28,  92,  89 }, // sector 2
-{   0,  80,   0,  81,   0, 163,   8,  82,  85, 101 }, // sector 3
-{   0, 164,   0, 165,  59, 214,  18, 155,  87, 118 }, // sector 4
-{  60, 214,  61, 214, 152, 214,  67, 201,  98, 128 }, // sector 5
-{ 153, 214, 154, 214, 214, 165, 147, 201, 116, 128 }, // sector 6
-{ 214, 164, 214, 163, 214,  81, 196, 155, 127, 118 }, // sector 7
-{ 214,  80, 214,  79, 197,   0, 206,  82, 129, 101 }, // sector 8
-{ 196,   0, 195,   0, 108,   0, 173,  28, 122,  89 }, // sector 9
-}, twin_sectorpoint[TWIN_SECTORS] = {
-{ 164,   0, 163,   0, 132,   0, 164,   5, 164, 120 }, //  0
-{ 131,   0, 130,   0,  91,   0, 133,   8, 155, 121 },
-{  90,   0,  89,   0,  50,   0,  99,  19, 146, 124 },
-{  49,   0,  48,   0,   1,   0,  73,  34, 139, 128 },
-{   0,   0,   0,   1,   0,  48,  52,  52, 133, 133 },
-{   0,  49,   0,  50,   0,  89,  34,  73, 128, 139 },
-{   0,  90,   0,  91,   0, 130,  19,  99, 124, 146 },
-{   0, 131,   0, 132,   0, 163,   8, 133, 121, 155 },
-{   0, 164,   0, 165,   0, 196,   5, 164, 120, 164 },
-{   0, 197,   0, 198,   0, 237,   8, 195, 121, 173 },
-{   0, 238,   0, 239,   0, 278,  19, 229, 124, 182 }, // 10
-{   0, 279,   0, 280,   0, 327,  34, 255, 128, 189 },
-{   0, 328,   1, 328,  48, 328,  52, 276, 133, 195 },
-{  49, 328,  50, 328,  89, 328,  73, 294, 139, 200 },
-{  90, 328,  91, 328, 130, 328,  99, 309, 146, 204 },
-{ 131, 328, 132, 328, 163, 328, 133, 320, 155, 207 },
-{ 164, 328, 165, 328, 196, 328, 164, 323, 164, 208 },
-{ 197, 328, 198, 328, 237, 328, 195, 320, 173, 207 },
-{ 238, 328, 239, 328, 278, 328, 229, 309, 182, 204 },
-{ 279, 328, 280, 328, 327, 328, 255, 294, 189, 200 },
-{ 328, 328, 328, 327, 328, 280, 276, 276, 195, 195 }, // 20
-{ 328, 279, 328, 278, 328, 239, 294, 255, 200, 189 },
-{ 328, 238, 328, 237, 328, 198, 309, 229, 204, 182 },
-{ 328, 197, 328, 196, 328, 165, 320, 195, 207, 173 },
-{ 328, 164, 328, 163, 328, 132, 323, 164, 208, 164 },
-{ 328, 131, 328, 130, 328,  91, 320, 133, 207, 155 },
-{ 328,  90, 328,  89, 328,  50, 309,  99, 204, 146 },
-{ 328,  49, 328,  48, 328,   1, 294,  73, 200, 139 },
-{ 328,   0, 327,   0, 280,   0, 276,  52, 195, 133 },
-{ 279,   0, 278,   0, 239,   0, 255,  34, 189, 128 },
-{ 238,   0, 237,   0, 198,   0, 229,  19, 182, 124 }, // 30
-{ 197,   0, 196,   0, 165,   0, 195,   8, 173, 121 }, // 31
-};
-#endif
+/* MODULE FUNCTIONS-------------------------------------------------------
 
-// CODE-------------------------------------------------------------------
+(None)
+
+CODE------------------------------------------------------------------- */
 
 EXPORT void update_tapedeck(FLAG force)
 {   PERSIST UBYTE oldtapebyte;
@@ -225,7 +163,7 @@ EXPORT void update_tapedeck(FLAG force)
     FAST    int   whichemupen;
 #endif
 
-    if (!SubWindowPtr[SUBWINDOW_TAPEDECK])
+    if (!subwin[SUBWINDOW_TAPEDECK].hwnd)
     {   return;
     }
 
@@ -271,43 +209,43 @@ EXPORT void update_tapedeck(FLAG force)
     if (tapemode != oldtapemode || force)
     {   tapedeck_settitle();
 #ifdef WIN32
-        SetWindowText(SubWindowPtr[SUBWINDOW_TAPEDECK], tapetitlestring);
+        SetWindowText(subwin[SUBWINDOW_TAPEDECK].hwnd, tapetitlestring);
 
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_POSITIONSLIDER), (tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_POSITIONSLIDER), (tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
 
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_REWIND    ), (samplewhere > 0          && tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_STOPTAPE  ), (                            tapemode >  TAPEMODE_STOP) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_RECORD    ), (                            tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_PLAY      ), (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_FFWD      ), (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_EJECTTAPE ), (                            tapemode != TAPEMODE_NONE) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_CREATE8SVX), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_CREATEAIFF), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_CREATEWAV ), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
-        DISCARD EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_INSERTTAPE), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_REWIND    ), (samplewhere > 0          && tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_STOPTAPE  ), (                            tapemode >  TAPEMODE_STOP) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_RECORD    ), (                            tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_PLAY      ), (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_FFWD      ), (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_EJECTTAPE ), (                            tapemode != TAPEMODE_NONE) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_CREATE8SVX), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_CREATEAIFF), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_CREATEWAV ), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
+        DISCARD EnableWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_INSERTTAPE), (                            tapemode == TAPEMODE_NONE) ? TRUE : FALSE);
 
-        DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_REWIND    ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_STOPTAPE  ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_RECORD    ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_PLAY      ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_FFWD      ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        DISCARD RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_EJECTTAPE ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_REWIND    ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_STOPTAPE  ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_RECORD    ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_PLAY      ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_FFWD      ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        DISCARD RedrawWindow(GetDlgItem(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_EJECTTAPE ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 #endif
 #ifdef AMIGA
-        SetWindowTitles(SubWindowPtr[SUBWINDOW_TAPEDECK], (const char*) tapetitlestring, (const char*) tapetitlestring);
+        SetWindowTitles(subwin[SUBWINDOW_TAPEDECK].hwnd, (const char*) tapetitlestring, (const char*) tapetitlestring);
 
-        SetGadgetAttrs(gadgets[GID_TA_SL2 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (tapemode == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE); // this autorefreshes
+        SetGadgetAttrs(gadgets[GID_TA_SL2 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (tapemode == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE); // this autorefreshes
 
-        SetGadgetAttrs(gadgets[GID_TA_BU1 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_RECORD) ? TRUE : FALSE, TAG_DONE); // record
-        SetGadgetAttrs(gadgets[GID_TA_BU2 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (samplewhere > 0          && tapemode == TAPEMODE_STOP) ? FALSE : TRUE,                                                            TAG_DONE); // rewind
-        SetGadgetAttrs(gadgets[GID_TA_BU3 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_PLAY  ) ? TRUE : FALSE, TAG_DONE); // play
-        SetGadgetAttrs(gadgets[GID_TA_BU4 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? FALSE : TRUE,                                                            TAG_DONE); // ffwd
-        SetGadgetAttrs(gadgets[GID_TA_BU5 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode >  TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_STOP  ) ? TRUE : FALSE, TAG_DONE); // stop
-        SetGadgetAttrs(gadgets[GID_TA_BU6 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode != TAPEMODE_NONE) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_NONE  ) ? TRUE : FALSE, TAG_DONE); // eject
-        SetGadgetAttrs(gadgets[GID_TA_BU7 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
-        SetGadgetAttrs(gadgets[GID_TA_BU8 ], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
-        SetGadgetAttrs(gadgets[GID_TA_BU11], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
-        SetGadgetAttrs(gadgets[GID_TA_BU12], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
+        SetGadgetAttrs(gadgets[GID_TA_BU1 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_RECORD) ? TRUE : FALSE, TAG_DONE); // record
+        SetGadgetAttrs(gadgets[GID_TA_BU2 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (samplewhere > 0          && tapemode == TAPEMODE_STOP) ? FALSE : TRUE,                                                            TAG_DONE); // rewind
+        SetGadgetAttrs(gadgets[GID_TA_BU3 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_PLAY  ) ? TRUE : FALSE, TAG_DONE); // play
+        SetGadgetAttrs(gadgets[GID_TA_BU4 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (samplewhere < tapelength && tapemode == TAPEMODE_STOP) ? FALSE : TRUE,                                                            TAG_DONE); // ffwd
+        SetGadgetAttrs(gadgets[GID_TA_BU5 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode >  TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_STOP  ) ? TRUE : FALSE, TAG_DONE); // stop
+        SetGadgetAttrs(gadgets[GID_TA_BU6 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode != TAPEMODE_NONE) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_NONE  ) ? TRUE : FALSE, TAG_DONE); // eject
+        SetGadgetAttrs(gadgets[GID_TA_BU7 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
+        SetGadgetAttrs(gadgets[GID_TA_BU8 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
+        SetGadgetAttrs(gadgets[GID_TA_BU11], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
+        SetGadgetAttrs(gadgets[GID_TA_BU12], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_NONE) ? FALSE : TRUE,                                                            TAG_DONE);
 #endif
     }
 
@@ -345,18 +283,18 @@ EXPORT void update_tapedeck(FLAG force)
     if (tapebyte != oldtapebyte || tapemode != oldtapemode || force)
     {   sprintf(gtempstring, "%02X", tapebyte);
 #ifdef WIN32
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_TAPEBYTE, gtempstring);
+        SetDlgItemText(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_TAPEBYTE, gtempstring);
 #endif
 #ifdef AMIGA
         switch (tapemode)
         {
-        case  TAPEMODE_PLAY:       SetGadgetAttrs(gadgets[GID_TA_BU17], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_CYAN  ], TAG_DONE);
+        case  TAPEMODE_PLAY:       SetGadgetAttrs(gadgets[GID_TA_BU17], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_CYAN  ], TAG_DONE);
         acase TAPEMODE_RECORD: if (tapewriteprotect)
-                               {   SetGadgetAttrs(gadgets[GID_TA_BU17], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_YELLOW], TAG_DONE);
+                               {   SetGadgetAttrs(gadgets[GID_TA_BU17], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_YELLOW], TAG_DONE);
                                } else
-                               {   SetGadgetAttrs(gadgets[GID_TA_BU17], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_RED   ], TAG_DONE);
+                               {   SetGadgetAttrs(gadgets[GID_TA_BU17], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_RED   ], TAG_DONE);
                                }
-        adefault:                  SetGadgetAttrs(gadgets[GID_TA_BU17], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_GREEN ], TAG_DONE);
+        adefault:                  SetGadgetAttrs(gadgets[GID_TA_BU17], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_GREEN ], TAG_DONE);
         }
 #endif
     }
@@ -404,7 +342,7 @@ EXPORT void update_tapedeck(FLAG force)
             {   strcat((char*) mdcr_string, mdcrrevstr[mdcrrevstate]);
             }
 #ifdef WIN32
-            SetDlgItemText(SubWindowPtr[SUBWINDOW_TAPEDECK], IDC_MDCRSTATUS, mdcr_string);
+            SetDlgItemText(subwin[SUBWINDOW_TAPEDECK].hwnd, IDC_MDCRSTATUS, mdcr_string);
 #endif
 #ifdef AMIGA
             if (mdcrblocks == 0)
@@ -421,7 +359,7 @@ EXPORT void update_tapedeck(FLAG force)
                 else
                 {   whichemupen = EMUBRUSH_GREEN;
             }   }
-            SetGadgetAttrs(gadgets[GID_TA_BU16], SubWindowPtr[SUBWINDOW_TAPEDECK], NULL, GA_Text, mdcr_string, BUTTON_BackgroundPen, emupens[whichemupen], TAG_DONE); // this refreshes automatically
+            SetGadgetAttrs(gadgets[GID_TA_BU16], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Text, mdcr_string, BUTTON_BackgroundPen, emupens[whichemupen], TAG_DONE); // this refreshes automatically
 #endif
         }
 
@@ -447,864 +385,267 @@ EXPORT void update_tapedeck(FLAG force)
     oldtapebyte    = tapebyte;
 }
 
-EXPORT void update_floppydrive(int level, int whichdrive)
-{   FAST    int      cluster,
-                     howmany,
-                     i, j, k,
-                     ii,
-                     length,
-                     localsector,
-                     localtrack,
-                     startblock, endblock,
-                     viewing,
-                     where;
-    FAST    UBYTE    t;
-    PERSIST TEXT     subwintitle[256 + 1];
-    PERSIST FLAG     outofrange;
-    PERSIST UBYTE    oldtrack,
-                     oldsector;
-    PERSIST int      oldblockoffset,
-                     oldcluster,
-                     olddrivemode,
-                     oldviewstart;
-#ifdef WIN32
-    FAST    double   angle,
-                     byte_offset,
-                     linelength;
-    FAST    int      amount;
-    FAST    COLORREF whichcolour;
-    FAST    HDC      DiskRastPtr;
-    FAST    HPEN     CyanPen, PinkPen, PurplePen, BlackPen, GreenPen, OrangePen, RedPen, WhitePen;
-#endif
+EXPORT void update_floppydrive(FLAG force, int whichdrive)
+{   TRANSIENT FLAG  refreshtips = FALSE;
+    FAST      int   cluster,
+                    i, j,
+                    length,
+                    startblock, endblock,
+                    viewingbyte,
+                    viewingcluster,
+                    where,
+                    whichpen;
+    FAST      UBYTE t,
+                    viewingtrack,
+                    viewingsector;
+    PERSIST   TEXT  subwintitle[256 + 1];
+    PERSIST   UBYTE oldtrack[DRIVES_MAX],
+                    oldsector;
+    PERSIST   int   oldblockoffset,
+                    oldcluster,
+                    olddrivemode,
+                    oldviewingdrive,
+                    oldviewstart;
 #ifdef AMIGA
-    FAST    FLAG     redraw;
-    FAST    int      dimicon,
-                     glowicon,
-                     viewbyte,
-                     whichpen,
-                     x, y;
+    FAST      int   dimicon,
+                    glowicon;
 #endif
 
-    if (MainWindowPtr && showstatusbars[wsm] && (level >= 2 || drive_mode != olddrivemode || drive[whichdrive].track != oldtrack))
+    if (viewingdrive != oldviewingdrive)
+    {   force = TRUE;
+    }
+
+    // Status bar---------------------------------------------------------
+
+    if (MainWindowPtr && showstatusbars[wsm] && (force || drive_mode != olddrivemode || drive[whichdrive].track != oldtrack[whichdrive]))
     {   if (whichdrive >= machines[machine].drives)
         {
-#ifdef WIN32
-            DISCARD SendMessage(hStatusBar, SB_SETTEXT, 4 + whichdrive, (LPARAM) "--");
-#endif
 #ifdef AMIGA
             SetGadgetAttrs(gadgets[GID_MA_BU3 + whichdrive], MainWindowPtr, NULL, GA_Text, "--", BUTTON_BackgroundPen, ~0, GA_Disabled, TRUE, TAG_END); // this refreshes automatically
 #endif
+#ifdef WIN32
+            SendMessage(hStatusBar, SB_SETTEXT, 4 + whichdrive, (LPARAM) "--");
+#ifdef COLOURSTATUSBAR
+            SendMessage(hStatusBar, SB_SETBKCOLOR, 0, (LPARAM) CLR_DEFAULT);
+#endif
+#endif
         } else
         {   sprintf(gtempstring, "%02d", drive[whichdrive].track);
+            whichpen = getdiskmodecolour();
 #ifdef AMIGA
-            switch (drive_mode)
-            {
-            case  DRIVEMODE_IDLE:    whichpen = EMUBRUSH_BLUE;
-            acase DRIVEMODE_READING: whichpen = EMUBRUSH_GREEN;
-            acase DRIVEMODE_WRITING: whichpen = EMUBRUSH_YELLOW;
-            adefault:                whichpen = EMUBRUSH_WHITE; // should never happen
-            }
             SetGadgetAttrs(gadgets[GID_MA_BU3 + whichdrive], MainWindowPtr, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[whichpen], GA_Disabled, FALSE, TAG_END); // this refreshes automatically
 #endif
 #ifdef WIN32
             DISCARD SendMessage(hStatusBar, SB_SETTEXT, 4 + whichdrive, (LPARAM) gtempstring);
+#ifdef COLOURSTATUSBAR
+            DISCARD SendMessage(hStatusBar, SB_SETBKCOLOR, 0, (LPARAM) whichpen);
 #endif
-        }
-#if defined(WIN32) && defined(COLOURSTATUSBAR)
-        if (!machines[machine].drives)
-        {   DISCARD SendMessage(hStatusBar, SB_SETBKCOLOR, 0, (LPARAM) CLR_DEFAULT);
-        } else
-        {   switch (drive_mode)
-            {
-            case  DRIVEMODE_IDLE:    whichcolour = EMUPEN_BLUE;
-            acase DRIVEMODE_READING: whichcolour = EMUPEN_GREEN;
-            acase DRIVEMODE_WRITING: whichcolour = EMUPEN_YELLOW;
-            adefault:                whichcolour = EMUPEN_WHITE; // should never happen
-            }
-            DISCARD SendMessage(hStatusBar, SB_SETBKCOLOR, 0, (LPARAM) whichcolour);
-        }
 #endif
-    }
+    }   }
 
     if
-    (   SubWindowPtr[SUBWINDOW_FLOPPYDRIVE]
-     && whichdrive < machines[machine].drives
-     && (machine == TWIN || whichdrive == viewingdrive)
+    (   !subwin[SUBWINDOW_FLOPPYDRIVE].hwnd
+     || whichdrive >= machines[machine].drives
+     || whichdrive != viewingdrive
     )
-    {   if (machine != TWIN && oldspinning != drive[whichdrive].spinning)
-        {
+    {   oldtrack[whichdrive] = drive[whichdrive].track;
+        return;
+    }
+
+    if (force)
+    {   // Subwindow title------------------------------------------------
+        if (machines[machine].drives >= 2)
+        {   strcpy(subwintitle, LLL(MSG_HAIL_FLOPPYDRIVES, "Floppy Disk Drives"));
+        } else
+        {   strcpy(subwintitle, LLL(MSG_HAIL_FLOPPYDRIVE,  "Floppy Disk Drive" ));
+        }
+        ch2_set(SUBWINDOW_FLOPPYDRIVE, IDC_DRIVE, whichdrive); // ordinal number in list
+        if (drive[whichdrive].inserted && drive[whichdrive].fn_disk[0])
+        {   length = strlen(drive[whichdrive].fn_disk);
+            j = 0;
+            for (i = length - 1; i >= 0; i--)
+            {   if (drive[whichdrive].fn_disk[i] == ':' || drive[whichdrive].fn_disk[i] == CHAR_PARENT)
+                {   j = i + 1;
+                    break;
+            }   }
+            strcat(subwintitle, ": ");
+            strcat(subwintitle, &drive[whichdrive].fn_disk[j]);
+        }
 #ifdef WIN32
-            SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], IDC_DISKGLYPH), STM_SETIMAGE, IMAGE_ICON, (LPARAM) spinicon[drive[whichdrive].spinning ? 1 : 0]);
+        SetWindowText(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, subwintitle);
 #endif
 #ifdef AMIGA
-            switch (machine)
-            {
-            case  BINBUG: dimicon = IMAGE_GLYPH_BINBUG_DIM; glowicon = IMAGE_GLYPH_BINBUG_GLOW;
-            acase CD2650: dimicon = IMAGE_GLYPH_CD2650_DIM; glowicon = IMAGE_GLYPH_CD2650_GLOW;
-            }
-            if (drive[whichdrive].spinning)
-            {   images[glowicon]->LeftEdge = driveglyph_x;
-                images[glowicon]->TopEdge  = driveglyph_y;
-                DrawImage(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE]->RPort, images[glowicon], 0, 0);
-            } else
-            {   images[dimicon ]->LeftEdge = driveglyph_x;
-                images[dimicon ]->TopEdge  = driveglyph_y;
-                DrawImage(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE]->RPort, images[dimicon ], 0, 0);
-            }
+        SetWindowTitles(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, (const char*) subwintitle, (const char*) subwintitle);
 #endif
-            oldspinning = drive[whichdrive].spinning;
-        }
 
+        // Buttons--------------------------------------------------------
+        bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_UPDATEDISK, drive[whichdrive].inserted ? TRUE : FALSE);
+        bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_EJECTDISK,  drive[whichdrive].inserted ? TRUE : FALSE);
+    }
+
+    // Glyph--------------------------------------------------------------
+
+    if (machine != TWIN && oldspinning != drive[whichdrive].spinning)
+    {
+#ifdef WIN32
+        SendMessage(GetDlgItem(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd, IDC_DISKGLYPH), STM_SETIMAGE, IMAGE_ICON, (LPARAM) spinicon[drive[whichdrive].spinning ? 1 : 0]);
+#endif
+#ifdef AMIGA
         switch (machine)
         {
-        case  BINBUG: howmany = BINBUG_BLOCKSIZE;
-        acase CD2650: howmany = CD2650_BLOCKSIZE;
-        acase TWIN:   howmany =   TWIN_BLOCKSIZE;
+        case  BINBUG: dimicon = IMAGE_GLYPH_BINBUG_DIM; glowicon = IMAGE_GLYPH_BINBUG_GLOW;
+        acase CD2650: dimicon = IMAGE_GLYPH_CD2650_DIM; glowicon = IMAGE_GLYPH_CD2650_GLOW;
         }
-        get_disk_byte(whichdrive, FALSE); // sets outofrange variable
-        viewing = get_viewing_cluster(whichdrive);
-
-#ifdef WIN32
-        if (drive[whichdrive].inserted)
-        {   DiskRastPtr = GetDC(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (machine == TWIN && whichdrive == 1) ? IDC_PLATTER2 : IDC_PLATTER));
-            RedPen    = CreatePen(PS_SOLID, 1, EMUPEN_RED);
-            GreenPen  = CreatePen(PS_SOLID, 1, EMUPEN_DARKGREEN);
-            OrangePen = CreatePen(PS_SOLID, 1, EMUPEN_DARKORANGE);
-            CyanPen   = CreatePen(PS_SOLID, 1, EMUPEN_CYAN);
-            PinkPen   = CreatePen(PS_SOLID, 1, EMUPEN_PINK);
-            PurplePen = CreatePen(PS_SOLID, 1, EMUPEN_PURPLE);
-            BlackPen  = CreatePen(PS_SOLID, 1, EMUPEN_BLACK);
-            WhitePen  = CreatePen(PS_SOLID, 1, EMUPEN_WHITE);
-        }
-#endif
-
-        if (level == 3)
-        {   if (machines[machine].drives >= 2)
-            {   strcpy(subwintitle, LLL(MSG_HAIL_FLOPPYDRIVES, "Floppy Disk Drives"));
-            } else
-            {   strcpy(subwintitle, LLL(MSG_HAIL_FLOPPYDRIVE,  "Floppy Disk Drive" ));
-            }
-            if (machine == TWIN)
-            {   for (k = 0; k < 2; k++)
-                {   if (drive[k].inserted && drive[k].fn_disk[0])
-                    {   length = strlen(drive[k].fn_disk);
-                        j = 0;
-                        for (i = length - 1; i >= 0; i--)
-                        {   if (drive[k].fn_disk[i] == ':' || drive[k].fn_disk[i] == CHAR_PARENT)
-                            {   j = i + 1;
-                                break;
-                        }   }
-                        if (k == 0 || !drive[0].inserted || drive[0].fn_disk[0] == EOS) // first
-                        {   strcat(subwintitle, ": ");
-                        } else
-                        {   strcat(subwintitle, " & ");
-                        }
-                        strcat(subwintitle, &drive[k].fn_disk[j]);
-            }   }   }
-            else
-            {   // assert(whichdrive == viewingdrive);
-                ch2_set(SUBWINDOW_FLOPPYDRIVE, IDC_DRIVE, whichdrive); // ordinal number in list
-                if (drive[whichdrive].inserted && drive[whichdrive].fn_disk[0])
-                {   length = strlen(drive[whichdrive].fn_disk);
-                    j = 0;
-                    for (i = length - 1; i >= 0; i--)
-                    {   if (drive[whichdrive].fn_disk[i] == ':' || drive[whichdrive].fn_disk[i] == CHAR_PARENT)
-                        {   j = i + 1;
-                            break;
-                    }   }
-                    strcat(subwintitle, ": ");
-                    strcat(subwintitle, &drive[whichdrive].fn_disk[j]);
-            }   }
-#ifdef WIN32
-            SetWindowText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], subwintitle);
-#endif
-#ifdef AMIGA
-            SetWindowTitles(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (const char*) subwintitle, (const char*) subwintitle);
-#endif
-
-            switch (machine)
-            {
-            case TWIN:
-                switch (whichdrive)
-                {
-                case 0:
-                    bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_UPDATEDISK,  drive[0].inserted ? TRUE : FALSE);
-                    bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_EJECTDISK,   drive[0].inserted ? TRUE : FALSE);
-#ifdef WIN32
-                    DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], IDC_PLATTER ), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) diskicon);
-#endif
-                acase 1:
-                    bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_UPDATEDISK2, drive[1].inserted ? TRUE : FALSE);
-                    bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_EJECTDISK2,  drive[1].inserted ? TRUE : FALSE);
-#ifdef WIN32
-                    DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], IDC_PLATTER2), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) diskicon);
-#endif
-                }
-#ifdef WIN32
-                if (drive[whichdrive].inserted)
-                {   for (i = 0; i < TWIN_DISKBLOCKS; i++) // 2464
-                    {   localtrack  = i / TWIN_SECTORS;
-                        localsector = i % TWIN_SECTORS;
-                        if (localtrack == 0) // first track is reserved
-                        {   SelectObject(DiskRastPtr, PurplePen);
-                        } else
-                        {   switch (drive[whichdrive].bam[(i - 32) / 8])
-                            {
-                            case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
-                            acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                            acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                            acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                        }   }
-#ifdef TESTSECTORLAYOUT
-                        SetPixel(DiskRastPtr, twin_sectorpoint[localsector].xarcstart, twin_sectorpoint[localsector].yarcstart, 0x000000FF); // red  ($00BBGGRR format)
-                        SetPixel(DiskRastPtr, twin_sectorpoint[localsector].xarcend,   twin_sectorpoint[localsector].yarcend,   0x00FF0000); // blue ($00BBGGRR format)
-#endif
-                        Arc
-                        (   DiskRastPtr,
-                              5 + (localtrack * 3 / 2),
-                              5 + (localtrack * 3 / 2),
-                            324 - (localtrack * 3 / 2),
-                            324 - (localtrack * 3 / 2),
-                            twin_sectorpoint[localsector].xarcstart,
-                            twin_sectorpoint[localsector].yarcstart,
-                            twin_sectorpoint[localsector].xarcend,
-                            twin_sectorpoint[localsector].yarcend
-                        );
-                    }
-
-#ifdef TESTSECTORLAYOUT
-                    SelectObject(DiskRastPtr, OrangePen);
-#else
-                    SelectObject(DiskRastPtr, BlackPen);
-#endif
-                    for (i = 0; i < TWIN_SECTORS; i++)
-                    {
-#ifdef TESTSECTORLAYOUT
-                        MoveToEx(DiskRastPtr, twin_sectorpoint[i].xedge,  twin_sectorpoint[i].yedge,  NULL);
-#else
-                        MoveToEx(DiskRastPtr, twin_sectorpoint[i].xstart, twin_sectorpoint[i].ystart, NULL);
-#endif
-                        LineTo(  DiskRastPtr, twin_sectorpoint[i].xend  , twin_sectorpoint[i].yend);
-                }   }
-#endif
-            acase BINBUG:
-                bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_UPDATEDISK,  drive[whichdrive].inserted ? TRUE : FALSE);
-                bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_EJECTDISK,   drive[whichdrive].inserted ? TRUE : FALSE);
-#ifdef WIN32
-                DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], IDC_PLATTER), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) diskicon);
-                if (drive[whichdrive].inserted)
-                {   for (i = 0; i < BINBUG_DISKBLOCKS; i++)
-                    {   localtrack  =  i / BINBUG_SECTORS;
-                        localsector = (i % BINBUG_SECTORS) + 1;
-                        switch (drive[whichdrive].bam[i])
-                        {
-                        case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
-                        acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                        acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                        acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                        }
-#ifdef TESTSECTORLAYOUT
-                        SetPixel(DiskRastPtr, binbug_sectorpoint[localsector - 1].xarcstart, binbug_sectorpoint[localsector - 1].yarcstart, 0x000000FF); // red  ($00BBGGRR format)
-                        SetPixel(DiskRastPtr, binbug_sectorpoint[localsector - 1].xarcend,   binbug_sectorpoint[localsector - 1].yarcend,   0x00FF0000); // blue ($00BBGGRR format)
-#endif
-                        Arc
-                        (   DiskRastPtr,
-                              5 + (localtrack * 2),
-                              5 + (localtrack * 2),
-                            210 - (localtrack * 2),
-                            210 - (localtrack * 2),
-                            binbug_sectorpoint[localsector - 1].xarcstart,
-                            binbug_sectorpoint[localsector - 1].yarcstart,
-                            binbug_sectorpoint[localsector - 1].xarcend,
-                            binbug_sectorpoint[localsector - 1].yarcend
-                        );
-                    }
-#ifdef TESTSECTORLAYOUT
-                    SelectObject(DiskRastPtr, OrangePen);
-#else
-                    SelectObject(DiskRastPtr, BlackPen);
-#endif
-                    for (i = 0; i < BINBUG_SECTORS; i++)
-                    {
-#ifdef TESTSECTORLAYOUT
-                        MoveToEx(DiskRastPtr, binbug_sectorpoint[i].xedge,  binbug_sectorpoint[i].yedge,  NULL);
-#else
-                        MoveToEx(DiskRastPtr, binbug_sectorpoint[i].xstart, binbug_sectorpoint[i].ystart, NULL);
-#endif
-                        LineTo(  DiskRastPtr, binbug_sectorpoint[i].xend,   binbug_sectorpoint[i].yend);
-                }   }
-#endif
-            acase CD2650:
-                bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_UPDATEDISK,  drive[whichdrive].inserted ? TRUE : FALSE);
-                bu_enable(SUBWINDOW_FLOPPYDRIVE, IDC_EJECTDISK,   drive[whichdrive].inserted ? TRUE : FALSE);
-#ifdef WIN32
-                DISCARD SendMessage(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], IDC_PLATTER), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) diskicon);
-                if (drive[whichdrive].inserted)
-                {   for (i = 0; i < CD2650_DISKBLOCKS; i++)
-                    {   localtrack  =  i / CD2650_SECTORS;
-                        localsector = (i % CD2650_SECTORS) + 1;
-                        switch (drive[whichdrive].bam[i])
-                        {
-                        case  BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                        acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                        acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                        }
-#ifdef TESTSECTORLAYOUT
-                        SetPixel(DiskRastPtr, cd2650_sectorpoint[localsector - 1].xarcstart, cd2650_sectorpoint[localsector - 1].yarcstart, 0x000000FF); // red  ($00BBGGRR format)
-                        SetPixel(DiskRastPtr, cd2650_sectorpoint[localsector - 1].xarcend,   cd2650_sectorpoint[localsector - 1].yarcend,   0x00FF0000); // blue ($00BBGGRR format)
-#endif
-                        amount = (localtrack * 2) + ((localtrack * 2) / 7);
-                        Arc
-                        (   DiskRastPtr,
-                              5 + amount,
-                              5 + amount,
-                            210 - amount,
-                            210 - amount,
-                            cd2650_sectorpoint[localsector - 1].xarcstart,
-                            cd2650_sectorpoint[localsector - 1].yarcstart,
-                            cd2650_sectorpoint[localsector - 1].xarcend,
-                            cd2650_sectorpoint[localsector - 1].yarcend
-                        );
-                    }
-#ifdef TESTSECTORLAYOUT
-                    SelectObject(DiskRastPtr, OrangePen);
-#else
-                    SelectObject(DiskRastPtr, BlackPen);
-#endif
-                    for (i = 0; i < CD2650_SECTORS; i++)
-                    {
-#ifdef TESTSECTORLAYOUT
-                        MoveToEx(DiskRastPtr, cd2650_sectorpoint[i].xedge,  cd2650_sectorpoint[i].yedge,  NULL);
-#else
-                        MoveToEx(DiskRastPtr, cd2650_sectorpoint[i].xstart, cd2650_sectorpoint[i].ystart, NULL);
-#endif
-                        LineTo(  DiskRastPtr, cd2650_sectorpoint[i].xend,   cd2650_sectorpoint[i].yend);
-                }   }
-#endif
-        }   }
-
-        if (level == 3 || drive[whichdrive].viewstart != oldviewstart)
-        {   if (machine == TWIN)
-            {   for (i = 0; i < howmany / 16; i++)
-                {   if (outofrange)
-                    {   strcpy((char*) gtempstring, "-:");
-                    } else
-                    {   sprintf((char*) gtempstring, "$%04Xx:", (drive[whichdrive].viewstart / 16) + i);
-                    }
-                    if (whichdrive == 0) st_set(SUBWINDOW_FLOPPYDRIVE, IDL_FREGION0 + i);
-                    else                 st_set(SUBWINDOW_FLOPPYDRIVE, IDL_FREGION8 + i);
-                }
-                sl_set(SUBWINDOW_FLOPPYDRIVE, (whichdrive == 1) ? IDC_DISKREGION2 : IDC_DISKREGION1,                   drive[whichdrive].viewstart / howmany);
-            } else
-            {   for (i = 0; i < howmany / 16; i++)
-                {   if (outofrange)
-                    {   strcpy((char*) gtempstring, "-:");
-                    } else
-                    {   sprintf((char*) gtempstring, "$%04Xx:", (drive[whichdrive].viewstart / 16) + i);
-                    }
-                    st_set(SUBWINDOW_FLOPPYDRIVE, IDL_FREGION0 + i);
-                }
-                sl_set(SUBWINDOW_FLOPPYDRIVE,                                       IDC_DISKREGION1, outofrange ? 0 : (drive[whichdrive].viewstart / howmany));
-        }   }
-
-        if (drive[whichdrive].inserted)
-        {
-#ifdef WIN32
-            for (i = 0; i < howmany; i++)
-            {   if (!outofrange)
-                {   t = drive[whichdrive].contents[drive[whichdrive].viewstart + i];
-                }
-                ii = i;
-                if (machine == TWIN && whichdrive == 1)
-                {   ii += 128;
-                }
-                if
-                (   level                       >= 2
-                 || t                           != blockcontents[ii]
-                 || i                           == drive[whichdrive].blockoffset
-                 || i                           == oldblockoffset
-                 || drive[whichdrive].viewstart != oldviewstart
-                )
-                {   if (outofrange)
-                    {   gtempstring[0] = '-';
-                        gtempstring[1] = EOS;
-                    } else
-                    {   blockcontents[ii] = t;
-                        if (viewdiskas == 0 || (machine == BINBUG && i <= 1))
-                        {   hex1(gtempstring, t);
-                            gtempstring[2] = EOS;
-                        } else
-                        {   gtempstring[0] = guestchar(t);
-                            gtempstring[1] = EOS;
-                    }   }
-                    SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], ID_DISK_0 + ii, gtempstring);
-            }   }
-
-            switch (machine)
-            {
-            case BINBUG:
-#ifdef DISKLINE
-                byte_offset = ((drive[whichdrive].sector - 1) * 256) + drive[whichdrive].blockoffset;
-                angle = (byte_offset / 2560.0) * 2.0 * PI;
-                linelength = 10.0 + ((92.0 * (BINBUG_TRACKS - drive[whichdrive].track)) / BINBUG_TRACKS);
-                SetROP2(DiskRastPtr, R2_XORPEN);
-                SelectObject(DiskRastPtr, WhitePen);
-                MoveToEx(DiskRastPtr, 107, 107, NULL);
-                LineTo(DiskRastPtr, (int) (107 - (linelength * sin(angle))), (int) (107 - (linelength * cos(angle))));
-                SetROP2(DiskRastPtr, R2_COPYPEN);
-#endif
-
-                if (level <= 2)
-                {   switch (drive[whichdrive].bam[(oldtrack * BINBUG_SECTORS) + oldsector - 1])
-                    {
-                    case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
-                    acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                    acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                    acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                    }
-                    Arc
-                    (   DiskRastPtr,
-                          5 + (oldtrack * 2),
-                          5 + (oldtrack * 2),
-                        210 - (oldtrack * 2),
-                        210 - (oldtrack * 2),
-                        binbug_sectorpoint[oldsector - 1].xarcstart,
-                        binbug_sectorpoint[oldsector - 1].yarcstart,
-                        binbug_sectorpoint[oldsector - 1].xarcend,
-                        binbug_sectorpoint[oldsector - 1].yarcend
-                    );
-                }
-
-                switch (drive_mode)
-                {
-                case  DRIVEMODE_READING:
-                    SelectObject(DiskRastPtr, GreenPen);
-                acase DRIVEMODE_WRITING:
-                    SelectObject(DiskRastPtr, RedPen);
-                acase DRIVEMODE_IDLE:
-                    switch (drive[whichdrive].bam[(drive[whichdrive].track * BINBUG_SECTORS) + drive[whichdrive].sector - 1])
-                    {
-                    case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
-                    acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                    acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                    acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                }   }
-                Arc
-                (   DiskRastPtr,
-                      5 + (drive[whichdrive].track * 2),
-                      5 + (drive[whichdrive].track * 2),
-                    210 - (drive[whichdrive].track * 2),
-                    210 - (drive[whichdrive].track * 2),
-                    binbug_sectorpoint[drive[whichdrive].sector - 1].xarcstart,
-                    binbug_sectorpoint[drive[whichdrive].sector - 1].yarcstart,
-                    binbug_sectorpoint[drive[whichdrive].sector - 1].xarcend,
-                    binbug_sectorpoint[drive[whichdrive].sector - 1].yarcend
-                );
-            acase CD2650:
-#ifdef DISKLINE
-                byte_offset = ((drive[whichdrive].sector - 1) * 256) + drive[whichdrive].blockoffset;
-                angle = (byte_offset / 2304.0) * 2 * PI;
-                linelength = 10.0 + ((92.0 * (CD2650_TRACKS - drive[whichdrive].track)) / CD2650_TRACKS);
-                SetROP2(DiskRastPtr, R2_XORPEN);
-                SelectObject(DiskRastPtr, WhitePen);
-                MoveToEx(DiskRastPtr, 107, 107, NULL);
-                LineTo(DiskRastPtr, (int) (107 - (linelength * sin(angle))), (int) (107 - (linelength * cos(angle))));
-                SetROP2(DiskRastPtr, R2_COPYPEN);
-#endif
-
-                if (level <= 2)
-                {   switch (drive[whichdrive].bam[(oldtrack * CD2650_SECTORS) + oldsector - 1])
-                    {
-                    case  BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                    acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                    acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                    }
-                    amount = (oldtrack * 2) + ((oldtrack * 2) / 7);
-                    Arc
-                    (   DiskRastPtr,
-                          5 + amount,
-                          5 + amount,
-                        210 - amount,
-                        210 - amount,
-                        cd2650_sectorpoint[oldsector - 1].xarcstart,
-                        cd2650_sectorpoint[oldsector - 1].yarcstart,
-                        cd2650_sectorpoint[oldsector - 1].xarcend,
-                        cd2650_sectorpoint[oldsector - 1].yarcend
-                    );
-                }
-
-                switch (drive_mode)
-                {
-                case  DRIVEMODE_READING:
-                    SelectObject(DiskRastPtr, GreenPen);
-                acase DRIVEMODE_WRITING:
-                    SelectObject(DiskRastPtr, RedPen);
-                acase DRIVEMODE_IDLE:
-                    switch (drive[whichdrive].bam[(drive[whichdrive].track * CD2650_SECTORS) + drive[whichdrive].sector - 1])
-                    {
-                    case  BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                    acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                    acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                }   }
-                amount = (drive[whichdrive].track * 2) + ((drive[whichdrive].track * 2) / 7);
-                Arc
-                (   DiskRastPtr,
-                      5 + amount,
-                      5 + amount,
-                    210 - amount,
-                    210 - amount,
-                    cd2650_sectorpoint[drive[whichdrive].sector - 1].xarcstart,
-                    cd2650_sectorpoint[drive[whichdrive].sector - 1].yarcstart,
-                    cd2650_sectorpoint[drive[whichdrive].sector - 1].xarcend,
-                    cd2650_sectorpoint[drive[whichdrive].sector - 1].yarcend
-                );
-            acase TWIN:
-#ifdef DISKLINE
-                byte_offset = (drive[whichdrive].sector * 128) + drive[whichdrive].blockoffset;
-                angle = (byte_offset / 4096.0) * 2 * PI;
-                linelength = 10.0 + ((92.0 * (TWIN_TRACKS - drive[whichdrive].track)) / TWIN_TRACKS);
-                SetROP2(DiskRastPtr, R2_XORPEN);
-                SelectObject(DiskRastPtr, WhitePen);
-                MoveToEx(DiskRastPtr, 107, 107, NULL);
-                LineTo(DiskRastPtr, (int) (107 - (linelength * sin(angle))), (int) (107 - (linelength * cos(angle))));
-                SetROP2(DiskRastPtr, R2_COPYPEN);
-#endif
-
-                if (level <= 2)
-                {   if (oldtrack == 0) // first track is reserved
-                    {   SelectObject(DiskRastPtr, PurplePen);
-                    } else
-                    {   switch (drive[whichdrive].bam[(((oldtrack * TWIN_SECTORS) + oldsector) - 32) / 8])
-                        {
-                        case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
-                        acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                        acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                        acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                    }   }
-                    Arc
-                    (   DiskRastPtr,
-                          5 + (oldtrack * 3 / 2),
-                          5 + (oldtrack * 3 / 2),
-                        324 - (oldtrack * 3 / 2),
-                        324 - (oldtrack * 3 / 2),
-                        twin_sectorpoint[oldsector].xarcstart,
-                        twin_sectorpoint[oldsector].yarcstart,
-                        twin_sectorpoint[oldsector].xarcend,
-                        twin_sectorpoint[oldsector].yarcend
-                    );
-                }
-
-                switch (drive_mode)
-                {
-                case  DRIVEMODE_READING:
-                    SelectObject(DiskRastPtr, GreenPen);
-                acase DRIVEMODE_WRITING:
-                    SelectObject(DiskRastPtr, RedPen);
-                acase DRIVEMODE_IDLE:
-                    switch (drive[whichdrive].bam[(((drive[whichdrive].track * TWIN_SECTORS) + drive[whichdrive].sector) - 32) / 8])
-                    {
-                    case  BAM_LOST: SelectObject(DiskRastPtr, BlackPen);
-                    acase BAM_DIR:  SelectObject(DiskRastPtr, PurplePen);
-                    acase BAM_FILE: SelectObject(DiskRastPtr, PinkPen);
-                    acase BAM_FREE: SelectObject(DiskRastPtr, CyanPen);
-                }   }
-                Arc
-                (   DiskRastPtr,
-                      5 + (drive[whichdrive].track * 3 / 2),
-                      5 + (drive[whichdrive].track * 3 / 2),
-                    324 - (drive[whichdrive].track * 3 / 2),
-                    324 - (drive[whichdrive].track * 3 / 2),
-                    twin_sectorpoint[drive[whichdrive].sector].xarcstart,
-                    twin_sectorpoint[drive[whichdrive].sector].yarcstart,
-                    twin_sectorpoint[drive[whichdrive].sector].xarcend,
-                    twin_sectorpoint[drive[whichdrive].sector].yarcend
-                );
-            }
-#endif
-
-#ifdef AMIGA
-            for (i = 0; i < howmany; i++)
-            {   t = drive[whichdrive].contents[drive[whichdrive].viewstart + i];
-                ii = i;
-                if (machine == TWIN && whichdrive == 1)
-                {   ii += 128;
-                }
-                if
-                (   level                       >= 2
-                 || t                           != blockcontents[ii]
-                 || i                           == drive[whichdrive].blockoffset
-                 || i                           == oldblockoffset
-                 || drive[whichdrive].viewstart != oldviewstart
-                )
-                {   if (outofrange)
-                    {   gtempstring[0] = '-';
-                        gtempstring[1] = EOS;
-                    } else
-                    {   blockcontents[ii] = t;
-                        if (viewdiskas == 0 || (machine == BINBUG && i < 2))
-                        {   hex1((char*) gtempstring, t);
-                            gtempstring[2] = EOS;
-                        } else
-                        {   gtempstring[0] = guestchar(t);
-                            gtempstring[1] = EOS;
-                    }   }
-
-                    viewbyte = drive[whichdrive].viewstart + i;
-
-                    if (outofrange)              whichpen = EMUPEN_GREY;
-                    elif (viewbyte == diskbyte)
-                    {   switch (drive_mode)
-                        {
-                        case  DRIVEMODE_IDLE:    whichpen = EMUPEN_BLUE;
-                        acase DRIVEMODE_READING: whichpen = EMUPEN_GREEN;
-                        acase DRIVEMODE_WRITING: whichpen = EMUPEN_YELLOW;
-                    }   }
-                    elif (drive[whichdrive].flags[viewbyte / 8] & (1 << (viewbyte % 8)))
-                    {                            whichpen = EMUPEN_ORANGE;
-                    } elif (machine == BINBUG && i <= 1)
-                    {                            whichpen = EMUPEN_RED;
-                    } elif (machine == TWIN && viewing == -1)
-                    {                            whichpen = EMUPEN_PURPLE;
-                    } else
-                    {   switch (drive[whichdrive].bam[viewing])
-                        {
-                        case  BAM_LOST:          whichpen = EMUPEN_GREY;
-                        acase BAM_DIR:           whichpen = EMUPEN_PURPLE;
-                        acase BAM_FILE:          whichpen = EMUPEN_PINK;
-                        acase BAM_FREE:          whichpen = EMUPEN_CYAN;
-                    }   }
-
-                    SetGadgetAttrs(gadgets[GID_FIRSTDISKGAD + ii], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, GA_Disabled, FALSE, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[whichpen], TAG_DONE); // this autorefreshes
-            }   }
-
-            redraw = FALSE;
-            switch (machine)
-            {
-            case BINBUG:
-                for (i = 0; i < BINBUG_DISKBLOCKS; i++)
-                {   if
-                    (   level <= 2
-                     && i != (               oldtrack * BINBUG_SECTORS) +                oldsector - 1
-                     && i != (drive[whichdrive].track * BINBUG_SECTORS) + drive[whichdrive].sector - 1
-                    )
-                    {   continue;
-                    }
-
-                    redraw = TRUE;
-                    localtrack  =  i / BINBUG_SECTORS;
-                    localsector = (i % BINBUG_SECTORS) + 1;
-
-                    if (drive_mode != DRIVEMODE_IDLE && localtrack == drive[whichdrive].track && localsector == drive[whichdrive].sector)
-                    {   switch (drive_mode)
-                        {
-                        case  DRIVEMODE_READING: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_GREEN);
-                        acase DRIVEMODE_WRITING: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_RED);
-                    }   }
-                    else
-                    {   switch (drive[whichdrive].bam[i])
-                        {
-                        case  BAM_LOST: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_BLACK);
-                        acase BAM_DIR:  drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_PURPLE);
-                        acase BAM_FILE: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_PINK);
-                        acase BAM_FREE: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_CYAN);
-                }   }   }
-            acase CD2650:
-                for (i = 0; i < CD2650_DISKBLOCKS; i++)
-                {   if
-                    (   level <= 2
-                     && i != (               oldtrack * CD2650_SECTORS) +                oldsector - 1
-                     && i != (drive[whichdrive].track * CD2650_SECTORS) + drive[whichdrive].sector - 1
-                    )
-                    {   continue;
-                    }
-
-                    redraw = TRUE;
-                    localtrack  =  i / CD2650_SECTORS;
-                    localsector = (i % CD2650_SECTORS) + 1;
-
-                    if (drive_mode != DRIVEMODE_IDLE && localtrack == drive[whichdrive].track && localsector == drive[whichdrive].sector)
-                    {   switch (drive_mode)
-                        {
-                        case  DRIVEMODE_READING: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_GREEN);
-                        acase DRIVEMODE_WRITING: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_RED);
-                    }   }
-                    else
-                    {   switch (drive[whichdrive].bam[i])
-                        {
-                        case  BAM_DIR:  drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_PURPLE);
-                        acase BAM_FILE: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_PINK);
-                        acase BAM_FREE: drawblox(whichdrive, localtrack, localsector - 1, EMUPEN_CYAN);
-                }   }   }
-            acase TWIN:
-                for (i = 0; i < TWIN_DISKBLOCKS; i++) // 2464
-                {   if
-                    (   level <= 2
-                     && i != (               oldtrack * TWIN_SECTORS) +                oldsector
-                     && i != (drive[whichdrive].track * TWIN_SECTORS) + drive[whichdrive].sector
-                    )
-                    {   continue;
-                    }
-
-                    redraw = TRUE;
-                    localtrack  = i / TWIN_SECTORS;
-                    localsector = i % TWIN_SECTORS;
-
-                    if (drive_mode != DRIVEMODE_IDLE && localtrack == drive[whichdrive].track && localsector == drive[whichdrive].sector)
-                    {   switch (drive_mode)
-                        {
-                        case  DRIVEMODE_READING: drawblox(whichdrive, localtrack, localsector, EMUPEN_GREEN);
-                        acase DRIVEMODE_WRITING: drawblox(whichdrive, localtrack, localsector, EMUPEN_RED);
-                    }   }
-                    else
-                    {   if (localtrack == 0) // first track is reserved
-                        {   drawblox(whichdrive, localtrack, localsector, EMUPEN_PURPLE);
-                        } else
-                        {   switch (drive[whichdrive].bam[(i - 32) / 8])
-                            {
-                            case  BAM_LOST: drawblox(whichdrive, localtrack, localsector, EMUPEN_BLACK);
-                            acase BAM_DIR:  drawblox(whichdrive, localtrack, localsector, EMUPEN_PURPLE);
-                            acase BAM_FILE: drawblox(whichdrive, localtrack, localsector, EMUPEN_PINK);
-                            acase BAM_FREE: drawblox(whichdrive, localtrack, localsector, EMUPEN_CYAN);
-            }   }   }   }   }
-
-            if (redraw)
-            {   redraw_blox(whichdrive);
-            }
-#endif
+        if (drive[whichdrive].spinning)
+        {   images[glowicon]->LeftEdge = driveglyph_x;
+            images[glowicon]->TopEdge  = driveglyph_y;
+            DrawImage(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd->RPort, images[glowicon], 0, 0);
         } else
-        {   if (level == 3)
-            {   for (i = 0; i < howmany; i++)
-                {   if (machine == TWIN && whichdrive == 1)
-#ifdef WIN32
-                        SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], ID_DISK_128 + i, "-");
-#endif
-#ifdef AMIGA
-                        SetGadgetAttrs(gadgets[GID_FIRSTDISKGAD + 128 + i], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, GA_Disabled, TRUE, GA_Text, "-", BUTTON_BackgroundPen, ~0, TAG_DONE); // this autorefreshes
-#endif
-                    else
-#ifdef WIN32
-                        SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], ID_DISK_0   + i, "-");
-#endif
-#ifdef AMIGA
-                        SetGadgetAttrs(gadgets[GID_FIRSTDISKGAD       + i], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, GA_Disabled, TRUE, GA_Text, "-", BUTTON_BackgroundPen, ~0, TAG_DONE); // this autorefreshes
-#endif
-                }
-#ifdef AMIGA
-                for (y = 0; y < bloxheight; y++)
-                {   for (x = 0; x < bloxwidth / 4; x++)
-                    {   *(bloxlongptr[(machine == TWIN) ? whichdrive : 0][y] + x) = emulongpens[EMUBRUSH_WHITE];
-                }   }
-                redraw_blox(whichdrive);
-#endif
-        }   }
-
-#ifdef AMIGA
-        switch (drive_mode)
-        {
-        case  DRIVEMODE_IDLE:    whichpen = EMUBRUSH_BLUE;
-        acase DRIVEMODE_READING: whichpen = EMUBRUSH_GREEN;
-        acase DRIVEMODE_WRITING: whichpen = EMUBRUSH_RED;
-        adefault:                whichpen = EMUBRUSH_WHITE; // should never happen
+        {   images[dimicon ]->LeftEdge = driveglyph_x;
+            images[dimicon ]->TopEdge  = driveglyph_y;
+            DrawImage(subwin[SUBWINDOW_FLOPPYDRIVE].hwnd->RPort, images[dimicon ], 0, 0);
         }
 #endif
+        oldspinning = drive[whichdrive].spinning;
+    }
 
-        if (level == 3 || drive_mode != olddrivemode || drive[whichdrive].track != oldtrack)
-        {   sprintf((char*) gtempstring, "%d", (int) drive[whichdrive].track);
-#ifdef WIN32
-            SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (machine != TWIN || whichdrive == 0) ? IDC_TRACK : IDC_TRACK2, gtempstring);
-#endif
-#ifdef AMIGA
-            SetGadgetAttrs(gadgets[(machine != TWIN || whichdrive == 0) ? GID_FL_BU8 : GID_FL_BU16], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, BUTTON_BackgroundPen, emupens[whichpen], GA_Text, gtempstring, TAG_DONE); // this autorefreshes
-#endif
+    // Platter------------------------------------------------------------
+
+    if (force)
+    {   draw_platter(TRUE, oldtrack[viewingdrive], oldsector);
+    } elif (drive[viewingdrive].track != oldtrack[viewingdrive] || drive[viewingdrive].sector != oldsector)
+    {   draw_platter(FALSE, oldtrack[viewingdrive], oldsector);
+    }
+    // Grid labels & slider-----------------------------------------------
+
+    switch (machine)
+    {
+    case  TWIN:
+        viewingtrack  =   drive[viewingdrive].viewstart /   TWIN_TRACKSIZE;
+        viewingsector =  (drive[viewingdrive].viewstart %   TWIN_TRACKSIZE) /   TWIN_BLOCKSIZE    ;
+    acase BINBUG:
+        viewingtrack  =   drive[viewingdrive].viewstart / BINBUG_TRACKSIZE;
+        viewingsector = ((drive[viewingdrive].viewstart % BINBUG_TRACKSIZE) / BINBUG_BLOCKSIZE) + 1;
+    acase CD2650:
+        viewingtrack  =   drive[viewingdrive].viewstart / CD2650_TRACKSIZE;
+        viewingsector = ((drive[viewingdrive].viewstart % CD2650_TRACKSIZE) / CD2650_BLOCKSIZE) + 1;
+    }
+    get_disk_byte(viewingdrive, viewingtrack, viewingsector, 0, &viewingbyte, &viewingcluster);
+
+    if (force || drive[whichdrive].viewstart != oldviewstart)
+    {   for (i = 0; i < diskblocksize / 16; i++)
+        {   if (viewingbyte == -1)
+            {   strcpy((char*) gtempstring, "-:");
+            } else
+            {   sprintf((char*) gtempstring, "$%04Xx:", (drive[whichdrive].viewstart / 16) + i);
+            }
+            st_set(SUBWINDOW_FLOPPYDRIVE, IDL_FREGION0 + i);
         }
+        sl_set(SUBWINDOW_FLOPPYDRIVE, IDC_DISKREGION1, (viewingbyte == -1) ? 0 : (drive[whichdrive].viewstart / diskblocksize));
+    }
 
-        if (level == 3 || drive_mode != olddrivemode || drive[whichdrive].sector != oldsector)
-        {   sprintf((char*) gtempstring, "%d", (int) drive[whichdrive].sector);
-#ifdef WIN32
-            SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (machine != TWIN || whichdrive == 0) ? IDC_SECTOR : IDC_SECTOR2, gtempstring);
-#endif
-#ifdef AMIGA
-            SetGadgetAttrs(gadgets[(machine != TWIN || whichdrive == 0) ? GID_FL_BU9 : GID_FL_BU17], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, BUTTON_BackgroundPen, emupens[whichpen], GA_Text, gtempstring, TAG_DONE); // this autorefreshes
-#endif
-        }
+    // Grid buttons-------------------------------------------------------
 
-        if (level == 3 || drive_mode != olddrivemode || drive[whichdrive].track != oldtrack || drive[whichdrive].sector != oldsector || drive[whichdrive].blockoffset != oldblockoffset)
-        {   if (outofrange)
+    for (i = 0; i < diskblocksize; i++)
+    {   t = drive[whichdrive].contents[drive[whichdrive].viewstart + i];
+        if
+        (   force
+         || drive[whichdrive].viewstart != oldviewstart
+         || t                           != blockcontents[i]
+         || i                           == drive[whichdrive].blockoffset
+         || i                           == oldblockoffset
+        )
+        {   if (!drive[viewingdrive].inserted || viewingbyte == -1)
             {   gtempstring[0] = '-';
                 gtempstring[1] = EOS;
+                setdrivegad(ID_DISK_0 + i, EMUPEN_GREY);
             } else
-            {   switch (machine)
-                {
-                case  BINBUG: sprintf((char*) gtempstring, "%X", (int) ((drive[whichdrive].track * BINBUG_TRACKSIZE) + ((drive[whichdrive].sector - 1) * BINBUG_BLOCKSIZE) + drive[whichdrive].blockoffset));
-                acase TWIN:   sprintf((char*) gtempstring, "%X", (int) ((drive[whichdrive].track *   TWIN_TRACKSIZE) + ( drive[whichdrive].sector      *   TWIN_BLOCKSIZE) + drive[whichdrive].blockoffset));
-                acase CD2650: sprintf((char*) gtempstring, "%X", (int) ((drive[whichdrive].track * CD2650_TRACKSIZE) + ((drive[whichdrive].sector - 1) * CD2650_BLOCKSIZE) + drive[whichdrive].blockoffset));
-            }   }
-#ifdef WIN32
-            SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (machine != TWIN || whichdrive == 0) ? IDC_BYTE : IDC_BYTE2, gtempstring);
-#endif
-#ifdef AMIGA
-            SetGadgetAttrs(gadgets[(machine != TWIN || whichdrive == 0) ? GID_FL_BU10 : GID_FL_BU18], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, BUTTON_BackgroundPen, emupens[whichpen], GA_Text, gtempstring, TAG_DONE); // this autorefreshes
-#endif
-        }
-
-        if (machine == TWIN)
-        {   cluster = (drive[whichdrive].track == 0) ? (-1) : (((drive[whichdrive].track - 1) * 4) + (drive[whichdrive].sector / 8));
-            if (level == 3 || drive_mode != olddrivemode || cluster != oldcluster)
-            {   if (drive[whichdrive].track == 0)
-                {   sprintf(gtempstring, "-");
+            {   blockcontents[i] = t;
+                if (viewdiskas == 0 || (machine == BINBUG && i < 2))
+                {   hex1((char*) gtempstring, t);
+                    gtempstring[2] = EOS;
                 } else
-                {   sprintf(gtempstring, "%d", cluster);
+                {   gtempstring[0] = guestchar(t);
+                    gtempstring[1] = EOS;
                 }
-#ifdef WIN32
-                SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (whichdrive == 0) ? IDC_CLUSTER : IDC_CLUSTER2, gtempstring);
-#endif
-#ifdef AMIGA
-                SetGadgetAttrs(gadgets[(whichdrive == 1) ? GID_FL_BU19 : GID_FL_BU11], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, BUTTON_BackgroundPen, emupens[whichpen], GA_Text, gtempstring, TAG_DONE); // this autorefreshes
-#endif
+                whichpen = getdiskbytecolour(drive[viewingdrive].viewstart + i);
+                setdrivegad(ID_DISK_0 + i, whichpen);
             }
-            oldcluster = cluster;
-        }
+            refreshtips = TRUE;
+    }   }
 
-        if (level >= 2 || drive[whichdrive].viewstart != oldviewstart)
-        {   if (!drive[whichdrive].inserted || outofrange)
-            {   strcpy(gtempstring, "-");
-#ifdef AMIGA
-                whichpen = ~0;
-#endif
-            } else
+    // Head Position------------------------------------------------------
+
+    whichpen = getdiskmodecolour();
+    if (force || drive_mode != olddrivemode || drive[viewingdrive].track  != oldtrack[viewingdrive])
+    {   sprintf((char*) gtempstring, "%d", (int) drive[viewingdrive].track);
+        setdrivegad(IDC_TRACK, whichpen);
+    }
+    if (force || drive_mode != olddrivemode || drive[viewingdrive].sector != oldsector)
+    {   sprintf((char*) gtempstring, "%d", (int) drive[viewingdrive].sector);
+        setdrivegad(IDC_SECTOR, whichpen);
+    }
+    if (force || drive_mode != olddrivemode || drive[viewingdrive].track  != oldtrack[viewingdrive] || drive[viewingdrive].sector != oldsector || drive[viewingdrive].blockoffset != oldblockoffset)
+    {   if (viewingbyte == -1)
+        {   gtempstring[0] = '-';
+            gtempstring[1] = EOS;
+        } else
+        {   switch (machine)
             {
-#ifdef WIN32
-                viewing = get_viewing_cluster(whichdrive); // already done earlier on AMIGA
-#endif
-                switch (machine)
+            case  BINBUG: sprintf((char*) gtempstring, "%X", (int) ((drive[viewingdrive].track * BINBUG_TRACKSIZE) + ((drive[viewingdrive].sector - 1) * BINBUG_BLOCKSIZE) + drive[viewingdrive].blockoffset));
+            acase TWIN:   sprintf((char*) gtempstring, "%X", (int) ((drive[viewingdrive].track *   TWIN_TRACKSIZE) + ( drive[viewingdrive].sector      *   TWIN_BLOCKSIZE) + drive[viewingdrive].blockoffset));
+            acase CD2650: sprintf((char*) gtempstring, "%X", (int) ((drive[viewingdrive].track * CD2650_TRACKSIZE) + ((drive[viewingdrive].sector - 1) * CD2650_BLOCKSIZE) + drive[viewingdrive].blockoffset));
+        }   }
+        setdrivegad(IDC_BYTE, whichpen);
+    }
+    if (machine == TWIN)
+    {   cluster = (drive[viewingdrive].track == 0) ? (-1) : (((drive[viewingdrive].track - 1) * 4) + (drive[viewingdrive].sector / 8));
+        if (force || drive_mode != olddrivemode || cluster != oldcluster)
+        {   if (drive[viewingdrive].track == 0)
+            {   sprintf(gtempstring, "-");
+            } else
+            {   sprintf(gtempstring, "%d", cluster);
+            }
+            setdrivegad(IDC_CLUSTER, whichpen);
+    }   }
+
+    // Filename-----------------------------------------------------------
+
+    if (force || drive[viewingdrive].viewstart != oldviewstart)
+    {   if (!drive[viewingdrive].inserted || viewingcluster == -1)
+        {   strcpy(gtempstring, "-");
+            whichpen = EMUPEN_GREY;
+        } else
+        {   switch (machine)
+            {
+            case BINBUG:
+                switch (drive[viewingdrive].bam[viewingcluster])
                 {
-                case BINBUG:
-                    switch (drive[whichdrive].bam[viewing])
-                    {
-                    case  BAM_LOST: strcpy(gtempstring, "(Lost)");
-                    acase BAM_DIR:  strcpy(gtempstring, "(Directory)");
-                    acase BAM_FILE:
-                        strcpy(            gtempstring, "(File)");
-                        where = 0;
-                        for (j = 0; j < 10; j++)
-                        {   where += 16; // skip identity section
-                            for (i = 0; i < 10; i++)
-                            {   if (drive[whichdrive].filename[(j * 10) + i][0] != EOS)
-                                {   startblock = (drive[whichdrive].contents[where + 13] * 10) + drive[whichdrive].contents[where + 14] - 1;
-                                    endblock   = (drive[whichdrive].contents[where + 15] * 10) + drive[whichdrive].contents[where + 16] - 1;
-                                    if (viewing >= startblock && viewing <= endblock)
-                                    {   sprintf(gtempstring, "%s.%s", drive[whichdrive].filename[(j * 10) + i], drive[whichdrive].fileext[(j * 10) + i]);
-                                        break;
-                                }   }
-                                where += 24;
-                        }   }
-                    acase BAM_FREE: strcpy(gtempstring, "(Free)");
-                    adefault:       strcpy(gtempstring, "(Unknown)"); // should never happen
-                    }
-                acase TWIN:
-                    if (viewing == -1)
-                    {   sprintf(           gtempstring, "(Track zero)");
-                    } else switch (drive[whichdrive].bam[viewing])
+                case  BAM_LOST: strcpy(gtempstring, "(Lost)");
+                acase BAM_DIR:  strcpy(gtempstring, "(Directory)");
+                acase BAM_FILE:
+                    strcpy(            gtempstring, "(File)");
+                    where = 0;
+                    for (j = 0; j < 10; j++)
+                    {   where += 16; // skip identity section
+                        for (i = 0; i < 10; i++)
+                        {   if (drive[viewingdrive].filename[(j * 10) + i][0] != EOS)
+                            {   startblock = (drive[viewingdrive].contents[where + 13] * 10) + drive[viewingdrive].contents[where + 14] - 1;
+                                endblock   = (drive[viewingdrive].contents[where + 15] * 10) + drive[viewingdrive].contents[where + 16] - 1;
+                                if (viewingcluster >= startblock && viewingcluster <= endblock)
+                                {   sprintf(gtempstring, "%s.%s", drive[viewingdrive].filename[(j * 10) + i], drive[viewingdrive].fileext[(j * 10) + i]);
+                                    break;
+                            }   }
+                            where += 24;
+                    }   }
+                acase BAM_FREE: strcpy(gtempstring, "(Free)");
+                adefault:       strcpy(gtempstring, "(Unknown)"); // should never happen
+                }
+            acase TWIN:
+                if (viewingcluster == -2)
+                {   sprintf(           gtempstring, "(Track zero)");
+                } else
+                {   switch (drive[viewingdrive].bam[viewingcluster])
                     {
                     case  BAM_LOST: strcpy(gtempstring, "(Lost)");
                     acase BAM_DIR:  strcpy(gtempstring, "(Directory)");
@@ -1312,87 +653,61 @@ EXPORT void update_floppydrive(int level, int whichdrive)
                         strcpy(            gtempstring, "(File)");
                         for (i = 0; i < 78; i++)
                         {   if
-                            (   drive[whichdrive].filename[i][0] != EOS
-                             && drive[whichdrive].contents[fileoffset[i] + (viewing / 8)] & (0x80 >> (viewing % 8))
+                            (   drive[viewingdrive].filename[i][0] != EOS
+                             && drive[viewingdrive].contents[fileoffset[i] + (viewingcluster / 8)] & (0x80 >> (viewingcluster % 8))
                             )
-                            {   strcpy(gtempstring, drive[whichdrive].filename[i]);
-                                twin_get_commands(whichdrive, i, FALSE); // extends gtempstring
+                            {   strcpy(gtempstring, drive[viewingdrive].filename[i]);
+                                twin_get_commands(viewingdrive, i, FALSE); // extends gtempstring
                                 break;
                         }   }
                     acase BAM_FREE: strcpy(gtempstring, "(Free)");
                     adefault:       strcpy(gtempstring, "(Unknown)"); // should never happen
-                    }
-                acase CD2650:
-                    switch (drive[whichdrive].bam[viewing])
-                    {
-                    // there is no BAM_LOST currently implemented for CD2650
-                    case  BAM_DIR:  strcpy(gtempstring, "(Directory)");
-                    acase BAM_FILE: strcpy(gtempstring, "(File)");
-                        for (i = 0; i < 64; i++)
-                        {   if (drive[whichdrive].filename[i][0] != EOS)
-                            {   startblock = (drive[whichdrive].contents[(i * 64) + 28] * CD2650_SECTORS) // track
-                                           +  drive[whichdrive].contents[(i * 64) + 29] - 1;              // sector
-                                endblock   = (drive[whichdrive].contents[(i * 64) + 30] * CD2650_SECTORS) // track
-                                           +  drive[whichdrive].contents[(i * 64) + 31] - 1;              // sector
-                                if (viewing >= startblock && viewing <= endblock)
-                                {   sprintf(gtempstring, "%s.%s", drive[whichdrive].filename[i], drive[whichdrive].fileext[i]);
-                                    break;
-                        }   }   }
-                    acase BAM_FREE: strcpy(gtempstring, "(Free)");
-                    adefault:       strcpy(gtempstring, "(Unknown)"); // should never happen
                 }   }
-
-#ifdef AMIGA
-                if (viewing == -1)
-                {   // assert(machine == TWIN);
-                    whichpen = emupens[EMUPEN_PURPLE];
-                } else switch (drive[whichdrive].bam[viewing])
+            acase CD2650:
+                switch (drive[viewingdrive].bam[viewingcluster])
                 {
-                case  BAM_LOST: whichpen = emupens[EMUPEN_GREY  ]; // ideally EMUPEN_BLACK but text would be illegible
-                acase BAM_DIR:  whichpen = emupens[EMUPEN_PURPLE];
-                acase BAM_FILE: whichpen = emupens[EMUPEN_PINK  ];
-                acase BAM_FREE: whichpen = emupens[EMUPEN_CYAN  ];
-                }
-#endif
-            }
+                // there is no BAM_LOST currently implemented for CD2650
+                case  BAM_DIR:  strcpy(gtempstring, "(Directory)");
+                acase BAM_FILE: strcpy(gtempstring, "(File)");
+                    for (i = 0; i < 64; i++)
+                    {   if (drive[viewingdrive].filename[i][0] != EOS)
+                        {   startblock = (drive[viewingdrive].contents[(i * 64) + 28] * CD2650_SECTORS) // track
+                                       +  drive[viewingdrive].contents[(i * 64) + 29] - 1;              // sector
+                            endblock   = (drive[viewingdrive].contents[(i * 64) + 30] * CD2650_SECTORS) // track
+                                       +  drive[viewingdrive].contents[(i * 64) + 31] - 1;              // sector
+                            if (viewingcluster >= startblock && viewingcluster <= endblock)
+                            {   sprintf(gtempstring, "%s.%s", drive[viewingdrive].filename[i], drive[viewingdrive].fileext[i]);
+                                break;
+                    }   }   }
+                acase BAM_FREE: strcpy(gtempstring, "(Free)");
+                adefault:       strcpy(gtempstring, "(Unknown)"); // should never happen
+            }   }
+            whichpen = getdiskclustercolour(viewingbyte);
+        }
+        setdrivegad(IDC_FILENAME, whichpen);
+     // zprintf(TEXTPEN_VERBOSE, "%s\n", gtempstring);
+    }
+
+    if (refreshtips)
+    {
 #ifdef WIN32
-            SetDlgItemText(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (machine != TWIN || whichdrive == 0) ? IDC_FILENAME1 : IDC_FILENAME2, gtempstring);
+        update_floppytips();
 #endif
 #ifdef AMIGA
-            SetGadgetAttrs(gadgets[(machine != TWIN || whichdrive == 0) ? GID_FL_BU2 : GID_FL_BU3], SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, whichpen, TAG_DONE); // this refreshes automatically
-#endif
-         // zprintf(TEXTPEN_VERBOSE, "%s\n", gtempstring);
-
-#ifdef WIN32
-            update_floppytips();
-#endif
-#ifdef AMIGA
-            if (tiptag1 != TAG_IGNORE)
-            {   make_floppytips();
-            }
-#endif
-        }
-
-#ifdef WIN32
-        if (drive[whichdrive].inserted)
-        {   ReleaseDC(GetDlgItem(SubWindowPtr[SUBWINDOW_FLOPPYDRIVE], (machine == TWIN && whichdrive == 1) ? IDC_PLATTER2 : IDC_PLATTER), DiskRastPtr);
-            DeleteObject(CyanPen);
-            DeleteObject(PinkPen);
-            DeleteObject(PurplePen);
-            DeleteObject(BlackPen);
-            DeleteObject(GreenPen);
-            DeleteObject(RedPen);
-            DeleteObject(WhitePen);
-            DeleteObject(OrangePen);
+        if (tiptag1 != TAG_IGNORE)
+        {   make_floppytips();
         }
 #endif
+    }
 
-        oldtrack       = drive[whichdrive].track;
-        oldsector      = drive[whichdrive].sector;
-        oldblockoffset = drive[whichdrive].blockoffset;
-        oldviewstart   = drive[whichdrive].viewstart;
-        olddrivemode   = drive_mode;
-}   }
+    oldcluster           = cluster;
+    oldtrack[whichdrive] = drive[whichdrive].track;
+    oldsector            = drive[whichdrive].sector;
+    oldblockoffset       = drive[whichdrive].blockoffset;
+    oldviewstart         = drive[whichdrive].viewstart;
+    olddrivemode         = drive_mode;
+    oldviewingdrive      = viewingdrive;
+}
 /* The black radial lines (sector dividers) go from x/ystart to x/yend.
 
 You give it a rectangle; the arc is part of an ellipse filling this rectangle.
@@ -1412,7 +727,7 @@ EXPORT void update_papertape(int whichunit, FLAG force)
     FAST    ULONG divisions;
 #endif
 
-    if (!SubWindowPtr[SUBWINDOW_PAPERTAPE])
+    if (!subwin[SUBWINDOW_PAPERTAPE].hwnd)
     {   return;
     }
 
@@ -1424,7 +739,7 @@ EXPORT void update_papertape(int whichunit, FLAG force)
 
         DISCARD SetGadgetAttrs
         (   gadgets[GID_PT_SL1 + whichunit],
-            SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL,
+            subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL,
             SLIDER_Level,                     papertapewhere[whichunit]  / divisions,
             SLIDER_Max,                       papertapelength[whichunit] / divisions,
         TAG_DONE); // this autorefreshes
@@ -1435,7 +750,7 @@ EXPORT void update_papertape(int whichunit, FLAG force)
     {
 #ifdef WIN32
         DISCARD SendMessage
-        (   GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PTPOSITIONSLIDER2 : IDC_PTPOSITIONSLIDER),
+        (   GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PTPOSITIONSLIDER2 : IDC_PTPOSITIONSLIDER),
             TBM_SETRANGEMAX, // don't use TBM_SETRANGE, because it only supports 16-bit arguments!
             FALSE,
             papertapelength[whichunit] ? papertapelength[whichunit] : 1 // Windows doesn't move the slider if we specifiy a TBM_SETRANGEMAX of 0
@@ -1453,7 +768,7 @@ EXPORT void update_papertape(int whichunit, FLAG force)
     {
 #ifdef WIN32
         DISCARD SendMessage
-        (   GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PTPOSITIONSLIDER2 : IDC_PTPOSITIONSLIDER),
+        (   GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PTPOSITIONSLIDER2 : IDC_PTPOSITIONSLIDER),
             TBM_SETPOS,
             TRUE,
             papertapewhere[whichunit]
@@ -1470,64 +785,64 @@ EXPORT void update_papertape(int whichunit, FLAG force)
     if (papertapemode[whichunit] != oldpapertapemode[whichunit] || force)
     {   papertape_settitle();
 #ifdef WIN32
-        SetWindowText(SubWindowPtr[SUBWINDOW_PAPERTAPE], papertapetitlestring);
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PTPOSITIONSLIDER2 : IDC_PTPOSITIONSLIDER), (papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
+        SetWindowText(subwin[SUBWINDOW_PAPERTAPE].hwnd, papertapetitlestring);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PTPOSITIONSLIDER2 : IDC_PTPOSITIONSLIDER), (papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
         if (whichunit == 0)
-        {   EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE],                                 IDC_PT_RECORD       ), (papertapewhere[whichunit] < PAPERTAPEMAX               && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
+        {   EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd,                                 IDC_PT_RECORD       ), (papertapewhere[whichunit] < PAPERTAPEMAX               && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
 
-            RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE],                                 IDC_PT_RECORD       ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+            RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd,                                 IDC_PT_RECORD       ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 
-            EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE],                                 IDC_CREATEPAPERTAPE ), (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? TRUE : FALSE);
+            EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd,                                 IDC_CREATEPAPERTAPE ), (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? TRUE : FALSE);
         }
 
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_REWIND2        : IDC_PT_REWIND       ), (papertapewhere[whichunit] > 0                          && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_PLAY2          : IDC_PT_PLAY         ), (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_FFWD2          : IDC_PT_FFWD         ), (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_STOPTAPE2      : IDC_PT_STOPTAPE     ), (                                                          papertapemode[whichunit] >  TAPEMODE_STOP) ? TRUE : FALSE);
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_EJECTTAPE2     : IDC_PT_EJECTTAPE    ), (                                                          papertapemode[whichunit] != TAPEMODE_NONE) ? TRUE : FALSE);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_REWIND2        : IDC_PT_REWIND       ), (papertapewhere[whichunit] > 0                          && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_PLAY2          : IDC_PT_PLAY         ), (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_FFWD2          : IDC_PT_FFWD         ), (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? TRUE : FALSE);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_STOPTAPE2      : IDC_PT_STOPTAPE     ), (                                                          papertapemode[whichunit] >  TAPEMODE_STOP) ? TRUE : FALSE);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_EJECTTAPE2     : IDC_PT_EJECTTAPE    ), (                                                          papertapemode[whichunit] != TAPEMODE_NONE) ? TRUE : FALSE);
 
-        RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_REWIND2        : IDC_PT_REWIND       ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_STOPTAPE2      : IDC_PT_STOPTAPE     ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_PLAY2          : IDC_PT_PLAY         ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_FFWD2          : IDC_PT_FFWD         ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PT_EJECTTAPE2     : IDC_PT_EJECTTAPE    ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_REWIND2        : IDC_PT_REWIND       ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_STOPTAPE2      : IDC_PT_STOPTAPE     ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_PLAY2          : IDC_PT_PLAY         ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_FFWD2          : IDC_PT_FFWD         ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PT_EJECTTAPE2     : IDC_PT_EJECTTAPE    ), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 
-        EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_INSERTPAPERTAPE2  : IDC_INSERTPAPERTAPE ), (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? TRUE : FALSE);
+        EnableWindow(GetDlgItem(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_INSERTPAPERTAPE2  : IDC_INSERTPAPERTAPE ), (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? TRUE : FALSE);
 #endif
 #ifdef AMIGA
-        SetWindowTitles(SubWindowPtr[SUBWINDOW_PAPERTAPE], (const char*) papertapetitlestring, (const char*) papertapetitlestring);
-        SetGadgetAttrs(gadgets[GID_PT_SL1 + whichunit], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE); // this autorefreshes
+        SetWindowTitles(subwin[SUBWINDOW_PAPERTAPE].hwnd, (const char*) papertapetitlestring, (const char*) papertapetitlestring);
+        SetGadgetAttrs(gadgets[GID_PT_SL1 + whichunit], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE); // this autorefreshes
         if (whichunit == 0)
-        {   SetGadgetAttrs(gadgets[                   GID_PT_BU4 ], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (papertapewhere[whichunit] < PAPERTAPEMAX               && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_RECORD) ? TRUE : FALSE, TAG_DONE); // record
+        {   SetGadgetAttrs(gadgets[                   GID_PT_BU4 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapewhere[whichunit] < PAPERTAPEMAX               && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_RECORD) ? TRUE : FALSE, TAG_DONE); // record
 
-            SetGadgetAttrs(gadgets[                   GID_PT_BU10], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? FALSE : TRUE,                                                                            TAG_DONE); // create
+            SetGadgetAttrs(gadgets[                   GID_PT_BU10], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? FALSE : TRUE,                                                                            TAG_DONE); // create
         }
 
-        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU12 : GID_PT_BU5 ], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (papertapewhere[whichunit] > 0                          && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE,                                                                            TAG_DONE); // rewind
-        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU13 : GID_PT_BU6 ], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_PLAY  ) ? TRUE : FALSE, TAG_DONE); // play
-        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU14 : GID_PT_BU7 ], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE,                                                                            TAG_DONE); // ffwd
-        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU15 : GID_PT_BU8 ], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (                                                          papertapemode[whichunit] >  TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_STOP  ) ? TRUE : FALSE, TAG_DONE); // stop
-        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU16 : GID_PT_BU9 ], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (                                                          papertapemode[whichunit] != TAPEMODE_NONE) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_NONE  ) ? TRUE : FALSE, TAG_DONE); // eject
+        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU12 : GID_PT_BU5 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapewhere[whichunit] > 0                          && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE,                                                                            TAG_DONE); // rewind
+        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU13 : GID_PT_BU6 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_PLAY  ) ? TRUE : FALSE, TAG_DONE); // play
+        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU14 : GID_PT_BU7 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapewhere[whichunit] < papertapelength[whichunit] && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE,                                                                            TAG_DONE); // ffwd
+        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU15 : GID_PT_BU8 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (                                                          papertapemode[whichunit] >  TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_STOP  ) ? TRUE : FALSE, TAG_DONE); // stop
+        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU16 : GID_PT_BU9 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (                                                          papertapemode[whichunit] != TAPEMODE_NONE) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_NONE  ) ? TRUE : FALSE, TAG_DONE); // eject
 
-        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU17 : GID_PT_BU11], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Disabled, (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? FALSE : TRUE,                                                                            TAG_DONE); // insert
+        SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU17 : GID_PT_BU11], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (                                                          papertapemode[whichunit] == TAPEMODE_NONE) ? FALSE : TRUE,                                                                            TAG_DONE); // insert
 #endif
     }
 
     if (papertapebyte[whichunit] != oldpapertapebyte[whichunit] || papertapemode[whichunit] != oldpapertapemode[whichunit] || force)
     {   sprintf((char*) gtempstring, "%02X", papertapebyte[whichunit]);
 #ifdef WIN32
-        SetDlgItemText(SubWindowPtr[SUBWINDOW_PAPERTAPE], whichunit ? IDC_PAPERTAPEBYTE2 : IDC_PAPERTAPEBYTE, gtempstring);
+        SetDlgItemText(subwin[SUBWINDOW_PAPERTAPE].hwnd, whichunit ? IDC_PAPERTAPEBYTE2 : IDC_PAPERTAPEBYTE, gtempstring);
 #endif
 #ifdef AMIGA
         switch (papertapemode[whichunit])
         {
-        case  TAPEMODE_PLAY:       SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_CYAN  ], TAG_DONE);
+        case  TAPEMODE_PLAY:       SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_CYAN  ], TAG_DONE);
         acase TAPEMODE_RECORD: if (papertapeprotect[whichunit])
-                               {   SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_YELLOW], TAG_DONE);
+                               {   SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_YELLOW], TAG_DONE);
                                } else
-                               {   SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_RED   ], TAG_DONE);
+                               {   SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_RED   ], TAG_DONE);
                                }
-        adefault:                  SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], SubWindowPtr[SUBWINDOW_PAPERTAPE], NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_GREEN ], TAG_DONE);
+        adefault:                  SetGadgetAttrs(gadgets[whichunit ? GID_PT_BU20 : GID_PT_BU3], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Text, gtempstring, BUTTON_BackgroundPen, emupens[EMUBRUSH_GREEN ], TAG_DONE);
         }
 #endif
     }
@@ -1548,7 +863,7 @@ EXPORT void update_papertape(int whichunit, FLAG force)
 }
 
 EXPORT void ghost_dips(BOOL state)
-{   if (!SubWindowPtr[SUBWINDOW_DIPS])
+{   if (!subwin[SUBWINDOW_DIPS].hwnd)
     {   return; // important!
     }
 
@@ -1673,3 +988,183 @@ EXPORT void ghost_dips(BOOL state)
             ra_enable( SUBWINDOW_DIPS, IDC_8600_TARGET2    , state);
             ra_enable2(SUBWINDOW_DIPS, IDC_8600_PONGVARIANT, state);
 }   }   }
+
+EXPORT int getdiskmodecolour(void)
+{   int whichpen;
+
+    switch (drive_mode)
+    {
+    case  DRIVEMODE_IDLE:    whichpen = EMUPEN_BLUE;
+    acase DRIVEMODE_READING: whichpen = EMUPEN_GREEN;
+    acase DRIVEMODE_WRITING: whichpen = EMUPEN_RED;
+    adefault:                whichpen = EMUPEN_WHITE; // should never happen
+    }
+
+    return whichpen;
+}
+
+EXPORT int getdiskclustercolour(int viewingbyte)
+{   UBYTE viewingtrack,
+          viewingsector;
+    int   viewingcluster,
+          whichpen;
+
+    switch (machine)
+    {
+    case  TWIN:
+        viewingtrack  =   viewingbyte /   TWIN_TRACKSIZE;
+        viewingsector =  (viewingbyte %   TWIN_TRACKSIZE) /   TWIN_BLOCKSIZE    ;
+    acase BINBUG:
+        viewingtrack  =   viewingbyte / BINBUG_TRACKSIZE;
+        viewingsector = ((viewingbyte % BINBUG_TRACKSIZE) / BINBUG_BLOCKSIZE) + 1;
+    acase CD2650:
+        viewingtrack  =   viewingbyte / CD2650_TRACKSIZE;
+        viewingsector = ((viewingbyte % CD2650_TRACKSIZE) / CD2650_BLOCKSIZE) + 1;
+    adefault:
+        return EMUPEN_WHITE; // should never happen
+    }
+    get_disk_byte(viewingdrive, viewingtrack, viewingsector, 0, &viewingbyte, &viewingcluster);
+
+    if (!drive[viewingdrive].inserted || viewingcluster == -1)
+                                 whichpen = EMUPEN_GREY;
+    elif (viewingcluster == -2)  whichpen = EMUPEN_PURPLE;
+    else
+    {   switch (drive[viewingdrive].bam[viewingcluster])
+        {
+        case  BAM_LOST:          whichpen = EMUPEN_GREY; // ideally EMU#?_BLACK but text would be illegible
+        acase BAM_DIR:           whichpen = EMUPEN_PURPLE;
+        acase BAM_FILE:          whichpen = EMUPEN_PINK;
+        acase BAM_FREE:          whichpen = EMUPEN_CYAN;
+        adefault:                whichpen = EMUPEN_WHITE; // should never happen
+    }   }
+
+    return whichpen;
+}
+
+EXPORT int getdiskbytecolour(int viewingbyte)
+{   FAST UBYTE viewingtrack,
+               viewingsector;
+    FAST int   diskbyte,
+               viewingcluster,
+               viewingoffset,
+               whichpen;
+
+    switch (machine)
+    {
+    case  TWIN:
+        viewingtrack  =   viewingbyte /   TWIN_TRACKSIZE;
+        viewingsector =  (viewingbyte %   TWIN_TRACKSIZE) /   TWIN_BLOCKSIZE    ;
+        viewingoffset =  (viewingbyte                     %   TWIN_BLOCKSIZE)   ;
+    acase BINBUG:
+        viewingtrack  =   viewingbyte / BINBUG_TRACKSIZE;
+        viewingsector = ((viewingbyte % BINBUG_TRACKSIZE) / BINBUG_BLOCKSIZE) + 1;
+        viewingoffset =  (viewingbyte                     % BINBUG_BLOCKSIZE)   ;
+    acase CD2650:
+        viewingtrack  =   viewingbyte / CD2650_TRACKSIZE;
+        viewingsector = ((viewingbyte % CD2650_TRACKSIZE) / CD2650_BLOCKSIZE) + 1;
+        viewingoffset =  (viewingbyte                     % CD2650_BLOCKSIZE)   ;
+    }
+    get_disk_byte(viewingdrive, viewingtrack, viewingsector, viewingoffset, NULL, &viewingcluster);
+    get_disk_byte(curdrive, drive[curdrive].track, drive[curdrive].sector, drive[curdrive].blockoffset, &diskbyte, NULL);
+
+    if (!drive[viewingdrive].inserted || viewingcluster == -1)
+                                 whichpen = EMUPEN_GREY;
+    elif (viewingbyte == diskbyte)
+    {   switch (drive_mode)
+        {
+        case  DRIVEMODE_IDLE:    whichpen = EMUPEN_BLUE;
+        acase DRIVEMODE_READING: whichpen = EMUPEN_GREEN;
+        acase DRIVEMODE_WRITING: whichpen = EMUPEN_RED;
+    }   }
+    elif (drive[viewingdrive].flags[viewingbyte / 8] & (1 << (viewingbyte % 8)))
+    {                            whichpen = EMUPEN_ORANGE;
+    } elif (machine == BINBUG && viewingoffset <= 1)
+    {                            whichpen = EMUPEN_YELLOW;
+    } elif (viewingcluster == -2)
+    {                            whichpen = EMUPEN_PURPLE;
+    } else
+    {   switch (drive[viewingdrive].bam[viewingcluster])
+        {
+        case  BAM_LOST:          whichpen = EMUPEN_GREY;
+        acase BAM_DIR:           whichpen = EMUPEN_PURPLE;
+        acase BAM_FILE:          whichpen = EMUPEN_PINK;
+        acase BAM_FREE:          whichpen = EMUPEN_CYAN;
+    }   }
+
+    return whichpen;
+}
+
+EXPORT void get_disk_byte(int whichdrive, UBYTE whichtrack, UBYTE whichsector, int whichoffset, int* rc_diskbyte, int* rc_diskcluster)
+{   int tempdiskbyte,
+        tempcluster;
+
+    if (!drive[whichdrive].inserted)
+    {   tempdiskbyte = -1;
+        tempcluster = -1;
+        goto DONE;
+    }
+
+    switch (machine)
+    {
+    case BINBUG:
+        if
+        (   whichsector == 0
+         || whichsector >  BINBUG_SECTORS
+         || whichtrack  >= BINBUG_TRACKS
+        )
+        {   tempdiskbyte = -1;
+            tempcluster  = -1;
+        } else
+        {   tempdiskbyte = (whichtrack * BINBUG_TRACKSIZE) + ((whichsector - 1) * BINBUG_BLOCKSIZE) + whichoffset;
+            tempcluster  = tempdiskbyte / BINBUG_BLOCKSIZE; // zero-based
+        }
+    acase TWIN:
+        if
+        (   whichsector >= TWIN_SECTORS
+         || whichtrack  >= TWIN_TRACKS
+        )
+        {   tempdiskbyte = -1;
+            tempcluster  = -1;
+        } else
+        {   tempdiskbyte = (whichtrack *   TWIN_TRACKSIZE) + ( whichsector      *   TWIN_BLOCKSIZE) + whichoffset;
+            tempcluster  = (whichtrack == 0) ? (-2) : (((whichtrack - 1) * 4) + (whichsector / 8));
+        }
+    acase CD2650:
+        if
+        (   whichsector == 0
+         || whichsector >  CD2650_SECTORS
+         || whichtrack  >= CD2650_TRACKS
+        )
+        {   tempdiskbyte = -1;
+            tempcluster  = -1;
+        } else
+        {   tempdiskbyte = (whichtrack * CD2650_TRACKSIZE) + ((whichsector - 1) * CD2650_BLOCKSIZE) + whichoffset;
+            tempcluster  = tempdiskbyte / CD2650_BLOCKSIZE; // zero-based
+        }
+    adefault: // should never happen
+        tempdiskbyte = -1;
+        tempcluster  = -1;
+    }
+
+DONE:
+    if (rc_diskbyte)
+    {   *rc_diskbyte = tempdiskbyte;
+    }
+    if (rc_diskcluster)
+    {   *rc_diskcluster = tempcluster;
+}   }
+
+EXPORT void set_drive_mode(int newdrivemode)
+{   drive_mode = newdrivemode;
+
+    update_floppydrive(FALSE, 0);
+    update_floppydrive(FALSE, 1);
+    update_floppydrive(FALSE, 2);
+    update_floppydrive(FALSE, 3);
+}
+
+EXPORT void redraw_roll(int whichunit)
+{   if   (whichunit == 0) wpa8(CANVAS_ROLL1, 0, 0);
+    elif (whichunit == 1) wpa8(CANVAS_ROLL2, 0, 0);
+    // else panic
+}

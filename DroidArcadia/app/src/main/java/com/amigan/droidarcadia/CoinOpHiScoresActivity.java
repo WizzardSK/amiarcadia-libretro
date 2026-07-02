@@ -31,22 +31,24 @@ public class CoinOpHiScoresActivity extends Activity
                  hs_4           = findViewById(R.id.hs_4);
                  hs_5           = findViewById(R.id.hs_5);
                  hs_6           = findViewById(R.id.hs_6);
+                 
                  hsd_1          = findViewById(R.id.hsd_1);
                  hsd_2          = findViewById(R.id.hsd_2);
                  hsd_3          = findViewById(R.id.hsd_3);
                  hsd_4          = findViewById(R.id.hsd_4);
                  hsd_5          = findViewById(R.id.hsd_5);
                  hsd_6          = findViewById(R.id.hsd_6);
+
         TextView button_clearhs = findViewById(R.id.button_clearhs);
 
-        for (int i = 0; i < 51 + 6; i++)
+        for (int i = 0; i < 52 + 6; i++)
         {   MainActivity.hiscore[i] = gethiscore(i);
             MainActivity.hiscoredate[i] = gethiscoredate(i);
         }
         doscores();
         
         button_clearhs.setOnClickListener((view) ->
-        {   for (int i = 51; i < 51 + 6; i++)
+        {   for (int i = 52; i < 52 + 6; i++)
             {   MainActivity.hiscore[i] = 0;
                 MainActivity.hiscoredate[i] = "-";
                 sethiscore(i, MainActivity.hiscore[i], MainActivity.hiscoredate[i]);

@@ -95,8 +95,8 @@ EXPORT struct KindStruct filekind[KINDS] =
     NULL,
     NULL
   },
-  { ".bin", NULL,
-    "Arcadia/Interton/SI50/PHUNSY Program (*.BIN)\0*.BIN\0All files (*.*)\0*.*\0",
+  { ".bin", ".rom",
+    "Arcadia/Interton/SI50/PHUNSY Program (*.BIN, *.ROM)\0*.BIN;*.ROM\0All files (*.*)\0*.*\0",
     TRUE,
     "bin_ext",
     "Program"
@@ -352,17 +352,18 @@ IMPORT       HBRUSH                    hBrush[EMUBRUSHES];
 IMPORT       HFONT                     hBoldFont;
 IMPORT       HINSTANCE                 InstancePtr;
 IMPORT       HWND                      ListeningWindowPtr,
-                                       MainWindowPtr,
-                                       SubWindowPtr[SUBWINDOWS];
+                                       MainWindowPtr;
 IMPORT       struct HiScoreStruct      hiscore[HISCORES];
 IMPORT       struct HostMachineStruct  hostmachines[MACHINES];
-IMPORT       struct LangStruct         langs[LANGUAGES];
 IMPORT       struct KeyNameStruct      keyname[SCANCODES];
+IMPORT       struct LangStruct         langs[LANGUAGES];
 IMPORT       struct MachineStruct      machines[MACHINES];
+IMPORT       struct SubWindowStruct    subwin[SUBWINDOWS];
 IMPORT       UBYTE*                    pixelubyte;
 IMPORT       ULONG*                    pixelulong;
 IMPORT const UWORD                     default_console[4],
                                        default_keypads[2][NUMKEYS];
+IMPORT const struct KeyTableStruct     keytable[NUMKEYS];
 IMPORT const struct KnownStruct        known[KNOWNGAMES];
 IMPORT const struct MemMapToStruct     memmap_to[MEMMAPS];
 IMPORT const struct TODStruct          tods[TIPSOFDAYS];
@@ -382,13 +383,13 @@ MODULE       TEXT                      temppath_disks[MAX_PATH + 1],
                                        temppath_tapes[MAX_PATH + 1],
                                        SysInfoName[MAX_PATH + 1];
 MODULE       UBYTE                     tempbutton[2][8];
-MODULE       int                       newbitrate,
+MODULE       int                       gplayer,
+                                       gwhichkey,
+                                       newbitrate,
                                        newsamplerate,
                                        newspeechrate,
                                        newusespeech,
-                                       newvolume,
-                                       side,
-                                       whichkey;
+                                       newvolume;
 MODULE       STRPTR                    editstring;
 MODULE       HWND                      ModalWindowPtr    = NULL,
                                        RedefineWindowPtr = NULL;
@@ -520,7 +521,6 @@ MODULE struct
 // MODULE FUNCTIONS-------------------------------------------------------
 
 MODULE void refreshkeys(void);
-MODULE void subreq(void);
 MODULE void ghost_soundgads(HWND hwnd);
 MODULE void ghost_resetpaths(HWND hwnd);
 MODULE FLAG zgetpath(STRPTR buffer);
@@ -590,15 +590,15 @@ MODULE BOOL CALLBACK AboutDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
         DISCARD SendMessage(GetDlgItem(hwnd, IDC_ABOUT), WM_SETFONT, (WPARAM) hBoldFont, MAKELPARAM(TRUE, 0));
 
         DISCARD SetFocus(GetDlgItem(hwnd, IDOK));
-        return FALSE; // must be FALSE so that our SetFocus()sing is respected
-    case WM_CLOSE: // no need for acase
+    return FALSE; // must be FALSE so that our SetFocus()sing is respected
+    case WM_CLOSE:
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDC_LINK1:
@@ -615,9 +615,9 @@ MODULE BOOL CALLBACK AboutDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             clearkybd();
             DISCARD EndDialog(hwnd, 0);
         }
-        return TRUE;
-    default: // no need for adefault
-        return FALSE;
+    return TRUE;
+    default:
+    return FALSE;
 }   }
 
 EXPORT void rq(STRPTR text)
@@ -1215,16 +1215,15 @@ MODULE BOOL CALLBACK EditDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         // DISCARD SetForegroundWindow(hwnd); doesn't work
 
         DISCARD SetFocus(GetDlgItem(hwnd, IDC_CHANGE_TO));
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         DISCARD GetWindowText(GetDlgItem(hwnd, IDC_CHANGE_TO), tostr, sizeof(tostr));
 
         pokeok = TRUE;
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         if (LOWORD (wParam) == IDOK)
         {   DISCARD GetWindowText(GetDlgItem(hwnd, IDC_CHANGE_TO), tostr, sizeof(tostr));
 
@@ -1239,10 +1238,9 @@ MODULE BOOL CALLBACK EditDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         }
-
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 MODULE BOOL CALLBACK BPNFDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -1255,14 +1253,14 @@ MODULE BOOL CALLBACK BPNFDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 
         SetDlgItemText(hwnd, IDC_ADDRESS, bpnf_string);
     return TRUE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
     return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
     return TRUE;
-    case WM_COMMAND: // no need for acase
+    case WM_COMMAND:
         if (LOWORD(wParam) == IDOK)
         {   clearkybd();
             DISCARD EndDialog(hwnd, 0);
@@ -1275,7 +1273,7 @@ MODULE BOOL CALLBACK BPNFDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             return TRUE;
         }
     return FALSE;
-    case WM_PAINT: // no need for acase
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
     adefault:
@@ -1329,14 +1327,14 @@ MODULE BOOL CALLBACK HiScoresDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         {   EnableWindow(GetDlgItem(hwnd, IDC_CLEARHS), TRUE);
         }
     return TRUE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
     return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
     return TRUE;
-    case WM_COMMAND: // no need for acase
+    case WM_COMMAND:
         if (LOWORD(wParam) == IDC_CLEARHS)
         {   clearhs();
             drawhiscores();
@@ -1351,7 +1349,7 @@ MODULE BOOL CALLBACK HiScoresDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             return TRUE;
         }
     return FALSE;
-    case WM_PAINT: // no need for acase
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
     adefault:
@@ -1367,15 +1365,13 @@ MODULE BOOL CALLBACK HostNameDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
     case WM_INITDIALOG:
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_HOSTNAME, "Enter Hostname"));
         DISCARD SetDlgItemText(hwnd, IDC_HOSTNAME, hostname);
-
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         DISCARD GetWindowText(GetDlgItem(hwnd, IDC_HOSTNAME), hostname, sizeof(hostname));
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         if (LOWORD (wParam) == IDOK)
         {   DISCARD GetWindowText(GetDlgItem(hwnd, IDC_HOSTNAME), hostname, sizeof(hostname));
             clearkybd();
@@ -1389,10 +1385,9 @@ MODULE BOOL CALLBACK HostNameDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 
             return TRUE;
         }
-
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 MODULE BOOL CALLBACK ListeningDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -1400,19 +1395,17 @@ MODULE BOOL CALLBACK ListeningDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
     {
     case WM_INITDIALOG:
         DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_LISTENING, "Listening..."));
-
-        return TRUE;
-    case WM_ACTIVATE: // no need for acase
+    return TRUE;
+    case WM_ACTIVATE:
         do_autopause(wParam, lParam);
-        return 0;
-    case WM_CLOSE: // no need for acase
- // case WM_KEYDOWN:
+    return 0;
+    case WM_CLOSE:
         DestroyWindow(hwnd);
         ListeningWindowPtr = NULL;
         aborting = TRUE;
-        return TRUE;
-    default: // no need for adefault
-        return FALSE;
+    return TRUE;
+    default:
+    return FALSE;
 }   }
 
 EXPORT BOOL CALLBACK RearrangeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -1501,19 +1494,18 @@ EXPORT BOOL CALLBACK RearrangeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
 
         ModalWindowPtr = hwnd;
         update_rearrange();
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
+    return TRUE;
     case WM_CLOSE:
         reopen_subwindow(SUBWINDOW_HOSTPADS);
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
+    return TRUE;
     case WM_DESTROY:
         ModalWindowPtr = NULL;
-        return FALSE;
+    return FALSE;
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
@@ -1533,8 +1525,8 @@ EXPORT BOOL CALLBACK RearrangeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
             reopen_subwindow(SUBWINDOW_HOSTPADS);
             clearkybd();
             DISCARD EndDialog(hwnd, 0);
-            return TRUE;
-        default: // adefault not required
+        return TRUE;
+        default:
             for (i = 0; i < 24; i++)
             {   if (LOWORD(wParam) == rearrange[i].hGad[0])
                 {   tempbutton[0][0] = rearrange[i].rearr[0];
@@ -1565,9 +1557,9 @@ EXPORT BOOL CALLBACK RearrangeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
                     tempbutton[1][7] = rearrange[i].rearr[3];
                     update_rearrange();
         }   }   }
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -1604,8 +1596,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         setdlgtext(hwnd, IDC_RESETREDEFINE,      MSG_RESETTODEFAULTS2,  "&Reset to defaults");
         setdlgtext(hwnd, IDOK,                   MSG_OK2,               "&OK");
         setdlgtext(hwnd, IDCANCEL,               MSG_CANCEL2,           "&Cancel");
-        setdlgtext(hwnd, IDC_LABEL_LEFT,         MSG_LEFTCONTROLLER,    "Left Controller");
-        setdlgtext(hwnd, IDC_LABEL_RIGHT,        MSG_RIGHTCONTROLLER,   "Right Controller");
+        setdlgtext(hwnd, IDC_LABEL_LEFT,         MSG_KYBDLEGEND_1,      "Left player");
+        setdlgtext(hwnd, IDC_LABEL_RIGHT,        MSG_KYBDLEGEND_2,      "Right player");
         setdlgtext(hwnd, IDL_CONSOLE,            MSG_KYBDLEGEND_3,      "Console");
         sprintf(gtempstring, "%s:", machines[machine].consolekeyname[0]);
         SetDlgItemText(hwnd, IDC_F1,             gtempstring);
@@ -1666,12 +1658,11 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
                 SWP_NOCOPYBITS | SWP_NOSIZE
             );
         }
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_LBUTTONDBLCLK: // no need for acase
+    return TRUE;
+    case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
         mousex = (int) LOWORD(lParam); // pixels -> dialog units
         mousey = (int) HIWORD(lParam); // pixels -> dialog units
@@ -1700,8 +1691,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || machines[machine].pvis
              || machine == PONG
             ) // excludes INSTRUCTOR, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 0; whichkey =  0; // IDC_P1_1ST
-                subreq();
+            {   subreq(GUESTKEY_1ST, 0);
+                refreshkeys(); // this is overkill
             }
         acase 1:
             if
@@ -1711,8 +1702,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || memmap == MEMMAP_LASERBATTLE
              || memmap == MEMMAP_LAZARIAN
             ) // excludes INSTRUCTOR, Astro Wars, Galaxia, MALZAK, PONG, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 0; whichkey = 21; // IDC_P1_2ND
-                subreq();
+            {   subreq(GUESTKEY_2ND, 0);
+                refreshkeys(); // this is overkill
             }
         acase 2:
             if
@@ -1722,8 +1713,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || memmap == MEMMAP_LASERBATTLE
              || memmap == MEMMAP_LAZARIAN
             ) // excludes INSTRUCTOR, Astro Wars, Galaxia, MALZAK, PONG, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 0; whichkey = 22; // IDC_P1_3RD
-                subreq();
+            {   subreq(GUESTKEY_3RD, 0);
+                refreshkeys(); // this is overkill
             }
         acase 3:
             if
@@ -1733,8 +1724,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || memmap == MEMMAP_LASERBATTLE
              || memmap == MEMMAP_LAZARIAN
             ) // excludes INSTRUCTOR, Astro Wars, Galaxia, MALZAK, PONG, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 0; whichkey = 23; // IDC_P1_4TH
-                subreq();
+            {   subreq(GUESTKEY_4TH, 0);
+                refreshkeys(); // this is overkill
             }
         acase 4:
             if
@@ -1746,8 +1737,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || machine == MALZAK
              || machine == PONG
             ) // excludes INSTRUCTOR, Laser Battle, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 1; whichkey =  0; // IDC_P2_1ST
-                subreq();
+            {   subreq(GUESTKEY_1ST, 1);
+                refreshkeys(); // this is overkill
             }
         acase 5:
             if
@@ -1755,8 +1746,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || machine == INTERTON
              || machine == ELEKTOR
             ) // excludes INSTRUCTOR, coin-ops, PONG, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 1; whichkey = 21; // IDC_P2_2ND
-                subreq();
+            {   subreq(GUESTKEY_2ND, 1);
+                refreshkeys(); // this is overkill
             }
         acase 6:
             if
@@ -1764,8 +1755,8 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || machine == INTERTON
              || machine == ELEKTOR
             ) // excludes INSTRUCTOR, coin-ops, PONG, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 1; whichkey = 22; // IDC_P2_3RD
-                subreq();
+            {   subreq(GUESTKEY_3RD, 1);
+                refreshkeys(); // this is overkill
             }
         acase 7:
             if
@@ -1773,25 +1764,17 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
              || machine == INTERTON
              || machine == ELEKTOR
             ) // excludes INSTRUCTOR, coin-ops, PONG, PHUNSY, SELBST, MIKIT, TYPERIGHT
-            {   side = 1; whichkey = 23; // IDC_P2_4TH
-                subreq();
+            {   subreq(GUESTKEY_4TH, 1);
+                refreshkeys(); // this is overkill
         }   }
     acase WM_CTLCOLORSTATIC:
         gid = GetWindowLong((HWND) lParam, GWL_ID);
 
-        if (    gid == IDC_P1_1ST || gid == IDC_P2_1ST)
-        {   SetBkColor((HDC) wParam, EMUPEN_RED);
-            return (LRESULT) hBrush[EMUBRUSH_RED];
-        } elif (gid == IDC_P1_2ND || gid == IDC_P2_2ND)
-        {   SetBkColor((HDC) wParam, EMUPEN_BLUE);
-            return (LRESULT) hBrush[EMUBRUSH_BLUE];
-        } elif (gid == IDC_P1_3RD || gid == IDC_P2_3RD)
-        {   SetBkColor((HDC) wParam, EMUPEN_GREEN);
-            return (LRESULT) hBrush[EMUBRUSH_GREEN];
-        } elif (gid == IDC_P1_4TH || gid == IDC_P2_4TH)
-        {   SetBkColor((HDC) wParam, EMUPEN_YELLOW);
-            return (LRESULT) hBrush[EMUBRUSH_YELLOW];
-        } else return TRUE;
+        if (gid == IDC_P1_1ST || gid == IDC_P2_1ST) { SetBkColor((HDC) wParam, EMUPEN_RED   ); return (LRESULT) hBrush[EMUBRUSH_RED   ]; }
+        if (gid == IDC_P1_2ND || gid == IDC_P2_2ND) { SetBkColor((HDC) wParam, EMUPEN_BLUE  ); return (LRESULT) hBrush[EMUBRUSH_BLUE  ]; }
+        if (gid == IDC_P1_3RD || gid == IDC_P2_3RD) { SetBkColor((HDC) wParam, EMUPEN_GREEN ); return (LRESULT) hBrush[EMUBRUSH_GREEN ]; }
+        if (gid == IDC_P1_4TH || gid == IDC_P2_4TH) { SetBkColor((HDC) wParam, EMUPEN_YELLOW); return (LRESULT) hBrush[EMUBRUSH_YELLOW]; }
+    return TRUE;
     case WM_CLOSE: // no need for acase
         for (i = 0; i < 2; i++)
         {   for (j = 0; j < NUMKEYS; j++)
@@ -1807,15 +1790,14 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
-    case WM_DESTROY: // no need for acase
+    return TRUE;
+    case WM_DESTROY:
         RedefineWindowPtr = NULL;
 
         close_subwindows(FALSE);
         reopen_subwindows(); // to refresh contents of eg. game info and host keyboard subwindows
-
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDOK:
@@ -1826,11 +1808,12 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             for (i = 0; i < 4; i++)
             {   console[i] = temp_console[i];
             }
-        case IDCANCEL: //lint -fallthrough
+        //lint -fallthrough
+        case IDCANCEL:
             clearkybd();
             DISCARD EndDialog(hwnd, 0);
-            return TRUE;
-        case IDC_RESETREDEFINE: // no need for acase
+        return TRUE;
+        case IDC_RESETREDEFINE:
             for (i = 0; i < 2; i++)
             {   for (j = 0; j < NUMKEYS; j++)
                 {   temp_keypads[i][j] = default_keypads[i][j];
@@ -1839,162 +1822,59 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             {   temp_console[i] = default_console[i];
             }
             refreshkeys();
-        acase IDC_P1_1:
-            side = 0; whichkey = 1;
-            subreq();
-        acase IDC_P1_2:
-            side = 0; whichkey = 2;
-            subreq();
-        acase IDC_P1_3:
-            side = 0; whichkey = 3;
-            subreq();
-        acase IDC_P1_4:
-            side = 0; whichkey = 4;
-            subreq();
-        acase IDC_P1_5:
-            side = 0; whichkey = 5;
-            subreq();
-        acase IDC_P1_6:
-            side = 0; whichkey = 6;
-            subreq();
-        acase IDC_P1_7:
-            side = 0; whichkey = 7;
-            subreq();
-        acase IDC_P1_8:
-            side = 0; whichkey = 8;
-            subreq();
-        acase IDC_P1_9:
-            side = 0; whichkey = 9;
-            subreq();
-        acase IDC_P1_C:
-            side = 0; whichkey = 10;
-            subreq();
-        acase IDC_P1_0:
-            side = 0; whichkey = 11;
-            subreq();
-        acase IDC_P1_E:
-            side = 0; whichkey = 12;
-            subreq();
-        acase IDC_P1_X1:
-            side = 0; whichkey = 13;
-            subreq();
-        acase IDC_P1_X2:
-            side = 0; whichkey = 14;
-            subreq();
-        acase IDC_P1_X3:
-            side = 0; whichkey = 15;
-            subreq();
-        acase IDC_P1_X4:
-            side = 0; whichkey = 16;
-            subreq();
-        acase IDC_P1_UPLEFT:
-            side = 0; whichkey = 24;
-            subreq();
-        acase IDC_P1_UP:
-            side = 0; whichkey = 17;
-            subreq();
-        acase IDC_P1_UPRIGHT:
-            side = 0; whichkey = 25;
-            subreq();
-        acase IDC_P1_LEFT:
-            side = 0; whichkey = 19;
-            subreq();
-        acase IDC_P1_RIGHT:
-            side = 0; whichkey = 20;
-            subreq();
-        acase IDC_P1_DOWNLEFT:
-            side = 0; whichkey = 26;
-            subreq();
-        acase IDC_P1_DOWN:
-            side = 0; whichkey = 18;
-            subreq();
-        acase IDC_P1_DOWNRIGHT:
-            side = 0; whichkey = 27;
-            subreq();
-        acase IDC_P2_1:
-            side = 1; whichkey = 1;
-            subreq();
-        acase IDC_P2_2:
-            side = 1; whichkey = 2;
-            subreq();
-        acase IDC_P2_3:
-            side = 1; whichkey = 3;
-            subreq();
-        acase IDC_P2_4:
-            side = 1; whichkey = 4;
-            subreq();
-        acase IDC_P2_5:
-            side = 1; whichkey = 5;
-            subreq();
-        acase IDC_P2_6:
-            side = 1; whichkey = 6;
-            subreq();
-        acase IDC_P2_7:
-            side = 1; whichkey = 7;
-            subreq();
-        acase IDC_P2_8:
-            side = 1; whichkey = 8;
-            subreq();
-        acase IDC_P2_9:
-            side = 1; whichkey = 9;
-            subreq();
-        acase IDC_P2_C:
-            side = 1; whichkey = 10;
-            subreq();
-        acase IDC_P2_0:
-            side = 1; whichkey = 11;
-            subreq();
-        acase IDC_P2_E:
-            side = 1; whichkey = 12;
-            subreq();
-        acase IDC_P2_X1:
-            side = 1; whichkey = 13;
-            subreq();
-        acase IDC_P2_X2:
-            side = 1; whichkey = 14;
-            subreq();
-        acase IDC_P2_X3:
-            side = 1; whichkey = 15;
-            subreq();
-        acase IDC_P2_X4:
-            side = 1; whichkey = 16;
-            subreq();
-        acase IDC_P2_UPLEFT:
-            side = 1; whichkey = 24;
-            subreq();
-        acase IDC_P2_UP:
-            side = 1; whichkey = 17;
-            subreq();
-        acase IDC_P2_UPRIGHT:
-            side = 1; whichkey = 25;
-            subreq();
-        acase IDC_P2_LEFT:
-            side = 1; whichkey = 19;
-            subreq();
-        acase IDC_P2_RIGHT:
-            side = 1; whichkey = 20;
-            subreq();
-        acase IDC_P2_DOWNLEFT:
-            side = 1; whichkey = 26;
-            subreq();
-        acase IDC_P2_DOWN:
-            side = 1; whichkey = 18;
-            subreq();
-        acase IDC_P2_DOWNRIGHT:
-            side = 1; whichkey = 27;
-            subreq();
-        acase IDC_KEY_START:
-            side = 2; whichkey = 0;
-            subreq();
-        acase IDC_KEY_A:
-            side = 2; whichkey = 1;
-            subreq();
-        acase IDC_KEY_B:
-            side = 2; whichkey = 2;
-            subreq();
-        acase IDC_KEY_RESET:
-            side = 2; whichkey = 3;
-            subreq();
+        acase IDC_P1_1:         subreq(GUESTKEY_1   , 0); refreshkeys();
+        acase IDC_P1_2:         subreq(GUESTKEY_2   , 0); refreshkeys();
+        acase IDC_P1_3:         subreq(GUESTKEY_3   , 0); refreshkeys();
+        acase IDC_P1_4:         subreq(GUESTKEY_4   , 0); refreshkeys();
+        acase IDC_P1_5:         subreq(GUESTKEY_5   , 0); refreshkeys();
+        acase IDC_P1_6:         subreq(GUESTKEY_6   , 0); refreshkeys();
+        acase IDC_P1_7:         subreq(GUESTKEY_7   , 0); refreshkeys();
+        acase IDC_P1_8:         subreq(GUESTKEY_8   , 0); refreshkeys();
+        acase IDC_P1_9:         subreq(GUESTKEY_9   , 0); refreshkeys();
+        acase IDC_P1_C:         subreq(GUESTKEY_CL  , 0); refreshkeys();
+        acase IDC_P1_0:         subreq(GUESTKEY_0   , 0); refreshkeys();
+        acase IDC_P1_E:         subreq(GUESTKEY_EN  , 0); refreshkeys();
+        acase IDC_P1_X1:        subreq(GUESTKEY_X1  , 0); refreshkeys();
+        acase IDC_P1_X2:        subreq(GUESTKEY_X2  , 0); refreshkeys();
+        acase IDC_P1_X3:        subreq(GUESTKEY_X3  , 0); refreshkeys();
+        acase IDC_P1_X4:        subreq(GUESTKEY_X4  , 0); refreshkeys();
+        acase IDC_P1_UPLEFT:    subreq(GUESTKEY_UPLT, 0); refreshkeys();
+        acase IDC_P1_UP:        subreq(GUESTKEY_UP  , 0); refreshkeys();
+        acase IDC_P1_UPRIGHT:   subreq(GUESTKEY_UPRT, 0); refreshkeys();
+        acase IDC_P1_LEFT:      subreq(GUESTKEY_LT  , 0); refreshkeys();
+        acase IDC_P1_RIGHT:     subreq(GUESTKEY_RT  , 0); refreshkeys();
+        acase IDC_P1_DOWNLEFT:  subreq(GUESTKEY_DNLT, 0); refreshkeys();
+        acase IDC_P1_DOWN:      subreq(GUESTKEY_DN  , 0); refreshkeys();
+        acase IDC_P1_DOWNRIGHT: subreq(GUESTKEY_DNRT, 0); refreshkeys();
+        acase IDC_P2_1:         subreq(GUESTKEY_1   , 1); refreshkeys();
+        acase IDC_P2_2:         subreq(GUESTKEY_2   , 1); refreshkeys();
+        acase IDC_P2_3:         subreq(GUESTKEY_3   , 1); refreshkeys();
+        acase IDC_P2_4:         subreq(GUESTKEY_4   , 1); refreshkeys();
+        acase IDC_P2_5:         subreq(GUESTKEY_5   , 1); refreshkeys();
+        acase IDC_P2_6:         subreq(GUESTKEY_6   , 1); refreshkeys();
+        acase IDC_P2_7:         subreq(GUESTKEY_7   , 1); refreshkeys();
+        acase IDC_P2_8:         subreq(GUESTKEY_8   , 1); refreshkeys();
+        acase IDC_P2_9:         subreq(GUESTKEY_9   , 1); refreshkeys();
+        acase IDC_P2_C:         subreq(GUESTKEY_CL  , 1); refreshkeys();
+        acase IDC_P2_0:         subreq(GUESTKEY_0   , 1); refreshkeys();
+        acase IDC_P2_E:         subreq(GUESTKEY_EN  , 1); refreshkeys();
+        acase IDC_P2_X1:        subreq(GUESTKEY_X1  , 1); refreshkeys();
+        acase IDC_P2_X2:        subreq(GUESTKEY_X2  , 1); refreshkeys();
+        acase IDC_P2_X3:        subreq(GUESTKEY_X3  , 1); refreshkeys();
+        acase IDC_P2_X4:        subreq(GUESTKEY_X4  , 1); refreshkeys();
+        acase IDC_P2_UPLEFT:    subreq(GUESTKEY_UPLT, 1); refreshkeys();
+        acase IDC_P2_UP:        subreq(GUESTKEY_UP  , 1); refreshkeys();
+        acase IDC_P2_UPRIGHT:   subreq(GUESTKEY_UPRT, 1); refreshkeys();
+        acase IDC_P2_LEFT:      subreq(GUESTKEY_LT  , 1); refreshkeys();
+        acase IDC_P2_RIGHT:     subreq(GUESTKEY_RT  , 1); refreshkeys();
+        acase IDC_P2_DOWNLEFT:  subreq(GUESTKEY_DNLT, 1); refreshkeys();
+        acase IDC_P2_DOWN:      subreq(GUESTKEY_DN  , 1); refreshkeys();
+        acase IDC_P2_DOWNRIGHT: subreq(GUESTKEY_DNRT, 1); refreshkeys();
+        acase IDC_KEY_START:    subreq(0,             2); refreshkeys();
+        acase IDC_KEY_A:        subreq(1,             2); refreshkeys();
+        acase IDC_KEY_B:        subreq(2,             2); refreshkeys();
+        acase IDC_KEY_RESET:    subreq(3,             2); refreshkeys();
+        // refreshkeys() is overkill because only one button needs to be updated, not all of them
         acase IDC_SHOWPALLADIUMKEYS2:
             if (SendMessage(GetDlgItem(hwnd, IDC_SHOWPALLADIUMKEYS2), BM_GETCHECK, 0, 0) == BST_CHECKED)
             {   showpalladiumkeys2 = TRUE;
@@ -2017,7 +1897,7 @@ EXPORT BOOL CALLBACK RedefineDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
         adefault:
             return FALSE;
         }
-        return TRUE;
+    return TRUE;
     }
 
     return FALSE;
@@ -2029,28 +1909,61 @@ MODULE BOOL CALLBACK RedefineSubDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
     switch (Message)
     {
     case WM_INITDIALOG:
-        DISCARD SetWindowText(hwnd, LLL(MSG_HAIL_REDEFINEKEY, "Redefine key..."));
+        switch (gplayer)
+        {
+        case 0:
+            sprintf
+            (   gtempstring,
+                LLL
+                (   MSG_REDEFINE_LEFT,
+                    "Redefine guest left '%s' button from host key '%s' to...",
+                ),
+                machines[machine].keynames[gplayer][gwhichkey],
+                keyname[temp_keypads[gplayer][gwhichkey]].name
+            );
+        acase 1:
+            sprintf
+            (   gtempstring,
+                LLL
+                (   MSG_REDEFINE_RIGHT,
+                    "Redefine guest right '%s' button from host key '%s' to...",
+                ),
+                machines[machine].keynames[gplayer][gwhichkey],
+                keyname[temp_keypads[gplayer][gwhichkey]].name
+            );
+        acase 2:
+            sprintf
+            (   gtempstring,
+                LLL
+                (   MSG_REDEFINE_CONSOLE,
+                    "Redefine guest console '%s' button from host key '%s' to...",
+                ),
+                machines[machine].consolekeyname[gwhichkey],
+                keyname[temp_console[gwhichkey]].name
+            );
+        }
+        SetWindowText(hwnd, gtempstring);
         clearkybd();
     return FALSE;
     case WM_KEYUP: // WM_KEYDOWN causes problems with cursor down and with cursor right
-    // no need for acase
         code = (lParam & 0x01FF0000) >> 16; // 0..511
         if (code == 1) // Esc
         {   clearkybd();
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         } elif (!keyname[code].reserved)
-        {   if (side == 2)
-            {   temp_console[      whichkey] = (UWORD) code;
+        {   if (gplayer == 2)
+            {   temp_console[         gwhichkey] = (UWORD) code;
             } else
-            {   temp_keypads[side][whichkey] = (UWORD) code;
+            {   temp_keypads[gplayer][gwhichkey] = (UWORD) code;
             }
+            update_controlstip(TRUE);
             clearkybd();
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         }
     return FALSE;
-    default: // no need for adefault
+    default:
     return FALSE;
 }   }
 
@@ -2075,23 +1988,22 @@ MODULE BOOL CALLBACK RegisterDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             {   DISCARD SendMessage(GetDlgItem(hwnd, assoc[i].gid), BM_SETCHECK, BST_CHECKED, 0);
         }   }
         if (reassociate) DISCARD SendMessage(GetDlgItem(hwnd, IDC_REASSOCIATE), BM_SETCHECK, BST_CHECKED, 0);
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_CLOSE: // no need for acase
-        goto DONE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
+    goto DONE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDOK:
         goto DONE;
-        case IDCANCEL: // no need for acase
+        case IDCANCEL:
             clearkybd();
             DISCARD EndDialog(hwnd, 0);
         return TRUE;
-        case IDC_REGISTERALL: // no need for acase
+        case IDC_REGISTERALL:
             for (i = 0; i < ASSOCIATIONS; i++)
             {   SendMessage(GetDlgItem(hwnd, assoc[i].gid), BM_SETCHECK, BST_CHECKED, 0);
             }
@@ -2166,19 +2078,18 @@ EXPORT BOOL CALLBACK SensitivityDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
         } else
         {   EnableWindow(GetDlgItem(hwnd, IDC_RESETSENSITIVITY), FALSE);
         }
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         sensitivity[0] = tempsensitivity[0];
         sensitivity[1] = tempsensitivity[1];
 
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
-    case WM_HSCROLL: // no need for acase
+    return TRUE;
+    case WM_HSCROLL:
         if (lParam == (long) GetDlgItem(hwnd, IDC_SENSITIVITY1))
         {   tempsensitivity[0] = SendMessage(GetDlgItem(hwnd, IDC_SENSITIVITY1), TBM_GETPOS, 0, 0);
             if (tempsensitivity[0] != defsensitivity || tempsensitivity[1] != defsensitivity)
@@ -2193,8 +2104,8 @@ EXPORT BOOL CALLBACK SensitivityDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             } else
             {   EnableWindow(GetDlgItem(hwnd, IDC_RESETSENSITIVITY), FALSE);
         }   }
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDC_RESETSENSITIVITY:
@@ -2213,9 +2124,9 @@ EXPORT BOOL CALLBACK SensitivityDlgProc(HWND hwnd, UINT Message, WPARAM wParam, 
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         }
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 EXPORT FLAG project_bpnf(void)
@@ -2349,12 +2260,11 @@ MODULE BOOL CALLBACK SoundDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             EnableWindow(GetDlgItem(hwnd, IDC_44100HZ), FALSE);
         }
         ghost_soundgads(hwnd);
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         usespeech   = newusespeech;
         speech_rate = newspeechrate;
         bitrate     = newbitrate;
@@ -2363,9 +2273,8 @@ MODULE BOOL CALLBACK SoundDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-
-        return TRUE;
-    case WM_HSCROLL: // no need for acase
+    return TRUE;
+    case WM_HSCROLL:
         if (lParam == (long) GetDlgItem(hwnd, IDC_RATE))
         {   newspeechrate = SendMessage
             (   GetDlgItem(hwnd, IDC_RATE),
@@ -2383,8 +2292,8 @@ MODULE BOOL CALLBACK SoundDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             );
             ghost_soundgads(hwnd);
         }
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDC_SPEECHENABLED:
@@ -2453,9 +2362,9 @@ MODULE BOOL CALLBACK SoundDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         } // implied else
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 MODULE void ghost_soundgads(HWND hwnd)
@@ -2524,17 +2433,16 @@ MODULE BOOL CALLBACK ConfirmDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 
         localhicon = LoadImage(InstancePtr, MAKEINTRESOURCE(memmap_to[memmap].icon), IMAGE_ICON, 32, 32, 0);
         DISCARD SendMessage(GetDlgItem(hwnd, IDL_GLYPH), STM_SETICON, (WPARAM) localhicon, (LPARAM) 0);
-
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         confirmed = TRUE;
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDC_CONFIRM:
@@ -2549,7 +2457,7 @@ MODULE BOOL CALLBACK ConfirmDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             clearkybd();
             DISCARD EndDialog(hwnd, 0);
         return TRUE;
-        case IDC_CONFIRM_NO: // no need for acase
+        case IDC_CONFIRM_NO:
         case IDCANCEL:
             confirmed = FALSE;
             clearkybd();
@@ -2651,19 +2559,21 @@ MODULE void refreshkeys(void)
     {   EnableWindow(GetDlgItem(RedefineWindowPtr, IDC_RESETREDEFINE), TRUE );
 }   }
 
-MODULE void subreq(void)
-{   opening = TRUE; // don't worry about modal as this is a sub-subwindow
+EXPORT void subreq(int whichkey, int player)
+{   gwhichkey = whichkey;
+    gplayer   = player;
+
+    opening = TRUE; // don't worry about modal as this is a sub-subwindow
     DISCARD DialogBox(InstancePtr, MAKEINTRESOURCE(IDD_REDEFINESUB), RedefineWindowPtr, RedefineSubDlgProc);
     opening = FALSE;
-    refreshkeys(); // this is overkill
 }
 
 EXPORT void enablegad(int whichgad, int enabled)
 {   if (RedefineWindowPtr && ctrlgads[whichgad].redef[showpalladiumkeys2 ? 1 : 0] != -1)
     {   EnableWindow(GetDlgItem(RedefineWindowPtr, ctrlgads[whichgad].redef[showpalladiumkeys2 ? 1 : 0]), enabled);
     }
-    if (SubWindowPtr[SUBWINDOW_GAMEINFO] && ctrlgads[whichgad].gameinfo[showpalladiumkeys1 ? 1 : 0] != -1)
-    {   EnableWindow(GetDlgItem(SubWindowPtr[SUBWINDOW_GAMEINFO], ctrlgads[whichgad].gameinfo[showpalladiumkeys1 ? 1 : 0]), enabled);
+    if (subwin[SUBWINDOW_GAMEINFO].hwnd && ctrlgads[whichgad].gameinfo[showpalladiumkeys1 ? 1 : 0] != -1)
+    {   EnableWindow(GetDlgItem(subwin[SUBWINDOW_GAMEINFO].hwnd, ctrlgads[whichgad].gameinfo[showpalladiumkeys1 ? 1 : 0]), enabled);
 }   }
 
 EXPORT void help_about(void)
@@ -2733,9 +2643,8 @@ MODULE BOOL CALLBACK PathsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 
         DISCARD SetFocus(GetDlgItem(hwnd, IDC_PATH_GAMES));
         DISCARD SendMessage(GetDlgItem(hwnd, IDC_PATH_GAMES), EM_SETSEL, 0, -1);
-
-        return FALSE; // FALSE so that our SetFocus()sing is respected
-    case WM_CLOSE: // no need for acase
+    return FALSE; // FALSE so that our SetFocus()sing is respected
+    case WM_CLOSE:
         GetWindowText(GetDlgItem(hwnd, IDC_PATH_DISKS      ), path_disks      , MAX_PATH);
         GetWindowText(GetDlgItem(hwnd, IDC_PATH_GAMES      ), path_games      , MAX_PATH);
         GetWindowText(GetDlgItem(hwnd, IDC_PATH_PROJECTS   ), path_projects   , MAX_PATH);
@@ -2760,11 +2669,11 @@ MODULE BOOL CALLBACK PathsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    return TRUE;
+    case WM_DRAWITEM:
         drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDC_RESETPATHS:
@@ -2893,12 +2802,12 @@ MODULE BOOL CALLBACK PathsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         }
-        return FALSE;
-    case WM_PAINT: // no need for acase
+    return FALSE;
+    case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
         DISCARD EndPaint(hwnd, &localps);
     adefault:
-        return FALSE;
+    return FALSE;
     }
 
     return FALSE;
@@ -2971,13 +2880,13 @@ MODULE BOOL CALLBACK REXXDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
     case WM_INITDIALOG:
         SetWindowText(hwnd, LLL(MSG_INPUTDATA, "Input Data to Script"));
         DISCARD SetFocus(GetDlgItem(hwnd, IDC_REXX));
-        return TRUE;
-    case WM_CLOSE: // no need for acase
+    return TRUE;
+    case WM_CLOSE:
         DISCARD GetWindowText(GetDlgItem(hwnd, IDC_REXX), rexxwhere, 256);
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
-        return TRUE;
-    case WM_COMMAND: // no need for acase
+    return TRUE;
+    case WM_COMMAND:
         if (LOWORD (wParam) == IDOK)
         {   DISCARD GetWindowText(GetDlgItem(hwnd, IDC_REXX), rexxwhere, 256);
             clearkybd();
@@ -2990,10 +2899,9 @@ MODULE BOOL CALLBACK REXXDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             DISCARD EndDialog(hwnd, 0);
             return TRUE;
         }
-
-        return FALSE;
-    default: // no need for adefault
-        return FALSE;
+    return FALSE;
+    default:
+    return FALSE;
 }   }
 
 EXPORT void showthetod(void)
@@ -3038,17 +2946,17 @@ MODULE BOOL CALLBACK TipOfDayDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             0
         );
     return TRUE;
-    case WM_CLOSE: // no need for acase
+    case WM_CLOSE:
         clearkybd();
         DISCARD EndDialog(hwnd, 0);
     return TRUE;
-    case WM_DRAWITEM: // no need for acase
+    case WM_DRAWITEM:
         switch (wParam)
         {
         case  IDOK: drawitem((struct tagDRAWITEMSTRUCT*) lParam, FALSE);
         }
     return TRUE;
-    case WM_COMMAND: // no need for acase
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case IDC_SHOWTOD:

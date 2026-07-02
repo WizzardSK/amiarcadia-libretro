@@ -16,7 +16,7 @@
 
 // DEFINES----------------------------------------------------------------
 
-#define UDCFLIPS         7
+#define UDGFLIPS         7
 
 #define UVIXTOSCREENX(x) (USG_XMARGIN + x - absxmin)
 #define UVIYTOSCREENY(y) (USG_YMARGIN + y - absymin)
@@ -71,10 +71,6 @@ IMPORT       int                   absxmin, absxmax,
                                    p2bgcol[4],
                                    p1sprcol[6],
                                    p2sprcol[6],
-                                   paddleup,
-                                   paddledown,
-                                   paddleleft,
-                                   paddleright,
                                    p1rumble,
                                    p2rumble,
                                    romsize,
@@ -82,7 +78,7 @@ IMPORT       int                   absxmin, absxmax,
                                    serializemode,
                                    slice_2650,
                                    supercpu,
-                                   udcflips,
+                                   udgflips,
                                    undither,
                                    useff[2],
                                    whichgame;
@@ -119,7 +115,7 @@ MODULE int    endsprx[4],
               hoffset,
               hoffsetstart,
               hoffsetend,
-              oldhoffset[UDCFLIPS + 1][26],
+              oldhoffset[UDGFLIPS + 1][26],
               uviy, uviy2,
               voffsetend;
 MODULE FLAG   spritesdone;
@@ -131,10 +127,10 @@ MODULE UBYTE  bgc,
               outerbgc, innerbgc, // Arcadia format
               hires,              // 0 for low resolution, 1 for high resolution
               pastbgc[312],
-              rowbuf[UDCFLIPS + 1][26][16],
+              rowbuf[UDGFLIPS + 1][26][16],
               scrnbgc,
               sprimagedata[4],
-              udgimgbuf[UDCFLIPS + 1][8][8],
+              udgimgbuf[UDGFLIPS + 1][8][8],
               t;
 MODULE SLONG  minorrow, // goes up only 1 per 2 rasts in low-res mode
                         // 0..7: which y-pixel row in the current "band" (row of chars) we are doing
@@ -179,7 +175,7 @@ EXPORT       int   flagline = TRUE,
                                     23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23 },
                    spriteflip,
                    spriteflips,
-                   udcflip,
+                   udgflip,
                    voffset;
 EXPORT const UBYTE from_a[2][24] =
 { { 0, //  0 ->  0 white
@@ -331,7 +327,7 @@ EXPORT void uvi(void)
 
     for (whichudg = 0; whichudg < 8; whichudg++)
     {   for (y = 0; y < 8; y++)
-        {   udgimgbuf[udcflip][whichudg][y] = memory[A_OFFSET_SPRITES + (whichudg * 8) + y];
+        {   udgimgbuf[udgflip][whichudg][y] = memory[A_OFFSET_SPRITES + (whichudg * 8) + y];
     }   }
 
     drawfakesprites();
@@ -340,10 +336,10 @@ EXPORT void uvi(void)
     } else spriteflip++;
 
     drawfakeudgs();
-    if (udcflip >= udcflips)
-    {   udcflip = 0;
+    if (udgflip >= udgflips)
+    {   udgflip = 0;
     } else
-    {   udcflip++;
+    {   udgflip++;
 }   }
 
 MODULE __inline void a_emuinput(void)
@@ -371,13 +367,36 @@ MODULE __inline void a_emuinput(void)
         } else
         {   memory[A_P1PADDLE - player] = hy[player];
         }
-        if   (hy[player] <=  64) setpaddle(player, paddleup);
-        elif (hy[player] >= 192) setpaddle(player, paddledown);
-        if   (hx[player] <=  64) setpaddle(player, paddleleft);
-        elif (hx[player] >= 192) setpaddle(player, paddleright);
-    }
+        if (whichgame != -1)
+        {   if   (hy[player] <=  64) setpaddle(player, known[whichgame].paddleup);
+            elif (hy[player] >= 192) setpaddle(player, known[whichgame].paddledown);
+            if   (hx[player] <=  64) setpaddle(player, known[whichgame].paddleleft);
+            elif (hx[player] >= 192) setpaddle(player, known[whichgame].paddleright);
+    }   }
         
-    if (console_start) { memory[A_CONSOLE] |= 0x01; console_start--; } // START
+    if (console_start)
+    {   memory[A_CONSOLE] |= 0x01;
+        console_start--; // START
+        if (whichgame != -1 && known[whichgame].startkey != -1)
+        {   switch (known[whichgame].startkey)
+            {
+            case  GUESTKEY_1:  memory[A_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x08;
+            acase GUESTKEY_2:  memory[A_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x08;
+            acase GUESTKEY_3:  memory[A_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x08;
+            acase GUESTKEY_4:  memory[A_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x04;
+            acase GUESTKEY_5:  memory[A_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x04;
+            acase GUESTKEY_6:  memory[A_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x04;
+            acase GUESTKEY_7:  memory[A_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x02;
+            acase GUESTKEY_8:  memory[A_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x02;
+            acase GUESTKEY_9:  memory[A_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x02;
+            acase GUESTKEY_CL: memory[A_P1LEFTKEYS   + (known[whichgame].startkeyplayer * 4)] |= 0x01;
+            acase GUESTKEY_0:  memory[A_P1MIDDLEKEYS + (known[whichgame].startkeyplayer * 4)] |= 0x01;
+            acase GUESTKEY_EN: memory[A_P1RIGHTKEYS  + (known[whichgame].startkeyplayer * 4)] |= 0x01;
+            acase GUESTKEY_X1: memory[A_P1PALLADIUM  + (known[whichgame].startkeyplayer * 4)] |= 0x01;
+            acase GUESTKEY_X2: memory[A_P1PALLADIUM  + (known[whichgame].startkeyplayer * 4)] |= 0x02;
+            acase GUESTKEY_X3: memory[A_P1PALLADIUM  + (known[whichgame].startkeyplayer * 4)] |= 0x04;
+            acase GUESTKEY_X4: memory[A_P1PALLADIUM  + (known[whichgame].startkeyplayer * 4)] |= 0x08;
+    }   }   }
     if (console_a    ) { memory[A_CONSOLE] |= 0x02; console_a--;     } // A
     if (console_b    ) { memory[A_CONSOLE] |= 0x04; console_b--;     } // B
     if (console_reset) { iar = 0;                   console_reset--; } // RESET
@@ -656,7 +675,7 @@ MODULE __inline void onepixel(void)
                 } else
                 {   minorrow = (uviy2 & 0xF) >> 1; // or (uviy2 % 16) / 2
             }   }
-            thechar = rowbuf[udcflip][majorrow][column];
+            thechar = rowbuf[udgflip][majorrow][column];
             if (thechar == 0xC0)
             {   blockmode = 1;
             } elif (thechar == 0x40)
@@ -799,7 +818,7 @@ MODULE __inline void do_sprites1(void)
             if (sprcollisions)
             {   uviwrite((UWORD) A_SPRITECOLLIDE, (UBYTE) (memory[A_SPRITECOLLIDE] & (~sprcollisions)));
             }
-            if (screen[cpux - absxmin][cpuy - absymin] != bgc) // we assume it works like this even in board mode
+            if (colltable[cpuy][cpux] & 0x10)
             {   uviwrite((UWORD) A_BGCOLLIDE,     (UBYTE) (memory[A_BGCOLLIDE    ] & (~sprpixel)));
                 for (whichsprite = 0; whichsprite < 4; whichsprite++)
                 {   if (sprpixel & (1 << whichsprite))
@@ -837,15 +856,15 @@ MODULE void newdma(void)
         // Red Clash relies on the row of characters being cached
         if (majorrow <= 12)
         {   for (x = 0; x < 16; x++)
-            {   rowbuf[udcflip][majorrow][x] = memory[0x1800 + (majorrow << 4) + x];
+            {   rowbuf[udgflip][majorrow][x] = memory[0x1800 + (majorrow << 4) + x];
         }   }
         elif (majorrow <= 25)
         {   for (x = 0; x < 16; x++)
-            {   rowbuf[udcflip][majorrow][x] = memory[0x1930 + (majorrow << 4) + x];
+            {   rowbuf[udgflip][majorrow][x] = memory[0x1930 + (majorrow << 4) + x];
         }   }
 
         uviwrite(A_CHARLINE, (UBYTE) (0xF0 | (majorrow % 13)));
-        oldhoffset[udcflip][majorrow] = hoffset = hoffsets[majorrow] = 23 + ((memory[A_VOLUME] & 0xE0) >> 5); // 3 bits wide
+        oldhoffset[udgflip][majorrow] = hoffset = hoffsets[majorrow] = 23 + ((memory[A_VOLUME] & 0xE0) >> 5); // 3 bits wide
         hoffsetstart = 49 + hoffset;
         hoffsetend   = hoffsetstart + 128;
     } else
@@ -1036,7 +1055,7 @@ MODULE void drawfakeudgs(void)
     // but we must use separate variables so that the values of such
     // MODULE variables are preserved.
 
-    if (!udcflips || !demultiplex || frames < (ULONG) udcflips)
+    if (!udgflips || !demultiplex || frames < (ULONG) udgflips)
     {   return;
     }
 
@@ -1047,7 +1066,7 @@ MODULE void drawfakeudgs(void)
         {   for (x = 0; x < 40; x++)
             {   imagedata = memory[0x1A30 + ((x / 8) * 8) + y];
                 if (imagedata & (0x80 >> (x % 8)))
-                {   xx = oldhoffset[udcflip][0] + 40 + x;
+                {   xx = oldhoffset[udgflip][0] + 40 + x;
                     yy = voffset + (y * 2);
 
                     changerelpixel(    xx    , yy    , BLACK);
@@ -1059,9 +1078,9 @@ MODULE void drawfakeudgs(void)
        So we only draw where it is black, to avoid overwriting new
        graphics with old graphics (eg. the bomb on level 3 of Macross). */
 
-    for (i = 1; i <= udcflips; i++)
-    {   flipper = (udcflip + i) % (udcflips + 1);
-        if (flipper == udcflip)
+    for (i = 1; i <= udgflips; i++)
+    {   flipper = (udgflip + i) % (udgflips + 1);
+        if (flipper == udgflip)
         {   continue;
         } // implied else
 
@@ -1161,18 +1180,22 @@ MODULE __inline void do_cpu(void)
 MODULE void setpaddle(int player, int which)
 {   switch (which)
     {
-    case   0: memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x01; // "0"
-    acase  1: memory[A_P1LEFTKEYS   + (player * 4)] |= 0x08; // "1"
-    acase  2: memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x08; // "2"
-    acase  3: memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x08; // "3"
-    acase  4: memory[A_P1LEFTKEYS   + (player * 4)] |= 0x04; // "4"
-    acase  5: memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x04; // "5"
-    acase  6: memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x04; // "6"
-    acase  7: memory[A_P1LEFTKEYS   + (player * 4)] |= 0x02; // "7"
-    acase  8: memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x02; // "8"
-    acase  9: memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x02; // "9"
-    acase 10: memory[A_P1LEFTKEYS   + (player * 4)] |= 0x01; // "Cl"
-    acase 11: memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x01; // "En"
+    case  GUESTKEY_1:  memory[A_P1LEFTKEYS   + (player * 4)] |= 0x08;
+    acase GUESTKEY_4:  memory[A_P1LEFTKEYS   + (player * 4)] |= 0x04;
+    acase GUESTKEY_7:  memory[A_P1LEFTKEYS   + (player * 4)] |= 0x02;
+    acase GUESTKEY_CL: memory[A_P1LEFTKEYS   + (player * 4)] |= 0x01;
+    acase GUESTKEY_2:  memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x08;
+    acase GUESTKEY_5:  memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x04;
+    acase GUESTKEY_8:  memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x02;
+    acase GUESTKEY_0:  memory[A_P1MIDDLEKEYS + (player * 4)] |= 0x01;
+    acase GUESTKEY_3:  memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x08;
+    acase GUESTKEY_6:  memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x04;
+    acase GUESTKEY_9:  memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x02;
+    acase GUESTKEY_EN: memory[A_P1RIGHTKEYS  + (player * 4)] |= 0x01;
+    acase GUESTKEY_X1: memory[A_P1PALLADIUM  + (player * 4)] |= 0x01;
+    acase GUESTKEY_X2: memory[A_P1PALLADIUM  + (player * 4)] |= 0x02;
+    acase GUESTKEY_X3: memory[A_P1PALLADIUM  + (player * 4)] |= 0x04;
+    acase GUESTKEY_X4: memory[A_P1PALLADIUM  + (player * 4)] |= 0x08;
 }   }
 
 MODULE void arcadia_oneraster(void)
@@ -1216,7 +1239,7 @@ MODULE void arcadia_oneraster(void)
     }
     
     for (column = 0; column < 16; column++)
-    {   thechar = rowbuf[udcflip][majorrow][column];
+    {   thechar = rowbuf[udgflip][majorrow][column];
         if (thechar == 0xC0)
         {   blockmode = 1;
         } elif (thechar == 0x40)

@@ -20,6 +20,7 @@
 // IMPORTED VARIABLES-----------------------------------------------------
 
 IMPORT FLAG                 bangercharging;
+IMPORT TEXT                 interpretstr[1024 + 1];
 IMPORT UBYTE                memory[32768];
 IMPORT UWORD                mirror_r[32768],
                             mirror_w[32768];
@@ -264,4 +265,112 @@ EXPORT void interton_reset(void)
     {   memory[i] = 0;
     }
     memory[IE_NOISE] = 0x04; // Come Come never writes to NOISE, but expects tones to be audible anyway
+}
+
+EXPORT FLAG interpret_intertonelektor(int address)
+{   PERSIST const STRPTR volumedesc[4] = { "full", "¾", "½", "¼" };
+
+    // assert(machine == INTERTON || machine == ELEKTOR);
+
+    switch (address)
+    {
+    case IE_CONSOLE:
+        sprintf
+        (   interpretstr,
+            "'SELECT' button: %s\n" \
+            "'START' button: %s",
+            (memory[IE_CONSOLE] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_CONSOLE] & 0x40) ? "pressed" : "unpressed"
+        );
+    acase IE_P1LEFTKEYS:
+        sprintf
+        (   interpretstr,
+            "Left '1' button: %s\n" \
+            "Left '4' button: %s\n" \
+            "Left '7' button: %s\n" \
+            "Left 'Clear' button: %s",
+            (memory[IE_P1LEFTKEYS] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_P1LEFTKEYS] & 0x40) ? "pressed" : "unpressed",
+            (memory[IE_P1LEFTKEYS] & 0x20) ? "pressed" : "unpressed",
+            (memory[IE_P1LEFTKEYS] & 0x10) ? "pressed" : "unpressed"
+        );
+    acase IE_P1MIDDLEKEYS:
+        sprintf
+        (   interpretstr,
+            "Left '2' button: %s\n" \
+            "Left '5' button: %s\n" \
+            "Left '8' button: %s\n" \
+            "Left '0' button: %s",
+            (memory[IE_P1MIDDLEKEYS] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_P1MIDDLEKEYS] & 0x40) ? "pressed" : "unpressed",
+            (memory[IE_P1MIDDLEKEYS] & 0x20) ? "pressed" : "unpressed",
+            (memory[IE_P1MIDDLEKEYS] & 0x10) ? "pressed" : "unpressed"
+        );
+    acase IE_P1RIGHTKEYS:
+        sprintf
+        (   interpretstr,
+            "Left '3' button: %s\n" \
+            "Left '6' button: %s\n" \
+            "Left '9' button: %s\n" \
+            "Left 'Enter' button: %s",
+            (memory[IE_P1RIGHTKEYS] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_P1RIGHTKEYS] & 0x40) ? "pressed" : "unpressed",
+            (memory[IE_P1RIGHTKEYS] & 0x20) ? "pressed" : "unpressed",
+            (memory[IE_P1RIGHTKEYS] & 0x10) ? "pressed" : "unpressed"
+        );
+    acase IE_P2LEFTKEYS:
+        sprintf
+        (   interpretstr,
+            "Right '1' button: %s\n" \
+            "Right '4' button: %s\n" \
+            "Right '7' button: %s\n" \
+            "Right 'Clear' button: %s",
+            (memory[IE_P2LEFTKEYS] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_P2LEFTKEYS] & 0x40) ? "pressed" : "unpressed",
+            (memory[IE_P2LEFTKEYS] & 0x20) ? "pressed" : "unpressed",
+            (memory[IE_P2LEFTKEYS] & 0x10) ? "pressed" : "unpressed"
+        );
+    acase IE_P2MIDDLEKEYS:
+        sprintf
+        (   interpretstr,
+            "Right '2' button: %s\n" \
+            "Right '5' button: %s\n" \
+            "Right '8' button: %s\n" \
+            "Right '0' button: %s",
+            (memory[IE_P2MIDDLEKEYS] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_P2MIDDLEKEYS] & 0x40) ? "pressed" : "unpressed",
+            (memory[IE_P2MIDDLEKEYS] & 0x20) ? "pressed" : "unpressed",
+            (memory[IE_P2MIDDLEKEYS] & 0x10) ? "pressed" : "unpressed"
+        );
+    acase IE_P2RIGHTKEYS:
+        sprintf
+        (   interpretstr,
+            "Right '3' button: %s\n" \
+            "Right '6' button: %s\n" \
+            "Right '9' button: %s\n" \
+            "Right 'Enter' button: %s",
+            (memory[IE_P2RIGHTKEYS] & 0x80) ? "pressed" : "unpressed",
+            (memory[IE_P2RIGHTKEYS] & 0x40) ? "pressed" : "unpressed",
+            (memory[IE_P2RIGHTKEYS] & 0x20) ? "pressed" : "unpressed",
+            (memory[IE_P2RIGHTKEYS] & 0x10) ? "pressed" : "unpressed"
+        );
+    acase IE_NOISE:
+        sprintf
+        (   interpretstr,
+            "Volume: %s\n" \
+            "Inverted grid/background colours: %s\n" \
+            "Start explosion: %s\n" \
+            "Noise: %s\n" \
+            "PVI tone: %s",
+            volumedesc[(memory[IE_NOISE] & 0xC0) >> 6],
+            (memory[IE_NOISE] & 0x20) ? "on" : "off",
+            (memory[IE_NOISE] & 0x10) ? "on" : "off",
+            (memory[IE_NOISE] & 0x08) ? "on" : "off",
+            (memory[IE_NOISE] & 0x04) ? "on" : "off"
+        );
+    adefault:
+        return FALSE;
+    }
+
+    return TRUE;
 }
