@@ -3021,7 +3021,7 @@ EXPORT void create_papertape(int whichunit)
     papertapelength[whichunit] =
     papertapewhere[ whichunit] = 0;
     papertapemode[  whichunit] = TAPEMODE_STOP;
-    update_papertape(whichunit, FALSE);
+    update_papertape(whichunit, FALSE, FALSE);
 }
 
 EXPORT void create_tape(void)
@@ -3156,7 +3156,7 @@ EXPORT FLAG load_papertape(FLAG wantasl, int whichunit)
 
     papertapemode[ whichunit] = TAPEMODE_STOP;
     papertapewhere[whichunit] = 0;
-    update_papertape(whichunit, FALSE);
+    update_papertape(whichunit, FALSE, FALSE);
     return TRUE;
 }
 
@@ -3529,7 +3529,7 @@ EXPORT void papertape_stop(int whichunit)
     }
 
     papertapemode[whichunit] = TAPEMODE_STOP;
-    update_papertape(whichunit, FALSE);
+    update_papertape(whichunit, FALSE, FALSE);
 }
 
 EXPORT void papertape_eject(int whichunit)
@@ -3550,21 +3550,21 @@ EXPORT void papertape_eject(int whichunit)
     papertapewhere[ whichunit] =
     papertapelength[whichunit] = 0;
     papertapemode[  whichunit] = TAPEMODE_NONE;
-    update_papertape(whichunit, TRUE);
+    update_papertape(whichunit, TRUE, FALSE);
 }
 
 EXPORT void papertape_record(int whichunit)
 {   // assert(papertapemode[whichunit] == TAPEMODE_STOP);
 
     papertapemode[whichunit] = TAPEMODE_RECORD;
-    update_papertape(whichunit, TRUE);
+    update_papertape(whichunit, TRUE, FALSE);
 }
 
 EXPORT void papertape_play(int whichunit)
 {   // assert(papertapemode[whichunit] == TAPEMODE_STOP);
 
     papertapemode[whichunit] = TAPEMODE_PLAY;
-    update_papertape(whichunit, TRUE);
+    update_papertape(whichunit, TRUE, FALSE);
 }
 
 MODULE LONG extended2long(UBYTE* ex)

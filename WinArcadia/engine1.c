@@ -3962,7 +3962,7 @@ EXPORT UBYTE get_guest_key(void)
         if (papertapewhere[0] == papertapelength[0])
         {   papertape_stop(0); // this calls update_papertape()
         } else
-        {   update_papertape(0, FALSE);
+        {   update_papertape(0, FALSE, FALSE);
         }
         if (machine == TWIN)
         {   ioport[0xE9].contents &= 0xFE;

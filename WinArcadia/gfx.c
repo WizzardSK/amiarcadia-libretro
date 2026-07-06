@@ -311,7 +311,8 @@ IMPORT       ULONG                arcadia_bigctrls,
                                   si50_bigctrls,
                                   sound,
                                   swapped;
-IMPORT       ULONG*               display;
+IMPORT       ULONG               *display,
+                                 *stars;
 IMPORT       ASCREEN              screen[BOXWIDTH][BOXHEIGHT];
 IMPORT       struct CanvasStruct  canvas[CANVASES];
 IMPORT       struct KeyNameStruct keyname[SCANCODES];
@@ -336,8 +337,7 @@ IMPORT const int                  gridline[220];
     IMPORT   int                  CatalogPtr; // APTR doesn't work
     IMPORT   UBYTE                fgtable[BOXHEIGHT][BOXWIDTH];
     IMPORT   ULONG                pencolours[COLOURSETS][PENS];
-    IMPORT   ULONG               *pixelulong,
-                                 *stars;
+    IMPORT   ULONG*               pixelulong;
 #endif
 
 // MODULE VARIABLES-------------------------------------------------------
@@ -1758,7 +1758,7 @@ EXPORT void thecout(UBYTE value)
         if (papertapewhere[0] == PAPERTAPEMAX)
         {   papertape_stop(0); // this calls update_papertape()
         } else
-        {   update_papertape(0, FALSE);
+        {   update_papertape(0, FALSE, FALSE);
         }
         // we assume we should still echo it to the terminal as usual
     }

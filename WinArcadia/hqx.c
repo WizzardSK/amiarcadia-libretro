@@ -283,8 +283,7 @@ IMPORT int                     colourset,
                                memmap,
                                rotating,
                                widthheight;
-IMPORT ULONG                  *display;
-                              *stars;
+IMPORT ULONG*                  display;
 IMPORT struct MachineStruct    machines[MACHINES];
 
 // MODULE FUNCTIONS-------------------------------------------------------

@@ -1660,7 +1660,6 @@ EXPORT const STRPTR opcodelink[256] = {
 
 // 4. IMPORTED VARIABLES--------------------------------------------------
 
-IMPORT       FLAG  hurry;
 IMPORT       TEXT  asciiname_short[259][3 + 1],
                    datetimestring[40 + 1],
                    friendly[FRIENDLYLENGTH + 1];
@@ -4198,25 +4197,24 @@ EXPORT void saytrace(void)
         if (tea == OUTOFRANGE)
         {   zprintf(TEXTPEN_PSEUDOCODE, "%s\n", an);
         } else
-        {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is ", an, tea);
-            if (tea != mirror_r[tea] || tea != mirror_w[tea])
-            {   zprintf(TEXTPEN_PSEUDOCODE, "mirror\n");
+        {   if (tea != mirror_r[tea] || tea != mirror_w[tea])
+            {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is mirror\n", an, tea);
             } elif (memflags[tea] & ASIC)
-            {   zprintf(TEXTPEN_PSEUDOCODE, "hardware register\n");
+            {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is hardware register\n", an, tea);
             } elif (memflags[tea] & (NOREAD & NOWRITE))
-            {   zprintf(TEXTPEN_PSEUDOCODE, "unmapped\n");
+            {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is unmapped\n", an, tea);
             } elif (memflags[tea] & NOWRITE)
             {   if (memflags[tea] & BIOS)
-                {   zprintf(TEXTPEN_PSEUDOCODE, "BIOS ROM\n");
+                {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is BIOS ROM\n", an, tea);
                 } else
-                {   zprintf(TEXTPEN_PSEUDOCODE, "game ROM\n");
+                {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is game ROM\n", an, tea);
             }   }
             elif (memflags[tea] & NOREAD)
-            {   zprintf(TEXTPEN_PSEUDOCODE, "write-only\n"); // should never happen (as they are all ASICs)
+            {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is write-only\n", an, tea); // should never happen (as they are all ASICs)
             } elif (memflags[tea] & BIOS)
-            {   zprintf(TEXTPEN_PSEUDOCODE, "BIOS RAM\n");
+            {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is BIOS RAM\n", an, tea);
             } else
-            {   zprintf(TEXTPEN_PSEUDOCODE, "user RAM\n");
+            {   zprintf(TEXTPEN_PSEUDOCODE, "%s // $%X is user RAM\n", an, tea);
         }   }
         if (en[0])
         {   zprintf(TEXTPEN_PSEUDOCODE, "%s", en);
@@ -4283,11 +4281,6 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
     int   i,
           intaddr,
           threads = 0;
-
-#ifdef WIN32
-    hurry = TRUE;
-    cls();
-#endif
 
     preserveiar = iar;
     preservepsl = psl;
@@ -4748,10 +4741,6 @@ EXPORT void disgame(int address1, int address2, STRPTR filename)
     psl = preservepsl;
 
     zprintf(TEXTPEN_CLIOUTPUT, "\n");
-#ifdef WIN32
-    hurry = FALSE;
-    zprintf(TEXTPEN_DEFAULT, "");
-#endif
 }
 
 EXPORT void show_data_comment(int whichaddr, int mode, STRPTR stringptr)

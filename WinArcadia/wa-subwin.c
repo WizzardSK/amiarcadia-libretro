@@ -176,8 +176,7 @@ IMPORT       FLAG                      capslock,
                                        reghost,
                                        resetdisabled,
                                        SampleOpened[SAMPLES];                                       
-IMPORT       TEXT                      consolestring[OUTPUTLENGTH + 1],
-                                       controltip[5][64 + 1],
+IMPORT       TEXT                      controltip[5][64 + 1],
                                        fn_game[MAX_PATH + 1], // the entire pathname (path and file)
                                        gtempstring[256 + 1],
                                        sprad[16][5 + 1],
@@ -3196,11 +3195,15 @@ EXPORT void ghost_bar(int whichbar)
 }
 
 MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{   TRANSIENT int         gid;
-    TRANSIENT ULONG       scancode;
-    TRANSIENT PAINTSTRUCT localps;
-    FAST      TEXT        tempstring[80 + 1];
-    FAST      DWORD       wparam, lparam;
+{   int         gid,
+                length;
+    ULONG       scancode;
+    PAINTSTRUCT localps;
+    TEXT        tempstring[80 + 1];
+    DWORD       mask,
+                sel,
+                start, end;
+    char*       clipstring;
 
     switch (Message)
     {
@@ -3259,6 +3262,12 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         }
         DISCARD SendMessage(RichTextGadget, EM_SETCHARFORMAT, SCF_ALL, (LPARAM) &fgformat);
 
+        SendMessage(RichTextGadget, EM_SETSEL, 0, 0);
+        SendMessage(RichTextGadget, EM_HIDESELECTION, FALSE, 0);
+
+        mask = (DWORD) SendMessage(RichTextGadget, EM_GETEVENTMASK, 0, 0);
+        SendMessage(RichTextGadget, EM_SETEVENTMASK, 0, (LPARAM) (mask | ENM_SELCHANGE));
+
         if (subwin[SUBWINDOW_OUTPUT].x == -1 && !fullscreen)
         {   int rightroom,
                 bottomroom;
@@ -3289,6 +3298,16 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
                 );
                 DISCARD SetWindowText(hwnd, tempstring);
         }   }
+    acase WM_SHOWWINDOW:
+        if (wParam == TRUE)
+        {   SendMessage(RichTextGadget, EM_SETSEL, 0, 0);
+        }
+    acase WM_NOTIFY:
+        if (((NMHDR*) lParam)->hwndFrom == RichTextGadget && ((NMHDR*) lParam)->code == EN_SELCHANGE)
+        {   EnableWindow(GetDlgItem(subwin[SUBWINDOW_OUTPUT].hwnd, IDC_COPYSELECTION), (((SELCHANGE*) lParam)->chrg.cpMin != ((SELCHANGE*) lParam)->chrg.cpMax) ? TRUE : FALSE);
+
+            return 0;
+        }
     acase WM_SETFOCUS:
         SendMessage(RichTextGadget, EM_SETSEL, (WPARAM) -1, (LPARAM) -1);
     acase WM_CLOSE:
@@ -3304,14 +3323,24 @@ MODULE BOOL CALLBACK OutputDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
             zprintf(TEXTPEN_DEFAULT, "");
         acase IDC_COPYTEXT:
             clip_open(TRUE);
-            clip_write(consolestring, strlen(consolestring), CF_TEXT);
+            length = GetWindowTextLength(RichTextGadget);
+            clipstring = (char*) malloc(length + 1);
+            SendMessage(RichTextGadget, WM_GETTEXT, length + 1, (LPARAM) clipstring);
+            clip_write(clipstring, length, CF_TEXT);
             clip_close();
+            free(clipstring);
         acase IDC_COPYSELECTION:
-            SendMessage(RichTextGadget, EM_GETSEL, (WPARAM) &wparam, (LPARAM) &lparam);
-            if (wParam != -1 && lParam != -1)
-            {   clip_open(TRUE);
-                clip_write(&consolestring[wparam], lparam - wparam, CF_TEXT);
+            sel   = SendMessage(RichTextGadget, EM_GETSEL, 0, 0);
+            start = LOWORD(sel);
+            end   = HIWORD(sel);
+            if (start != end)
+            {   length = end - start;
+                clipstring = (char*) malloc(length + 1);
+                SendMessage(RichTextGadget, EM_GETSELTEXT, 0, (LPARAM) clipstring);
+                clip_open(TRUE);
+                clip_write(clipstring, length, CF_TEXT);
                 clip_close();
+                free(clipstring);
             }
         acase IDC_CONSOLEBG:
             consolebg = SendMessage(GetDlgItem(hwnd, IDC_CONSOLEBG), CB_GETCURSEL, 0, 0);

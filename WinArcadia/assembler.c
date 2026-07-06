@@ -75,7 +75,6 @@ IMPORT       struct OpcodeStruct      opcodes[3][256];
     IMPORT   struct Catalog*          CatalogPtr;
 #endif
 #ifdef WIN32
-    IMPORT   FLAG                     hurry;
     IMPORT   int                      CatalogPtr; // APTR doesn't work
 #endif
 
@@ -223,11 +222,6 @@ EXPORT void assemble(void)
         {   zprintf(TEXTPEN_CLIOUTPUT, "Can't open %s for output!\n", fn_lstbin);
             goto ASMDONE;
     }   }
-
-#ifdef WIN32
-    hurry = TRUE;
-    cls();
-#endif
 
     switch (style)
     {
@@ -470,10 +464,6 @@ DONE2:
 
 ASMDONE:
     assembling = FALSE;
-#ifdef WIN32
-    hurry = FALSE;
-    zprintf(TEXTPEN_DEFAULT, "");
-#endif
 
     if (BinHandle)
     {   fclose(BinHandle);

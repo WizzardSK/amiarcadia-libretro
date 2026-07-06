@@ -302,11 +302,11 @@ EXPORT void open_papertape(void)
 
     if (machine == TWIN)
     {   open_subwindow(SUBWINDOW_PAPERTAPE, MAKEINTRESOURCE(IDD_PAPERTAPE_TWIN), PapertapeDlgProc);
-        update_papertape(0, TRUE);
-        update_papertape(1, TRUE);
+        update_papertape(0, TRUE, FALSE);
+        update_papertape(1, TRUE, FALSE);
     } else
     {   open_subwindow(SUBWINDOW_PAPERTAPE, MAKEINTRESOURCE(IDD_PAPERTAPE     ), PapertapeDlgProc);
-        update_papertape(0, TRUE);
+        update_papertape(0, TRUE, FALSE);
 }   }
 
 EXPORT void open_tapedeck(void)
@@ -1303,7 +1303,7 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
                 if (papertapewhere[0] > papertapelength[0]) // this can happen on Windows with an empty (zero-length) papertape
                 {   papertapewhere[0] = papertapelength[0];
                 }
-                update_papertape(0, TRUE);
+                update_papertape(0, TRUE, FALSE);
         }   }
         elif (lParam == (long) GetDlgItem(hwnd, IDC_PTPOSITIONSLIDER2))
         {   if (papertapemode[1] == TAPEMODE_STOP)
@@ -1316,7 +1316,7 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
                 if (papertapewhere[1] > papertapelength[1]) // this can happen on Windows with an empty (zero-length) papertape
                 {   papertapewhere[1] = papertapelength[1];
                 }
-                update_papertape(1, TRUE);
+                update_papertape(1, TRUE, FALSE);
         }   }
     acase WM_COMMAND:
         switch (LOWORD(wParam))
@@ -1324,11 +1324,11 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
         case IDC_PT_REWIND:
             // assert(papertapemode[0] == TAPEMODE_STOP);
             papertapewhere[0] = 0;
-            update_papertape(0, TRUE);
+            update_papertape(0, TRUE, FALSE);
         acase IDC_PT_REWIND2:
             // assert(papertapemode[1] == TAPEMODE_STOP);
             papertapewhere[1] = 0;
-            update_papertape(1, TRUE);
+            update_papertape(1, TRUE, FALSE);
         acase IDC_PT_STOPTAPE:
             // assert(papertapemode[0] > TAPEMODE_STOP);
             papertape_stop(0);
@@ -1344,11 +1344,11 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
         acase IDC_PT_FFWD:
             // assert(papertapemode[0] == TAPEMODE_STOP);
             papertapewhere[0] = papertapelength[0];
-            update_papertape(0, TRUE);
+            update_papertape(0, TRUE, FALSE);
         acase IDC_PT_FFWD2:
             // assert(papertapemode[1] == TAPEMODE_STOP);
             papertapewhere[1] = papertapelength[1];
-            update_papertape(1, TRUE);
+            update_papertape(1, TRUE, FALSE);
         acase IDC_PT_EJECTTAPE:
             // assert(papertapemode[0] != TAPEMODE_NONE);
             papertape_eject(0);
@@ -1411,9 +1411,9 @@ MODULE BOOL CALLBACK PapertapeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LP
     return FALSE;
     case WM_PAINT:
         DISCARD BeginPaint(hwnd, &localps);
-        update_papertape(0, TRUE);
+        update_papertape(0, TRUE, FALSE);
         if (machine == TWIN)
-        {   update_papertape(1, TRUE);
+        {   update_papertape(1, TRUE, FALSE);
         }
         DISCARD EndPaint(hwnd, &localps);
     return FALSE;

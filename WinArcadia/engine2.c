@@ -363,10 +363,8 @@ IMPORT const struct KnownStruct       known[KNOWNGAMES];
     IMPORT const int                  memmap_to_smlimage[MEMMAPS];
 #endif
 #ifdef WIN32
-    IMPORT       FLAG                 hurry,
-                                      quitting;
-    IMPORT       TEXT                 consolestring[OUTPUTLENGTH + 1],
-                                      file_bkgrnd[MAX_PATH + 1],
+    IMPORT       FLAG                 quitting;
+    IMPORT       TEXT                 file_bkgrnd[MAX_PATH + 1],
                                       fn_bkgrnd[MAX_PATH + 1],
                                       path_bkgrnd[MAX_PATH + 1];
     IMPORT       UBYTE                sky;
@@ -415,8 +413,33 @@ MODULE int         badframes,
                    startoffset,
                    wantmemmap;
 MODULE FILE*       LogfileHandle = NULL;
+
 #ifdef WIN32
-MODULE UBYTE       colourtext[OUTPUTLENGTH + 1];
+MODULE const int textpen_to_rgb[] =
+{
+// on black background
+  RGB( 64,  64,  64), // 0          black (not used)
+  RGB(255,   0,   0), // 1          TEXTPEN_RED
+  RGB(  0, 255,   0), // 2          TEXTPEN_GREEN
+  RGB(255, 255,   0), // 3          TEXTPEN_YELLOW
+  RGB(128, 128, 255), // 4          TEXTPEN_BLUE
+  RGB(255,   0, 255), // 5          purple
+  RGB(  0, 255, 255), // 6          cyan
+  RGB(255, 255, 255), // 7          white   
+  RGB(255, 128,   0), // 8          orange
+  RGB(128, 128, 128), // 9          grey
+// on white background
+  RGB(  0,   0,   0), // 0+TEXTPENS black (not used)
+  RGB(192,   0,   0), // 1+TEXTPENS TEXTPEN_RED
+  RGB(  0, 128,   0), // 2+TEXTPENS TEXTPEN_GREEN
+  RGB( 96,  96,   0), // 3+TEXTPENS TEXTPEN_YELLOW
+  RGB(  0,   0, 255), // 4+TEXTPENS TEXTPEN_BLUE
+  RGB(128,   0, 128), // 5+TEXTPENS purple
+  RGB(  0, 128, 128), // 6+TEXTPENS cyan
+  RGB(128, 128, 128), // 7+TEXTPENS grey
+  RGB(255, 160,   0), // 8+TEXTPENS orange
+  RGB( 64,  64,  64), // 9+TEXTPENS dark grey
+};
 #endif
 
 /* MODULE STRUCTURES------------------------------------------------------
@@ -429,9 +452,6 @@ MODULE int aof_readblock(int localsize);
 MODULE int iof_readblock(int localsize);
 MODULE FLAG autosense(void);
 MODULE FLAG isok(int start, int end);
-#ifdef WIN32
-    MODULE void textpen(int colour);
-#endif
 MODULE int resolvegame(void);
 MODULE int identify(STRPTR passedname);
 MODULE void sortbyname(void);
@@ -1992,43 +2012,18 @@ EXPORT void zprintf(int whichcolour, const char* format, ...)
 #ifdef AMIGA
 EXPORT void zprintf(UNUSED int whichcolour, const char* format, ...)
 #endif
-{   TRANSIENT va_list list;
-    PERSIST   char    string[16384]; // PERSISTent so as not to blow the stack
-    FAST      int     i,
-                      length;
+{   TRANSIENT va_list   list;
+    PERSIST   char      string[16384]; // PERSISTent so as not to blow the stack
+    FAST      int       i,
+                        length;
 #ifdef WIN32
-    PERSIST   FLAG    already = FALSE;
-    FAST      UBYTE   currenttextpen;
-    FAST      int     j,
-                      prevpos;
-PERSIST const int textpen_to_rgb[] =
-{
-// on black background
-  RGB( 64,  64,  64), // 0          black (not used)
-  RGB(255,   0,   0), // 1          TEXTPEN_RED
-  RGB(  0, 255,   0), // 2          TEXTPEN_GREEN
-  RGB(255, 255,   0), // 3          TEXTPEN_YELLOW
-  RGB(128, 128, 255), // 4          TEXTPEN_BLUE
-  RGB(255,   0, 255), // 5          purple
-  RGB(  0, 255, 255), // 6          cyan
-  RGB(255, 255, 255), // 7          white
-  RGB(255, 128,   0), // 8          orange
-  RGB(128, 128, 128), // 9          grey
-// on white background
-  RGB(  0,   0,   0), // 0+TEXTPENS black (not used)
-  RGB(192,   0,   0), // 1+TEXTPENS TEXTPEN_RED
-  RGB(  0, 128,   0), // 2+TEXTPENS TEXTPEN_GREEN
-  RGB( 96,  96,   0), // 3+TEXTPENS TEXTPEN_YELLOW
-  RGB(  0,   0, 255), // 4+TEXTPENS TEXTPEN_BLUE
-  RGB(128,   0, 128), // 5+TEXTPENS purple
-  RGB(  0, 128, 128), // 6+TEXTPENS cyan
-  RGB(128, 128, 128), // 7+TEXTPENS grey
-  RGB(255, 160,   0), // 8+TEXTPENS orange
-  RGB( 64,  64,  64), // 9+TEXTPENS dark grey
-};
+    PERSIST   FLAG      already = FALSE;
+    FAST      int       j,
+                        start, end;
+    FAST      CHARRANGE cr;
 #endif
 
-    // Be aware that this function isn't callable recursively
+    // This function isn't callable recursively
     // (due to the use of persistent variables).
 
 #ifdef AMIGA
@@ -2055,8 +2050,8 @@ PERSIST const int textpen_to_rgb[] =
     )
     {   open_output(TRUE);
     }
-    if (colourlog && textcolour != whichcolour)
-    {   textpen(whichcolour);
+    if (colourlog)
+    {   textcolour = whichcolour;
     }
 #endif
 
@@ -2074,105 +2069,32 @@ PERSIST const int textpen_to_rgb[] =
         return;
     }
 
-    if (outputpos + length >= OUTPUTLENGTH)
-    {   cls();
+    SendMessage(RichTextGadget, EM_EXGETSEL,      0,             (LPARAM) &cr);
+    start = cr.cpMin;
+    SendMessage(RichTextGadget, EM_SETSEL,        start,         start);
+    SendMessage(RichTextGadget, EM_REPLACESEL,    FALSE,         (LPARAM) string);
+    SendMessage(RichTextGadget, EM_EXGETSEL,      0,             (LPARAM) &cr);
+    end = cr.cpMin;
+    SendMessage(RichTextGadget, EM_SETSEL,        start,         end);
+
+    memset(&fgformat, 0, sizeof(fgformat));
+    fgformat.cbSize      = sizeof(fgformat);
+    fgformat.dwMask      = CFM_COLOR | CFM_BACKCOLOR;
+    fgformat.crTextColor = textpen_to_rgb[textcolour + ((consolebg == 1) ? TEXTPENS : 0)];
+    fgformat.crBackColor = (consolebg == 0) ? RGB(0,0,0) : RGB(255,255,255);
+    SendMessage(RichTextGadget, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &fgformat);
+
+    SendMessage(RichTextGadget, EM_SETSEL,        end,           end);
+    SendMessage(RichTextGadget, EM_SCROLLCARET,   0,             0);
+
+    if (!already && !quitting && storedmenu1 == -1 && storedmenu2 == -1)
+    {   already = TRUE;
+        wa_checkinput();
+        process_code();
+        already = FALSE;
     }
-
-    j = outputpos;
-    for (i = 0; i < length; i++)
-    {   switch (string[i])
-        {
-        case  0xA1: /*      161  */ consolestring[j++] = '!'; // inverted question mark
-        acase 0xAF: /*      175  */ consolestring[j++] = '_'; // overscore
-        acase '·':  /* $B7 (183) */ consolestring[j++] = '.';
-        acase '¾':  /* $BC (188) */ consolestring[j  ] = '3'; consolestring[j + 1] = '/'; consolestring[j + 2] = '4'; j += 3; // 3/4
-        acase '½':  /* $BD (189) */ consolestring[j  ] = '1'; consolestring[j + 1] = '/'; consolestring[j + 2] = '2'; j += 3; // 1/2
-        acase '¼':  /* $BE (190) */ consolestring[j  ] = '1'; consolestring[j + 1] = '/'; consolestring[j + 2] = '4'; j += 3; // 1/4
-        adefault:
-            if (string[i] == CR || (string[i] >= 180 && !(string[i] & 1)) || string[i] >= 192)
-            {   ;
-            } else
-            {   consolestring[j++] = string[i];
-    }   }   }
-    consolestring[j] = EOS;
-    memset(&colourtext[outputpos], textcolour, j - outputpos);
-    outputpos = j;
-
-    if (!hurry)
-    {   DISCARD SendMessage
-        (   RichTextGadget,
-            WM_SETTEXT,
-            0,
-            (LPARAM) consolestring
-        );
-        DISCARD SendMessage
-        (   RichTextGadget,
-            WM_VSCROLL,
-            SB_BOTTOM,
-            0
-        );
-        DISCARD SendMessage
-        (   RichTextGadget,
-            EM_SCROLLCARET,
-            0,
-            0
-        );
-
-        if (colourlog)
-        {   currenttextpen = (UBYTE) -1;
-            prevpos = 0;
-            for (i = 0; i < outputpos; i++)
-            {   if (colourtext[i] != currenttextpen)
-                {   fgformat.crTextColor = textpen_to_rgb[currenttextpen + ((consolebg == 1) ? TEXTPENS : 0)];
-                    if (consolebg == 0) // black
-                    {   fgformat.crBackColor = RGB(  0,   0,   0);
-                    } else
-                    {   // assert(consolebg == 1); // white
-                        fgformat.crBackColor = RGB(255, 255, 255);
-                    }
-                    DISCARD SendMessage
-                    (   RichTextGadget,
-                        EM_SETSEL,
-                        prevpos,
-                        i
-                    );
-                    DISCARD SendMessage
-                    (   RichTextGadget,
-                        EM_SETCHARFORMAT,
-                        SCF_SELECTION,
-                        (LPARAM) &fgformat
-                    );
-                    currenttextpen = colourtext[i];
-                    prevpos = i;
-            }   }
-            fgformat.crTextColor = textpen_to_rgb[currenttextpen + ((consolebg == 1) ? TEXTPENS : 0)];
-            if (consolebg == 0) // black
-            {   fgformat.crBackColor = RGB(  0,   0,   0);
-            } else
-            {   // assert(consolebg == 1); // white
-                fgformat.crBackColor = RGB(255, 255, 255);
-            }
-            DISCARD SendMessage
-            (   RichTextGadget,
-                EM_SETSEL,
-                prevpos,
-                outputpos
-            );
-            DISCARD SendMessage
-            (   RichTextGadget,
-                EM_SETCHARFORMAT,
-                SCF_SELECTION,
-                (LPARAM) &fgformat
-            );
-        }
-
-        if (!already && !quitting && storedmenu1 == -1 && storedmenu2 == -1)
-        {   already = TRUE;
-            wa_checkinput();
-            process_code();
-            already = FALSE;
-    }   }
 #endif
+
 #ifdef AMIGA
     i = 0;
     // puts() always write newlines, it is shit!
@@ -4904,16 +4826,6 @@ EXPORT int parse_bytes(int mode)
     } else
     {   return 1;
 }   }
-
-#ifdef WIN32
-MODULE void textpen(int colour)
-{   if (!colourlog || textcolour == colour)
-    {   return;
-    }
-
-    textcolour = colour;
-}
-#endif
 
 EXPORT void reset_fps(void)
 {   newtime    =

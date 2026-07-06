@@ -171,8 +171,8 @@ EXPORT void update_tapedeck(FLAG force)
     {
 #ifdef AMIGA
         divisions = (tapelength / (2 * KILOBYTE)) + 1;
-        /* "A SLIDER_MAX level beyond 65535 is not supported." - OS4.1 SDK.
-            But the limit seems to be much less under OS3.9. 2048 is a safe value. */
+        // "A SLIDER_MAX level beyond 65535 is not supported." - OS4.1 SDK.
+        //  But the limit seems to be much less under OS3.9. 2048 is a safe value.
         sl_set2(SUBWINDOW_TAPEDECK, IDC_POSITIONSLIDER, tapelength / divisions, samplewhere / divisions);
 #endif
 #ifdef WIN32
@@ -234,7 +234,7 @@ EXPORT void update_tapedeck(FLAG force)
 #ifdef AMIGA
         SetWindowTitles(subwin[SUBWINDOW_TAPEDECK].hwnd, (const char*) tapetitlestring, (const char*) tapetitlestring);
 
-        SetGadgetAttrs(gadgets[GID_TA_SL2 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (tapemode == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE); // this autorefreshes
+        SetGadgetAttrs(gadgets[GID_TA_SL2 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_STOP) ? FALSE : TRUE,                                                            TAG_DONE); // this autorefreshes
 
         SetGadgetAttrs(gadgets[GID_TA_BU1 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (                            tapemode == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (tapemode == TAPEMODE_RECORD) ? TRUE : FALSE, TAG_DONE); // record
         SetGadgetAttrs(gadgets[GID_TA_BU2 ], subwin[SUBWINDOW_TAPEDECK].hwnd, NULL, GA_Disabled, (samplewhere > 0          && tapemode == TAPEMODE_STOP) ? FALSE : TRUE,                                                            TAG_DONE); // rewind
@@ -279,7 +279,7 @@ EXPORT void update_tapedeck(FLAG force)
         case  TAPEMODE_PLAY:   im_set(SUBWINDOW_TAPEDECK, IDC_TAPEANIM, FIRSTSPOOLANIMIMAGE + TAPEIMAGE_ANIMPLAY + tapeanim);
         acase TAPEMODE_RECORD: im_set(SUBWINDOW_TAPEDECK, IDC_TAPEANIM, FIRSTSPOOLANIMIMAGE + TAPEIMAGE_ANIMREC  + tapeanim);
         adefault:              im_set(SUBWINDOW_TAPEDECK, IDC_TAPEANIM, FIRSTSPOOLANIMIMAGE + TAPEIMAGE_ANIMSTOP + tapeanim);
-    }   }  
+    }   }
     if (tapebyte != oldtapebyte || tapemode != oldtapemode || force)
     {   sprintf(gtempstring, "%02X", tapebyte);
 #ifdef WIN32
@@ -449,6 +449,7 @@ EXPORT void update_floppydrive(FLAG force, int whichdrive)
      || whichdrive != viewingdrive
     )
     {   oldtrack[whichdrive] = drive[whichdrive].track;
+        olddrivemode         = drive_mode;
         return;
     }
 
@@ -718,7 +719,7 @@ The rectangle (ellipse) we calculate algorithmically.
 x1/y1 is just the point on the "wall" of the disk's "box" where the sector line intersects.
 x2/y2 is just the x1/y1 of the next sector. */
 
-EXPORT void update_papertape(int whichunit, FLAG force)
+EXPORT void update_papertape(int whichunit, FLAG force, FLAG interim)
 {   PERSIST UBYTE oldpapertapebyte[  2];
     PERSIST ULONG oldpapertapewhere[ 2],
                   oldpapertapelength[2];
@@ -732,7 +733,7 @@ EXPORT void update_papertape(int whichunit, FLAG force)
     }
 
 #ifdef AMIGA
-    if (papertapewhere[whichunit] != oldpapertapewhere[whichunit] || papertapelength[whichunit] != oldpapertapelength[whichunit] || force)
+    if (!interim && (papertapewhere[whichunit] != oldpapertapewhere[whichunit] || papertapelength[whichunit] != oldpapertapelength[whichunit] || force))
     {   divisions = (papertapelength[whichunit] / (2 * KILOBYTE)) + 1;
         /* "A SLIDER_MAX level beyond 65535 is not supported." - OS4.1 SDK.
             But limit seems to be much less under OS3.9. 2048 is a safe value. */
@@ -811,7 +812,8 @@ EXPORT void update_papertape(int whichunit, FLAG force)
 #endif
 #ifdef AMIGA
         SetWindowTitles(subwin[SUBWINDOW_PAPERTAPE].hwnd, (const char*) papertapetitlestring, (const char*) papertapetitlestring);
-        SetGadgetAttrs(gadgets[GID_PT_SL1 + whichunit], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE); // this autorefreshes
+        SetGadgetAttrs(gadgets[GID_PT_SL1 + whichunit], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, TAG_DONE);
+        RefreshGList((struct Gadget*) gadgets[GID_PT_SL1 + whichunit], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, 1);
         if (whichunit == 0)
         {   SetGadgetAttrs(gadgets[                   GID_PT_BU4 ], subwin[SUBWINDOW_PAPERTAPE].hwnd, NULL, GA_Disabled, (papertapewhere[whichunit] < PAPERTAPEMAX               && papertapemode[whichunit] == TAPEMODE_STOP) ? FALSE : TRUE, GA_Selected, (papertapemode[whichunit] == TAPEMODE_RECORD) ? TRUE : FALSE, TAG_DONE); // record
 

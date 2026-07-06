@@ -226,15 +226,13 @@ EXPORT       HICON              bigicon,
 EXPORT       HMENU              MenuPtr              = NULL;
 EXPORT       HBITMAP            BezelBitMap[BEZELS],
                                 OurhBitMap           = NULL;
-EXPORT       TEXT               consolestring[OUTPUTLENGTH + 1],
-                                hostname[256 + 1],
+EXPORT       TEXT               hostname[256 + 1],
                                 ProgDir[MAX_PATH + 1],
                                 ProgName[MAX_PATH + 1],
                                 username[MAX_USERNAMELEN + 1];
 EXPORT       HDC                OurhDC               = NULL;
 EXPORT       HINSTANCE          InstancePtr          = NULL;
 EXPORT       struct RTCStruct   rtc;
-EXPORT       ULONG*             stars                = NULL;
 
 EXPORT       struct HostMachineStruct hostmachines[MACHINES] =
 { {          "WinArcadia " DECIMALVERSION, IDD_MONITOR_CPU_2650 , 0               , IDD_MONITOR_XVI_ARCADIA , 0                      ,  4.0f, 512 }, // height of 269 or 312 (assuming PAL)
@@ -2281,8 +2279,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     DisplayWidth  = GetSystemMetrics(SM_CXSCREEN); // these 2 lines must be done before loadconfig()
     DisplayHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    stars = malloc(MAXBOX * sizeof(ULONG));
-
     /* major    minor
          3        51     Windows NT version 3.51
          4         0     Windows NT version 4.0, Windows 95
@@ -3209,12 +3205,6 @@ EXPORT void freeall(void)
         savehiscores();
     }
     EXITING(17);
-    if (stars)
-    {   free(stars);
-        EXITING(18);
-        stars = NULL;
-    }
-    EXITING(19);
     if (pixelubyte)
     {   free(pixelubyte);
         pixelubyte = NULL;
@@ -6481,9 +6471,7 @@ EXPORT void do_recents(HMENU themenu)
 }   }
 
 EXPORT void cls(void)
-{   consolestring[0] = EOS;
-    outputpos = 0;
-    zprintf(TEXTPEN_CLIOUTPUT, "");
+{   SendMessage(RichTextGadget, WM_SETTEXT, 0, (LPARAM) "");
 }
 
 EXPORT void hexify(int y, UBYTE thebyte)

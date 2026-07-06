@@ -48,9 +48,6 @@ EXPORT       int                      drawmode  = 0, // INTERTON/ELEKTOR/MALZAK:
                                       poketoken;
 EXPORT       struct ConditionalStruct bp[32768],
                                       wp[ALLTOKENS];
-#ifdef WIN32
-EXPORT       FLAG                     hurry     = FALSE;
-#endif
 
 EXPORT const TEXT                     led_chars[128 + 1] =
 // 0               1               2               3
@@ -2103,20 +2100,7 @@ EXPORT FLAG debug_command(void)
                 {   cd_projects();
                     fixextension(filekind[KIND_ASM].extension, (STRPTR) thearg[3], TRUE, "");
                     if ((TheLocalHandle = fopen((const char*) thearg[3], "wt")))
-                    {
-#ifdef WIN32
-                        if (address2 - address1 > 256)
-                        {   hurry = TRUE;
-                            cls();
-                        }
-#endif
-                        view_imagery(address1, address2, TheLocalHandle);
-#ifdef WIN32
-                        if (address2 - address1 > 256)
-                        {   hurry = FALSE;
-                            zprintf(TEXTPEN_DEFAULT, "");
-                        }
-#endif
+                    {   view_imagery(address1, address2, TheLocalHandle);
                         DISCARD fclose(TheLocalHandle);
                         // TheLocalHandle = NULL;
                     } else
@@ -2128,35 +2112,13 @@ EXPORT FLAG debug_command(void)
             {   address1 = parse_expression((STRPTR) thearg[1], MAX_ADDR, FALSE);
                 address2 = parse_expression((STRPTR) thearg[2], MAX_ADDR, FALSE);
                 if (check_range(address1, address2))
-                {
-#ifdef WIN32
-                    if (address2 - address1 > 256)
-                    {   hurry = TRUE;
-                        cls();
-                    }
-#endif
-                    view_imagery(address1, address2, NULL);
-#ifdef WIN32
-                    if (address2 - address1 > 256)
-                    {   hurry = FALSE;
-                        zprintf(TEXTPEN_DEFAULT, "");
-                    }
-#endif
+                {   view_imagery(address1, address2, NULL);
             }   }
             elif (thearg[1][0]) // <filename>
             {   cd_projects();
                 fixextension(filekind[KIND_ASM].extension, (STRPTR) thearg[3], TRUE, "");
                 if ((TheLocalHandle = fopen((const char*) thearg[3], "wt")))
-                {
-#ifdef WIN32
-                    hurry = TRUE;
-                    cls();
-#endif
-                    view_imagery(0, 32767, TheLocalHandle);
-#ifdef WIN32
-                    hurry = FALSE;
-                    zprintf(TEXTPEN_DEFAULT, "");
-#endif
+                {   view_imagery(0, 32767, TheLocalHandle);
                     DISCARD fclose(TheLocalHandle);
                     // TheLocalHandle = NULL;
                 } else
@@ -2164,16 +2126,7 @@ EXPORT FLAG debug_command(void)
                 }
                 cd_progdir();
             } else
-            {
-#ifdef WIN32
-                hurry = TRUE;
-                cls();
-#endif
-                view_imagery(0, 32767, NULL);
-#ifdef WIN32
-                hurry = FALSE;
-                zprintf(TEXTPEN_DEFAULT, "");
-#endif
+            {   view_imagery(0, 32767, NULL);
         }   }
     acase MENUITEM_INJECT:
         if (!HASDISK)
@@ -4596,11 +4549,6 @@ MODULE void view_coverage(int reporttype)
    4 = loops
    5 = UVI/PVI accesses */
 
-#ifdef WIN32
-    hurry = TRUE;
-    cls();
-#endif
-
     if (reporttype <= 1)
     {   zprintf(TEXTPEN_CLIOUTPUT, "Accessed bytes:\n");
         i = 0;
@@ -4793,13 +4741,7 @@ MODULE void view_coverage(int reporttype)
             zprintf(TEXTPEN_CLIOUTPUT, "\n");
         } elif (reporttype == 5)
         {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n\n", LLL(MSG_WRONGGUEST, "Wrong guest machine!"));
-    }   }
-
-#ifdef WIN32
-    hurry = FALSE;
-    zprintf(TEXTPEN_DEFAULT, "");
-#endif
-}
+}   }   }
 
 MODULE int showasic(int whichmem, ULONG whichflag)
 {   FLAG ok = FALSE;

@@ -517,7 +517,7 @@ EXPORT UBYTE twin_readport(int port)
                 if (papertapewhere[1] == papertapelength[1])
                 {   papertape_stop(1); // this calls update_papertape()
                 } else
-                {   update_papertape(1, FALSE);
+                {   update_papertape(1, FALSE, FALSE);
             }   }
             else
             {   t = 0; // blank (unpunched) papertape

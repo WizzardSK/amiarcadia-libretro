@@ -1,10 +1,10 @@
-#define DECIMALVERSION       "36.5"
-#define INTEGERVERSION       "36.50"
+#define DECIMALVERSION       "36.51"
+#define INTEGERVERSION       "36.51"
 #define MAJORVERSION         0x36
-#define MINORVERSION         0x50
-#define VERSIONSTRING        "\0$VER: AmiArcadia " INTEGERVERSION " (28.6.2026)" // d.m.yyyy format
-#define RELEASEDATE          "28-06-26" // dd-mm-yy format. Year *must* be only 2 digits!
-#define LONGDATE             "28 June 2026" // full month and year
+#define MINORVERSION         0x51
+#define VERSIONSTRING        "\0$VER: AmiArcadia " INTEGERVERSION " (6.7.2026)" // d.m.yyyy format
+#define RELEASEDATE          "06-07-26" // dd-mm-yy format. Year *must* be only 2 digits!
+#define LONGDATE             "6 July 2026" // full month and year
 #define COPYRIGHT            "© 2006-2026 James Jacobs of Amigan Software"
 // VERSIONSTRING needs a leading NUL for OS4 to correctly find it
 #define NEWCONFIGVERSION     "36.5"  // V36.5      +
@@ -4059,12 +4059,13 @@ EXPORT void wa_checkinput(void);
 #endif
 
 #ifdef AMIGA
-    // aa-subwin.c
+    // aa-subwin.c (mostly)
+    EXPORT void changecolour(void);
     EXPORT int make_memorytips(void);
     EXPORT FLAG redefinekeys(FLAG preserve);
+    EXPORT void settapegad(void);
     EXPORT void updatekeycolours(struct Window* hwnd);
     EXPORT void updatepadcolours(struct Window* hwnd);
-    EXPORT void settapegad(void);
 
     EXPORT void     controls_loop(void);
     EXPORT void         dips_loop(void);
@@ -4593,7 +4594,7 @@ EXPORT int getdiskmodecolour(void);
 EXPORT void ghost_dips(BOOL state);
 EXPORT void redraw_roll(int whichunit);
 EXPORT void update_floppydrive(FLAG force, int whichdrive);
-EXPORT void update_papertape(int whichunit, FLAG force);
+EXPORT void update_papertape(int whichunit, FLAG force, FLAG interim);
 EXPORT void update_tapedeck(FLAG force);
 
 // arcadia.c

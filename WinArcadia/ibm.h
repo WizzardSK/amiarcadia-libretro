@@ -19,7 +19,6 @@ typedef void*               APTR;
 #define BLANKASCII          ' '
 #define TITLEBARTEXT        "WinArcadia " DECIMALVERSION
 #define LOGFILENAME         "WinArcadia.log"
-#define OUTPUTLENGTH        (24 * KILOBYTE)
 
 #define PATH_DISKS          "Disks"
 #define PATH_GAMES          "Games"

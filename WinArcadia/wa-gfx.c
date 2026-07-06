@@ -66,7 +66,8 @@ typedef interface ID3DXFile*           LPD3DXFILE;
 
 EXPORT UBYTE           fgtable[BOXHEIGHT][BOXWIDTH];
 EXPORT ULONG           pencolours[COLOURSETS][PENS];
-EXPORT ULONG*          display           = NULL;
+EXPORT ULONG          *display           = NULL,
+                      *stars             = NULL;
 EXPORT IDirect3D9*     Direct3DInterface = NULL;
 
 // IMPORTED VARIABLES-----------------------------------------------------
@@ -163,8 +164,7 @@ IMPORT       int       anims,
                        wsm,
                        xoffset,
                        yoffset;
-IMPORT       ULONG    *pixelulong,
-                      *stars;
+IMPORT       ULONG*    pixelulong;
 IMPORT       DWORD     winstyle;
 IMPORT       HBITMAP   BezelBitMap[BEZELS],
                        OurhBitMap;
@@ -535,8 +535,9 @@ EXPORT void make_display(void)
     if (!(SelectObject(OurhDC, OurhBitMap)))
     {   rq("SelectObject() failed!");
     }
-
     drawpixelroutine();
+
+    stars = malloc(sizeof(ULONG) * destwidth * destheight);
     make_stars();
 }
 
@@ -548,6 +549,10 @@ EXPORT void free_display(void)
     if (OurhDC)
     {   DeleteDC(OurhDC);
         OurhDC = NULL;
+    }
+    if (stars)
+    {   free(stars);
+        stars = NULL;
 }   }
 
 EXPORT void make_stars(void)
