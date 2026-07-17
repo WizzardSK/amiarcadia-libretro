@@ -173,13 +173,11 @@ IMPORT       ULONG                analog,
                                   autofire[2],
                                   collisions,
                                   cycles_2650,
-                                  downframes,
                                   frames,
                                   jf[2],
                                   pong_machine,
                                   region,
-                                  swapped,
-                                  totalframes;
+                                  swapped;
 IMPORT       int                  ax[2],
                                   ay[4],
                                   colourset,
@@ -1090,7 +1088,7 @@ MODULE void pong_playerinput(int source, int dest)
                      || KeyDown(keypads[source][0])
                      || (hostcontroller[source] == CONTROLLER_TRACKBALL && lmb)
                     )
-                 && ((frames % totalframes) < downframes)
+                 && ((frames % DEF_TO) < DEF_DN)
                 )
                 {   // 1st firebutton
                     playerfire[dest] = 1;

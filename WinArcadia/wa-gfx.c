@@ -579,6 +579,8 @@ EXPORT void make_stars(void)
 
     // these 6 parts (sky, stars, nebula, sun, comet, moon) are order-dependent (farthest to nearest)!
 
+    // assert(rastwidth);
+    // assert(rastheight);
     rastsize = rastwidth * rastheight;
     for (xy = 0; xy < rastsize; xy++)
     {   stars[xy] = pencolours[colourset][BLACK];

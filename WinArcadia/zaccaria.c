@@ -254,8 +254,6 @@ MODULE void do_cvs(void);
 EXPORT void astrowars_setmemmap(void)
 {   int i, address, mirror;
 
-    game = FALSE;
-
     for (i = 0x1400; i <= 0x7FFF; i++)
     {   memory[i] = 0; // important
     }
@@ -350,8 +348,6 @@ EXPORT void astrowars_setmemmap(void)
 
 EXPORT void galaxia_setmemmap(void)
 {   int i, address, mirror;
-
-    game = FALSE;
 
     for (i = 0x1400; i <= 0x7FFF; i++)
     {   memory[i] = 0; // important
@@ -452,8 +448,6 @@ EXPORT void lb_setmemmap(void)
 {   int address,
         i,
         mirror;
-
-    game = FALSE;
 
     for (i = 0x1400; i <= 0x7FFF; i++)
     {   memory[i] = 0;

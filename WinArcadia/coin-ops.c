@@ -32,8 +32,7 @@ EXPORT       int                  collx, colly,
 // IMPORTED VARIABLES-----------------------------------------------------
 
 IMPORT       FLAG                 inframe,
-                                  lmb, mmb, rmb,
-                                  multisprite[4];
+                                  lmb, mmb, rmb;
 IMPORT       SBYTE                galaxia_scrolly;
 IMPORT       UBYTE                awga_collide,
                                   coinignore,
@@ -44,10 +43,8 @@ IMPORT       UBYTE                awga_collide,
 IMPORT       UWORD                keypads[2][NUMKEYS];
 IMPORT       ULONG                autofire[2],
                                   collisions,
-                                  downframes,
                                   frames,
-                                  jf[2],
-                                  totalframes;
+                                  jf[2];
 IMPORT       int                  ax[2],
                                   ay[4],
                                   coinop_1p,
@@ -725,7 +722,7 @@ EXPORT void coinop_playerinput(int source, int dest)
              || (   hostcontroller[source] == CONTROLLER_TRACKBALL
                  && lmb
             )   )
-         && (memmap == MEMMAP_LASERBATTLE || memmap == MEMMAP_LAZARIAN || ((frames % totalframes) < downframes))
+         && (memmap == MEMMAP_LASERBATTLE || memmap == MEMMAP_LAZARIAN || ((frames % DEF_TO) < DEF_DN))
         )
         {   // 1st firebutton
             switch (memmap)

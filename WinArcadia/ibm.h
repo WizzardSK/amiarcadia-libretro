@@ -357,13 +357,13 @@ struct LangStruct
 #define IN_SORTBY     11
 
 // Debug menu
-// IN_DEBUG_GENERAL        0
-// IN_DEBUG_FILE           1
+#define IN_DEBUG_GENERAL   0
+#define IN_DEBUG_FILE      1
 #define IN_DEBUG_DISK      2
 #define IN_DEBUG_EDIT      3
-// IN_DEBUG_VIEW           4
+#define IN_DEBUG_VIEW      4
 #define IN_DEBUG_LOG       5
-// IN_DEBUG_RUN            6
+#define IN_DEBUG_RUN       6
 #define IN_DEBUG_BP        7
 #define IN_DEBUG_SYMBOLS   8
 #define IN_DEBUG_TOOLS     9

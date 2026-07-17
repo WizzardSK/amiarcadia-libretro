@@ -3969,7 +3969,7 @@ MODULE void ABS_EA_TRACE(void)
         }
     adefault: // eg. *1234,r1-
         if (OPERAND & 0x80)
-        {   strcat(addressstring, "*");
+        {   strcpy(addressstring, "*");
         } else
         {   addressstring[0] = EOS;
         }
@@ -4011,7 +4011,7 @@ MODULE void ABS_EA_TRACE(void)
         case  STYLE_OLDCALM: reg[0] = 'A'; reg[1] = EOS;
         acase STYLE_IEEE:    reg[0] = '.'; reg[1] = '0'; reg[2] = EOS;
         adefault:            reg[0] = 'r'; reg[1] = '0'; reg[2] = EOS;
-} } }
+}   }   }
 
 MODULE void REL_EA_TRACE(void)
 {   tea = (iar & PAGE) + ((iar + 2 + relative_2650[OPERAND]) & NONPAGE); // what about mirroring?
@@ -4065,7 +4065,7 @@ MODULE void REL_EA_TRACE(void)
 MODULE void BRA_EA_TRACE(FLAG full)
 {   tea = ((OPERAND << 8) + memory[WRAPMEM(2)]) & AMSK; // what about mirroring?
 
-    if (OPERAND & 0x80) // indirect addressing?
+    if (OPERAND & 0x80)
     {   switch (style)
         {
         case  STYLE_OLDCALM: strcpy(addressstring, "@"  );
@@ -4086,7 +4086,7 @@ MODULE void BRA_EA_TRACE(FLAG full)
         addr = (int) tea;
         tea = memory[addr] << 8;
         if ((++addr & NONPAGE) == 0)
-        {   addr -= PLEN; /* page wrap */
+        {   addr -= PLEN;
         }
         tea = (tea + memory[addr]) & AMSK;
 

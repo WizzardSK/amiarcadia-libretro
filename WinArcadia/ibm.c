@@ -171,8 +171,8 @@ EXPORT       int                bottomheight,
                                 promptwidth,
                                 quiet                = FALSE,
                                 toolbarheight,
-                                rastwidth,
-                                rastheight,
+                                rastwidth            = 0,
+                                rastheight           = 0,
                                 realsize,
                                 realwide,
                                 reassociate          = FALSE,
@@ -183,7 +183,7 @@ EXPORT       int                bottomheight,
                                 sourceheight,
                                 statusbarheight,
                                 storedmenu1          = -1,
-                                storedmenu2          = -1;
+                                storedmenu2          = -1,
                                 stretch43            = FALSE,
                                 titleheight,
                                 useff[2]             = { TRUE, TRUE },
@@ -201,7 +201,8 @@ EXPORT       UBYTE              jx[2], jy[2],
                                 KeyMatrix[SCANCODES / 8]; // to allow keycodes up to 511
 EXPORT       STRPTR             rexxwhere;
 EXPORT       ASCREEN            screen[BOXWIDTH][BOXHEIGHT];
-EXPORT       UINT               storedcode           = 0;
+EXPORT       UINT               storedcode           =  0,
+                                storedaltcode        =  0;
 EXPORT       DWORD              winstyle;
 EXPORT       HWND               hDebugger            = NULL,
                                 hSideBar             = NULL,
@@ -373,10 +374,11 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_EXTRACT,
     ID_DEBUG_INJECT,
     ID_DEBUG_REN,
+    ID_DEBUG_SWAPDISKS,
     -1, // MENUFAKE_DRIVE
 // "Debug|Edit »" submenu
     ID_DEBUG_DOKE,
-    ID_DEBUG_POKE,               //  90
+    ID_DEBUG_POKE,
     ID_DEBUG_FPOKE,
     ID_DEBUG_WRITEPORT,
 // "Debug|View »" submenu
@@ -387,9 +389,10 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_ERROR,
     ID_DEBUG_FPEEK,
     ID_DEBUG_HISTORY,
-    ID_DEBUG_IM,                 // 100
+    ID_DEBUG_IM,
+    ID_DEBUG_LIST,
     ID_DEBUG_READPORT,
-    ID_DEBUG_VIEW_BASIC,         // 102
+    ID_DEBUG_VIEW_BASIC,         // 104
     ID_DEBUG_VIEW_BIOS,
     ID_DEBUG_VIEW_CPU,
     ID_DEBUG_VIEW_PSG,
@@ -400,7 +403,7 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Debug|Log »" submenu
     ID_DEBUG_L_A,
     ID_DEBUG_L_B,
-    ID_DEBUG_L_C,                // 112
+    ID_DEBUG_L_C,                // 114
     ID_DEBUG_L_I,
     ID_DEBUG_L_N,
     ID_DEBUG_L_S,
@@ -411,7 +414,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_GI,
     ID_DEBUG_I,
     ID_DEBUG_JUMP,
-    ID_DEBUG_O,                  // 122
+    ID_DEBUG_O,                  // 124
     ID_DEBUG_S,
     ID_DEBUG_R,
     ID_DEBUG_R_F,
@@ -422,7 +425,7 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Debug|Breakpoints »" submenu
     ID_DEBUG_BP,
     ID_DEBUG_BC,
-    ID_DEBUG_BL,                 // 132
+    ID_DEBUG_BL,                 // 134
     ID_DEBUG_FP,
     ID_DEBUG_FC,
     ID_DEBUG_FL,
@@ -432,7 +435,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_WP,
     ID_DEBUG_WC,
     ID_DEBUG_WL,
-    ID_DEBUG_PB,                 // 142
+    ID_DEBUG_PB,                 // 144
     ID_DEBUG_WR,
     -1, // MENUFAKE_WW
 // "Debug|Symbols »" submenu
@@ -444,7 +447,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_DEBUG_COMP,
     ID_DEBUG_COPY,
     ID_DEBUG_FILL,
-    ID_DEBUG_FIND,               // 152
+    ID_DEBUG_FIND,               // 154
     ID_DEBUG_REL,
     ID_DEBUG_SWAP,
     ID_DEBUG_TRAIN,
@@ -453,7 +456,7 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUFAKE_CPU
     -1, // MENUFAKE_N
     -1, // MENUFAKE_TU
-    -1, // MENUFAKE_VERBOSITY       160
+    -1, // MENUFAKE_VERBOSITY       162
     ID_DEBUG_GR,
     ID_DEBUG_WARN,
 // "Debug|Graphics »" submenu
@@ -466,7 +469,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_TOOLS_MONITOR_PSGS,
     ID_TOOLS_MONITOR_XVI,
     ID_TOOLS_MUSIC,
-    ID_FILE_SERVER,              // 170
+    ID_FILE_SERVER,              // 172
     ID_FILE_CLIENT,
     ID_TOOLS_CHEEVOS,
 // "Peripherals" menu
@@ -479,7 +482,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_LEFT_FORCEFEEDBACK,
 // "Peripherals|Right controller »" submenu
     -1, // MENUFAKE_RIGHT
-    ID_RIGHT_AUTOFIRE,           // 180
+    ID_RIGHT_AUTOFIRE,           // 182
     ID_RIGHT_REQUIREBUTTON,
     ID_RIGHT_FORCEFEEDBACK,
 // "Peripherals" menu
@@ -491,7 +494,7 @@ EXPORT const int menucode[MENUITEMS] = {
 // "Settings|BIOS »" submenu
     -1, // MENUFAKE_ELEKTORBIOS
     -1, // MENUFAKE_PIPBUGBIOS
-    -1, // MENUFAKE_BINBUGBIOS      190
+    -1, // MENUFAKE_BINBUGBIOS      192
     -1, // MENUFAKE_CD2650BIOS
     -1, // MENUFAKE_PHUNSYBIOS
     -1, // MENUFAKE_SELBSTBIOS
@@ -503,7 +506,7 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUFAKE_COLOURSET
 // "Settings|DOS »" submenu
     -1, // MENUFAKE_BINBUGDOS
-    -1, // MENUFAKE_TWINDOS         200
+    -1, // MENUFAKE_TWINDOS         202
     -1, // MENUFAKE_CD2650DOS
 // "Settings|Emulator »" submenu
     ID_EMULATOR_AUTOSAVE,
@@ -514,7 +517,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_EMULATOR_EMUID,
     ID_EMULATOR_POST,
     ID_EMULATOR_RANDOMIZE,
-    ID_EMULATOR_SENSEGAME,       // 210
+    ID_EMULATOR_SENSEGAME,       // 212
     ID_EMULATOR_SHOWTOD,
     ID_EMULATOR_USESTUBS,
     -1, // MENUFAKE_FRAMEBASED
@@ -526,7 +529,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_FILTERS_STRETCHWINDOWED,
     -1, // MENUFAKE_STRETCHING,
 // "Settings|Graphics »" submenu
-    -1, // MENUFAKE_SIZE         // 220
+    -1, // MENUFAKE_SIZE         // 222
     ID_VDU_BEZEL,
     ID_GRAPHICS_USEMARGINS,
     ID_VDU_BLINK,
@@ -536,7 +539,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_GRAPHICS_FULLSCREEN,
     ID_VDU_COOMER,
     ID_GRAPHICS_NARROW,
-    ID_GRAPHICS_ROTATE,          // 230
+    ID_GRAPHICS_ROTATE,          // 232
     ID_GRAPHICS_UNLIT,
     ID_GRAPHICS_SHOWLEDS,
 // "Settings|Input »" submenu
@@ -547,7 +550,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_INPUT_CALIBRATE,
     ID_INPUT_REARRANGE,
     ID_INPUT_REDEFINE,
-    ID_INPUT_SENSITIVITY,        // 240
+    ID_INPUT_SENSITIVITY,        // 242
     ID_INPUT_LOWERCASE,
     ID_INPUT_CONFINE,
     ID_INPUT_ERASEDEL,
@@ -556,7 +559,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_INPUT_QUEUEKEYSTROKES,
     -1, // MENUFAKE_KEYMAP
 // "Settings|Language »" submenu
-    -1, // MENUFAKE_LANGUAGE     // 248
+    -1, // MENUFAKE_LANGUAGE     // 250
 // "Settings|Machine »" submenu
     -1, // MENUFAKE_MACHINE
 // "Settings|Sound »" submenu
@@ -571,7 +574,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_SPEED_PAUSED,
     ID_SPEED_AUTOPAUSE,
     ID_SPEED_EXACT,
-    ID_SPEED_LIMIT,              // 260
+    ID_SPEED_LIMIT,              // 262
     ID_SPEED_TURBO,
     -1, // MENUFAKE_REGION
     -1, // MENUFAKE_PRIORITY
@@ -584,7 +587,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_CHEATS_INVINCIBILITY,
     ID_CHEATS_LEVELSKIP,
 // "Settings|VDU »" submenu
-    -1, // MENUFAKE_PIPBUGVDU       270
+    -1, // MENUFAKE_PIPBUGVDU       272
     -1, // MENUFAKE_CD2650VDU
 // "Help" menu
     ID_HELP_GAMEINFO,
@@ -595,7 +598,7 @@ EXPORT const int menucode[MENUITEMS] = {
     ID_HELP_GAMINGGUIDE,
     ID_HELP_MANUAL,
     ID_HELP_UPDATE,
-    -1, // MENUITEM_REACTION        280
+    -1, // MENUITEM_REACTION        282
     ID_HELP_ABOUT,
 // "RetroAchievements" menu
     ID_EMULATOR_CHEEVOS,
@@ -607,7 +610,7 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUMENU_DEBUG
     -1, // MENUMENU_TOOLS
     -1, // MENUMENU_PERIPHERALS,
-    -1, // MENUMENU_SETTINGS        290
+    -1, // MENUMENU_SETTINGS        292
     -1, // MENUMENU_HELP
 // submenus
     -1, // MENUMENU_SORTBY
@@ -618,7 +621,7 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUMENU_DEBUG_FILE
     -1, // MENUMENU_DEBUG_DISK
     -1, // MENUMENU_DEBUG_EDIT
-    -1, // MENUMENU_DEBUG_VIEW      300
+    -1, // MENUMENU_DEBUG_VIEW      302
     -1, // MENUMENU_DEBUG_LOG
     -1, // MENUMENU_DEBUG_RUN
     -1, // MENUMENU_DEBUG_BP
@@ -628,15 +631,13 @@ EXPORT const int menucode[MENUITEMS] = {
     -1, // MENUMENU_DEBUG_GRAPHICS
     -1, // MENUMENU_LEFT
     -1, // MENUMENU_RIGHT
-    -1, // MENUMENU_BIOS            310
+    -1, // MENUMENU_BIOS            312
     -1, // MENUMENU_DOS
     -1, // MENUMENU_FILTERS
     -1, // MENUMENU_MACHINE
     -1, // MENUMENU_SPRITES
     -1, // MENUMENU_TRAINERS
-    -1, // MENUMENU_VDU             316
-// new ones
-    ID_DEBUG_SWAPDISKS,          // 317
+    -1, // MENUMENU_VDU             318
 }, menuopt[MENUOPTS] = {
     ID_SORTBY_NAME,              //   0 "View" menu
     ID_SORTBY_MACHINE,
@@ -817,7 +818,6 @@ MODULE FLAG                    cheevos_reopen      = FALSE,
                                showingpointer      = TRUE;
 // MODULE FLAG                 win8                = FALSE;
 MODULE TEXT                    coinstring[2][40 + 1];
-MODULE UINT                    storedaltcode       = 0;
 MODULE int                     highestid           = 0,
                                historyline         = -1,
                                minwinwidth,
@@ -1252,9 +1252,9 @@ IMPORT       int                         ambient,
                                          recmode,
                                          retune,
                                          rotating,
-                                         s_io,
-                                         s_id,
-                                         s_intdir,
+                                         si50_io,
+                                         si50_id,
+                                         si50_intdir,
                                          scale2x,
                                          scrnaddr,
                                          selbst_biosver,
@@ -1284,6 +1284,7 @@ IMPORT       int                         ambient,
                                          trainer_time,
                                          usemargins,
                                          usespeech,
+                                         usestubs,
                                          viewpadsas2[2],
                                          warnings,
                                          wsm,
@@ -2700,19 +2701,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {   mib[i].bitmap = LoadBitmap(InstancePtr, MAKEINTRESOURCE(mib[i].resource));
     }
 
-    changemachine(machine, memmap, FALSE, 1, FALSE);
+    filesize  =  0;
+    game      = FALSE;
+    whichgame = -1;
+    if (usestubs)
+    {   switch (machine)
+        {
+        case  ARCADIA:  whichgame  = ARCADIASTUBPOS;
+        acase INTERTON: whichgame  = INTERTONSTUBPOS;
+    }   }
+    set_filename();
+    change_machine(machine, memmap, FALSE);
+
     allglyphs = (langs[language].codepage == CODEPAGE_ENG) ? TRUE : FALSE;
     load_catalog();
     translate();
     // Unfortunately we can't do load_catalog() earlier because it
     // (via generate_autotext()) relies on having coherence between the
-    // machine and memmap variables, and changemachine() makes them
+    // machine and memmap variables, and change_machine() makes them
     // coherent.
     needaudit = TRUE;
 
     if (fn_sym[0])
     {   loadsym_full(fn_sym);
     }
+
     if (climode == 1)
     {   assemble();
         if (errors)
@@ -2736,7 +2749,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             cleanexit(EXIT_SUCCESS);
     }   }
     else
-    {   DISCARD strcpy(fn_game, path_games);
+    {   strcpy(fn_game, path_games);
         if (autosave)
         {   changefilepart(fn_game, path_games, file_game, "AUTOSAVE.COS");
             if (!engine_load(TRUE))
@@ -3930,8 +3943,7 @@ EXPORT void make_toolbar(void)
     // Send the TB_BUTTONSTRUCTSIZE message, which is required
     DISCARD SendMessage(hToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
     DISCARD SendMessage(hToolbar, TB_AUTOSIZE, 0, 0);
-    updatebiggads();
-    updatesmlgads();
+    update_toolbar();
 
     DISCARD GetWindowRect(hToolbar, &therect);
     toolbarheight = therect.bottom - therect.top + 1;
@@ -4306,8 +4318,7 @@ EXPORT void openwindow(FLAG reopen)
     }
     make_display();
 
-    updatebiggads();
-    updatesmlgads();
+    update_toolbar();
     updatemenus();
     redrawscreen();
     settitle();
@@ -4366,7 +4377,7 @@ EXPORT void openwindow(FLAG reopen)
 }
 
 EXPORT void closewindow(void)
-{   close_subwindows(TRUE);
+{   close_subwindows(FALSE);
     if (MenuPtr)
     {   SetMenu(MainWindowPtr, MenuPtr); // so it is (supposedly) automatically freed for us
     }
@@ -5144,7 +5155,7 @@ EXPORT void process_code(void)
         {   if (shift())
             {   view_hiscores();
             } else
-            {   command_changemachine(ARCADIA, MEMMAP_ARCADIA);
+            {   change_machine(ARCADIA, MEMMAP_ARCADIA, TRUE);
         }   }
     acase SCAN_A2:
     case SCAN_N2:
@@ -5156,7 +5167,7 @@ EXPORT void process_code(void)
                 {   edit_dips();
             }   }
             else
-            {   command_changemachine(INTERTON, MEMMAP_D);
+            {   change_machine(INTERTON, MEMMAP_D, TRUE);
         }   }
     acase SCAN_A3:
     case SCAN_N3:
@@ -5168,7 +5179,7 @@ EXPORT void process_code(void)
                 {   edit_memory();
             }   }
             else
-            {   command_changemachine(ELEKTOR, MEMMAP_F);
+            {   change_machine(ELEKTOR, MEMMAP_F, TRUE);
         }   }
     acase SCAN_A4:
     case SCAN_N4:
@@ -5180,7 +5191,7 @@ EXPORT void process_code(void)
                 {   edit_palette();
             }   }
             else
-            {   command_changemachine(PIPBUG, MEMMAP_PIPBUG1);
+            {   change_machine(PIPBUG, MEMMAP_PIPBUG1, TRUE);
         }   }
     acase SCAN_A5:
     case SCAN_N5:
@@ -5192,9 +5203,8 @@ EXPORT void process_code(void)
                 {   open_spriteeditor();
             }   }
             else
-            {   if (!crippled)
-                {   command_changemachine(BINBUG, MEMMAP_BINBUG);
-        }   }   }
+            {   change_machine(BINBUG, MEMMAP_BINBUG, TRUE);
+        }   }
     acase SCAN_A6:
     case SCAN_N6:
         if (ctrl())
@@ -5205,7 +5215,7 @@ EXPORT void process_code(void)
                 {   view_monitor(SUBWINDOW_MONITOR_PSGS);
             }   }
             else
-            {   command_changemachine(INSTRUCTOR, MEMMAP_O);
+            {   change_machine(INSTRUCTOR, MEMMAP_O, TRUE);
         }   }
     acase SCAN_A7:
     case SCAN_N7:
@@ -5213,7 +5223,7 @@ EXPORT void process_code(void)
         {   if (shift())
             {   help_gameinfo();
             } else
-            {   command_changemachine(    TWIN,       MEMMAP_TWIN);
+            {   change_machine(TWIN, MEMMAP_TWIN, TRUE);
         }   }
     acase SCAN_A8:
     case SCAN_N8:
@@ -5231,17 +5241,15 @@ EXPORT void process_code(void)
                 {   docommand(MENUITEM_REDEFINEKEYS);
             }   }
             else
-            {   command_changemachine(CD2650, MEMMAP_CD2650);
+            {   change_machine(CD2650, MEMMAP_CD2650, TRUE);
         }   }
     acase SCAN_A9:
     case SCAN_N9:
         if (ctrl())
         {   if (shift())
-            {   if (!crippled)
-                {   docommand(MENUITEM_QUICKLOAD);
-            }   }
-            else
-            {   command_changemachine(PHUNSY, MEMMAP_PHUNSY);
+            {   docommand(MENUITEM_QUICKLOAD);
+            } else
+            {   change_machine(PHUNSY, MEMMAP_PHUNSY, TRUE);
         }   }
     acase SCAN_A0:
     case SCAN_N0:
@@ -5251,12 +5259,12 @@ EXPORT void process_code(void)
                 {   docommand(MENUITEM_QUICKSAVE);
             }   }
             else
-            {   command_changemachine(SELBST, MEMMAP_SELBST);
+            {   change_machine(SELBST, MEMMAP_SELBST, TRUE);
         }   }
     acase SCAN_F1:
         if (ctrl())
         {   if (shift())
-            {   command_changemachine(MIKIT, MEMMAP_MIKIT);
+            {   change_machine(MIKIT, MEMMAP_MIKIT, TRUE);
             } else
             {   if (!fullscreen && size != 1)
                 {   resize(1, FALSE);
@@ -5264,7 +5272,7 @@ EXPORT void process_code(void)
     acase SCAN_F2:
         if (ctrl())
         {   if (shift())
-            {   command_changemachine(ZACCARIA,   MEMMAP_ASTROWARS);
+            {   change_machine(ZACCARIA, MEMMAP_ASTROWARS, TRUE);
             } else
             {   if (!fullscreen && size != 2)
                 {   resize(2, FALSE);
@@ -5272,7 +5280,7 @@ EXPORT void process_code(void)
     acase SCAN_F3:
         if (ctrl())
         {   if (shift())
-            {   command_changemachine(ZACCARIA,   MEMMAP_GALAXIA);
+            {   change_machine(ZACCARIA, MEMMAP_GALAXIA, TRUE);
             } else
             {   if (!fullscreen && size != 3)
                 {   resize(3, FALSE);
@@ -5280,7 +5288,7 @@ EXPORT void process_code(void)
     acase SCAN_F4:
         if (ctrl())
         {   if (shift())
-            {   command_changemachine(ZACCARIA,   MEMMAP_LASERBATTLE);
+            {   change_machine(ZACCARIA, MEMMAP_LASERBATTLE, TRUE);
             } else
             {   if (!fullscreen && size != 4)
                 {   resize(4, FALSE);
@@ -5288,7 +5296,7 @@ EXPORT void process_code(void)
     acase SCAN_F5:
         if (ctrl())
         {   if (shift())
-            {   command_changemachine(ZACCARIA,   MEMMAP_LAZARIAN);
+            {   change_machine(ZACCARIA, MEMMAP_LAZARIAN, TRUE);
             } else
             {   if (!fullscreen && size != 5)
                 {   resize(5, FALSE);
@@ -5314,26 +5322,26 @@ EXPORT void process_code(void)
     acase SCAN_F6:
         if (ctrl())
         {   if (shift())
-            {   command_changemachine(MALZAK,     MEMMAP_MALZAK1);
+            {   change_machine(MALZAK, MEMMAP_MALZAK1, TRUE);
             } else
             {   if (!fullscreen && size != 6)
                 {   resize(6, FALSE);
         }   }   }
     acase SCAN_F7:
         if (ctrl() && shift())
-        {   command_changemachine(    MALZAK,     MEMMAP_MALZAK2);
+        {   change_machine(MALZAK, MEMMAP_MALZAK2, TRUE);
         }
     acase SCAN_F8:
         if (ctrl() && shift())
-        {   command_changemachine(    PONG,       MEMMAP_8550);
+        {   change_machine(PONG, MEMMAP_8550, TRUE);
         }
     acase SCAN_F9:
         if (ctrl() && shift())
-        {   command_changemachine(    PONG,       MEMMAP_8600);
+        {   change_machine(PONG, MEMMAP_8600, TRUE);
         }
     acase SCAN_F11:
         if (ctrl() && shift())
-        {   command_changemachine(    TYPERIGHT,  MEMMAP_TYPERIGHT);
+        {   change_machine(TYPERIGHT, MEMMAP_TYPERIGHT, TRUE);
         } elif (!ctrl() && !shift())
         {   fullscreen = fullscreen ? FALSE : TRUE;
             docommand(MENUITEM_FULLSCREEN);
@@ -5608,38 +5616,6 @@ EXPORT void refreshkybd(void)
     if (GetKeyState(VK_LSHIFT  ) & 0x8000) KeyMatrix[SCAN_LSHIFT / 8] |= 1 << (SCAN_LSHIFT % 8); else KeyMatrix[SCAN_LSHIFT / 8] &= ~(1 << (SCAN_LSHIFT % 8));
     if (GetKeyState(VK_RSHIFT  ) & 0x8000) KeyMatrix[SCAN_RSHIFT / 8] |= 1 << (SCAN_RSHIFT % 8); else KeyMatrix[SCAN_RSHIFT / 8] &= ~(1 << (SCAN_RSHIFT % 8));
 }
-
-EXPORT void updatebiggads(void)
-{   if (!MainWindowPtr)
-    {   return; // important!
-    }
-
-    if (crippled)
-    {   if (hToolbar)
-        {   DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_RESET,                      0);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_OPEN,                       0);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_SAVESNP,                    0);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKLOAD,                  0);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKSAVE,                  0);
-        }
-        if (hSideBar)
-        {   EnableWindow(hSideBar, FALSE);
-    }   }
-    else
-    {   if (hToolbar)
-        {   DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_RESET,        TBSTATE_ENABLED);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_OPEN,         TBSTATE_ENABLED);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_SAVESNP,      TBSTATE_ENABLED);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKLOAD,    (cheevos && RA_HardcoreModeIsActive()) ? 0 : TBSTATE_ENABLED);
-            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKSAVE,    TBSTATE_ENABLED);
-        }
-        if (hSideBar && foundgames)
-        {   EnableWindow(hSideBar, TRUE);
-    }   }
-
-    if (hToolbar)
-    {   DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_MACRO_RUNREXX,         (cheevos && RA_HardcoreModeIsActive()) ? 0 : TBSTATE_ENABLED);
-}   }
 
 EXPORT void ghost(int which, int ghosted)
 {   if (menucode[which] != -1)
@@ -6015,11 +5991,6 @@ EXPORT void updatepointer(FLAG force, FLAG full)
     } else
     {   DISCARD ClipCursor(NULL);
 }   }
-
-EXPORT void changecolours(void)
-{   make_stars();
-    redrawscreen();
-}
 
 EXPORT void traymenu(void)
 {   int          i;
@@ -7871,7 +7842,7 @@ APIRET APIENTRY rexx_setmachine(CONST CHAR* name, ULONG numargs, RXSTRING args[]
     if (numargs >= 1)
     {   for (i = 0; i < MACHINES; i++)
         {   if (!stricmp(args[0].strptr, machines[i].cli))
-            {   changemachine(i, machines[i].memmap, FALSE, 2, FALSE);
+            {   change_machine(i, machines[i].memmap, TRUE);
                 break;
     }   }   }
 
@@ -8169,8 +8140,7 @@ EXPORT void remove_cheevos(FLAG full)
 
     settitle();
     updatemenus();
-    updatebiggads();
-    updatesmlgads();
+    update_toolbar();
 }
 
 MODULE void go_hardcore(void)
@@ -8192,8 +8162,7 @@ MODULE void go_hardcore(void)
     close_subwindow(SUBWINDOW_MONITOR_PSGS);
     close_subwindow(SUBWINDOW_MONITOR_XVI);
     updatemenus();
-    updatebiggads(); // unnecessary?
-    updatesmlgads();
+    update_toolbar();
 
     if (showdebugger[wsm])
     {   showdebugger[wsm] = FALSE;
@@ -8205,8 +8174,7 @@ MODULE void go_hardcore(void)
 MODULE void go_softcore(void)
 {   macro_stop(); // unnecessary?
     updatemenus(); // unnecessary?
-    updatebiggads(); // unnecessary?
-    updatesmlgads(); // important
+    update_toolbar(); // important
 }
 
 EXPORT UBYTE AByteReader( unsigned int nOffs                    ) { return memory[         0x1800 + nOffs ]       ; }
@@ -8275,84 +8243,10 @@ EXPORT void setstatus(STRPTR thetext)
 }   }
 
 EXPORT void resize(int newsize, FLAG force)
-{   int oldwidth  = winwidth,
-        oldheight = winheight;
-
-    size = realsize = newsize;
-    updatemenu(MENUFAKE_SIZE);
-    calc_size();
-
-    if (!MainWindowPtr)
-    {   return;
-    }
-
-    if (force || winwidth != oldwidth || winheight != oldheight)
-    {   ready = FALSE;
-        sizing = TRUE;
-
-        closewindow_3d();
-
-        update_menuheight();
-        DISCARD SetWindowPos
-        (   MainWindowPtr,
-            HWND_TOP,
-            winleftx,
-            wintopy,
-            winwidth,
-            winheight,
-            SWP_NOCOPYBITS
-        );
-        make_toolbar();
-        if (showsidebars[wsm])
-        {   if (fullscreen)
-            {   DISCARD SetWindowPos
-                (   hSideBar,
-                    HWND_TOP,
-                    showtitlebars[wsm] ? (winwidth - sidebarwidth - leftwidth) : (winwidth - sidebarwidth + 2),
-                    sidebartopy,
-                    sidebarwidth,
-                    sidebarheight,
-                    SWP_NOCOPYBITS
-                );
-            } else
-            {   DISCARD SetWindowPos
-                (   hSideBar,
-                    HWND_TOP,
-                    winwidth - sidebarwidth - (leftwidth * 2) + 2,
-                    sidebartopy,
-                    sidebarwidth,
-                    sidebarheight,
-                    SWP_NOCOPYBITS
-                );
-            }
-            DISCARD ListView_EnsureVisible(hSideBar, currentgame, TRUE); // doesn't seem to work properly for items in the rightmost column
-        }
-        if (showdebugger[wsm])
-        {   DISCARD SetWindowPos
-            (   hDebugger,
-                HWND_TOP,
-                promptwidth,
-                debuggertop,
-                debuggerwidth,
-                debuggerheight,
-                SWP_NOCOPYBITS
-            );
-        }
-        if (showstatusbars[wsm])
-        {   DestroyWindow(hStatusBar);
-            // hStatusBar = NULL;
-            make_statusbar();
-        }
-
-        openwindow_3d();
-        free_display();
-        make_display();
-        redrawscreen();
-        updatepointer(FALSE, TRUE);
-        update_fps();
-        clearkybd();
-
-        ready = TRUE;
+{   if (force || newsize != size)
+    {   closewindow();
+        size = newsize;
+        openwindow(FALSE);
 }   }
 
 LRESULT CALLBACK MagnifierWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

@@ -214,13 +214,11 @@ IMPORT       ULONG                 autofire[2],
                                    collisions,
                                    cycles_2650,
                                    demultiplex,
-                                   downframes,
                                    frames,
                                    jf[2],
                                    oldcycles,
                                    region,
-                                   swapped,
-                                   totalframes;
+                                   swapped;
 IMPORT       STRPTR                colourname[8];
 IMPORT       MEMFLAG               memflags[ALLTOKENS];
 IMPORT       struct ConditionalStruct wp[ALLTOKENS];
@@ -1272,7 +1270,9 @@ MODULE UBYTE pviread(int address)
 }
 
 MODULE void ie_playerinput(int source, int dest)
-{   FAST ULONG jg;
+{   FAST ULONG jg,
+               downframes,
+               totalframes;
 
     // dest is which side   (0 or 1) you want to set the registers of.
     // source is which side (0 or 1) you want to use to do it.
@@ -1299,6 +1299,14 @@ MODULE void ie_playerinput(int source, int dest)
          || (dest == 1 && connected == NET_SERVER)
         )
         {   return;
+        }
+
+        if (whichgame == -1)
+        {   downframes  = DEF_DN;
+            totalframes = DEF_TO;
+        } else
+        {   downframes  = known[whichgame].downframes;
+            totalframes = known[whichgame].totalframes;
         }
 
         if

@@ -779,7 +779,6 @@ E_LINEOUT4, E_LINEOUT5, E_LINEOUT6, E_LINEOUT7  // $1DFC..$1DFF
 
     // assert(!crippled);
     // assert(!inframe);
-    game = FALSE;
     bangercharging = FALSE;
 
     pvibase = 0x1F00;

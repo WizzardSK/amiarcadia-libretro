@@ -241,7 +241,8 @@ IMPORT const struct MenuStruct        menuinfo1[MENUITEMS],
 
 MODULE       UBYTE                    AOFBuffer[13 + (255 * 2) + 1],
                                       watchmask;
-MODULE       TEXT                     firststring[FRIENDLYLENGTH + 1],
+MODULE       TEXT                     listingbuf[(16 * KILOBYTE) + 1],
+                                      firststring[FRIENDLYLENGTH + 1],
                                       secondstring[FRIENDLYLENGTH + 1];
 MODULE       int                      friendlycolour,
                                       symoffset,
@@ -381,7 +382,7 @@ EXPORT FLAG debug_command(void)
                            address3, // not UWORD!
                            command,
                            found,
-                           i, j,
+                           i, j, k,
                            length,
                            localsize,
                            numargs,
@@ -629,10 +630,7 @@ EXPORT FLAG debug_command(void)
         }   }
     acase MENUITEM_BC:
         if (allowable(TRUE))
-        {   if (thearg[3][0] || (thearg[1][0] == '?' && thearg[1][1] == EOS))
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_BC].desc_id, menuinfo1[MENUITEM_BC].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_BC, "Usage: BC [<start-address> [<end-address>]]\n\n"));
-            } elif (thearg[2][0])
+        {   if (thearg[2][0])
             {   address1 = parse_expression((STRPTR) thearg[1], MAX_ADDR, FALSE);
                 address2 = parse_expression((STRPTR) thearg[2], MAX_ADDR, FALSE);
                 if (check_range(address1, address2))
@@ -756,8 +754,7 @@ EXPORT FLAG debug_command(void)
                     update_monitor(TRUE);
                     zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_BP].desc_id, menuinfo1[MENUITEM_BP].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_BP, "Usage: BP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n"));
+                {   commandusage(MENUITEM_BP);
             }   }
             elif (thearg[4][0])
             {   // BP <start-address> <address/register> <condition> <value>
@@ -767,8 +764,7 @@ EXPORT FLAG debug_command(void)
                 address3 = parse_expression((STRPTR) thearg[4], MAX_ADDR,  FALSE); // not really an address
                 DISCARD bp_add(address1, the1st, the2nd, address3);
             } elif (thearg[3][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_BP].desc_id, menuinfo1[MENUITEM_BP].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_BP, "Usage: BP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n"));
+            {   commandusage(MENUITEM_BP);
             } elif (thearg[2][0])
             {   // BP <start-address> <end-address>
                 address1 = parse_expression((STRPTR) thearg[1], MAX_ADDR, FALSE);
@@ -786,8 +782,7 @@ EXPORT FLAG debug_command(void)
                     update_monitor(TRUE);
                     zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_BP].desc_id, menuinfo1[MENUITEM_BP].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_BP, "Usage: BP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n"));
+                {   commandusage(MENUITEM_BP);
             }   }
             else
             {   // BP <start-address>
@@ -1046,8 +1041,7 @@ EXPORT FLAG debug_command(void)
                 {   adduserlabel((STRPTR) thearg[1], (UWORD) address1, tempchar);
                     zprintf(TEXTPEN_CLIOUTPUT, "\n");
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_DEFSYM].desc_id, menuinfo1[MENUITEM_DEFSYM].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_DEFSYM, "Usage: DEFSYM <label> <address> [C|D|P|U]\n\n"));
+                {   commandusage(MENUITEM_DEFSYM);
             }   }
             else
             {   adduserlabel((STRPTR) thearg[1], (UWORD) address1, 'U');
@@ -1207,8 +1201,7 @@ EXPORT FLAG debug_command(void)
             elif (thearg[1][0] && (thearg[1][0] != '?' || thearg[1][1] != EOS))
             {   DISCARD debug_edit((STRPTR) thearg[1], FALSE, TRUE);
             } else
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_DOKE].desc_id, menuinfo1[MENUITEM_DOKE].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_DOKE, "Usage: DOKE <address> [<value>]\n\n"));
+            {   commandusage(MENUITEM_DOKE);
         }   }
     acase MENUFAKE_DRIVE:
         if (thearg[1][0])
@@ -2090,10 +2083,7 @@ EXPORT FLAG debug_command(void)
         zprintf(TEXTPEN_CLIOUTPUT, "\n");
     acase MENUITEM_IM:
         if (allowable(TRUE))
-        {   /* if (thearg[4][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_IM].desc_id, menuinfo1[MENUITEM_IM].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_IM, "Usage: IM [<start-address> <end-address>] [<filename>]\n\n"));
-            } el */ if (thearg[3][0]) // <start-address> <end-address> <filename>
+        {   if (thearg[3][0]) // <start-address> <end-address> <filename>
             {   address1 = parse_expression((STRPTR) thearg[1], MAX_ADDR, FALSE);
                 address2 = parse_expression((STRPTR) thearg[2], MAX_ADDR, FALSE);
                 if (check_range(address1, address2))
@@ -2164,8 +2154,7 @@ EXPORT FLAG debug_command(void)
                     }
                     zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_IP].desc_id, menuinfo1[MENUITEM_IP].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_IP, "Usage: IP [<start-port> [<end-port>] [<addr/reg> <condition> <value>]]\n\n"));
+                {   commandusage(MENUITEM_IP);
             }   }
             elif (thearg[4][0])
             {   // IP <port> <addr/reg> <condition> <value>
@@ -2175,8 +2164,7 @@ EXPORT FLAG debug_command(void)
                 address3 = parse_expression((STRPTR) thearg[4], MAX_ADDR,  FALSE); // not really an address
                 DISCARD ip_add(address1, the1st, the2nd, address3, 0xFF, TRUE);
             } elif (thearg[3][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_IP].desc_id, menuinfo1[MENUITEM_IP].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_IP, "Usage: IP [<start-port> [<end-port>] [<addr/reg> <condition> <value>]]\n\n"));
+            {   commandusage(MENUITEM_IP);
             } elif (thearg[2][0])
             {   // IP <start-port> <end-port>
                 address1 = readbase((STRPTR) thearg[1], FALSE);
@@ -2195,8 +2183,7 @@ EXPORT FLAG debug_command(void)
                     }
                     zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_IP].desc_id, menuinfo1[MENUITEM_IP].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_IP, "Usage: IP [<start-port> [<end-port>] [<addr/reg> <condition> <value>]]\n\n"));
+                {   commandusage(MENUITEM_IP);
             }   }
             elif (thearg[1][0])
             {   // IP <port>[:mask]
@@ -2223,8 +2210,7 @@ EXPORT FLAG debug_command(void)
                     poke_end(FALSE, FALSE);
             }   }
             else
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_JUMP].desc_id, menuinfo1[MENUITEM_JUMP].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_JUMP, "Usage: J|JUMP <address>\n\n"));
+            {   commandusage(MENUITEM_JUMP);
         }   }
     acase MENUITEM_L_A:
     case MENUITEM_L_B:
@@ -2297,6 +2283,155 @@ EXPORT FLAG debug_command(void)
             } else
             {   commandusage(command);
         }   }
+    acase MENUITEM_LIST:
+        switch (machine)
+        {
+        case PIPBUG:
+            if (numargs == 1)
+            {   if (!stricmp(thearg[1], "MB"))
+                {   temp = CL_MB;
+                } elif (!stricmp(thearg[1], "MWB"))
+                {   temp = CL_MWB;
+                } elif (!stricmp(thearg[1], "TCT"))
+                {   temp = CL_TCT;
+                } else
+                {   temp = -1;
+                    zprintf(TEXTPEN_ERROR, "Unsupported language!\n\n"); // localize
+            }   }
+            elif (whichgame == -1)
+            {   temp = -1;
+                zprintf(TEXTPEN_ERROR, "Unknown language!\n\n"); // localize
+            } else
+            {   temp = known[whichgame].complang;
+            }
+            switch (temp)
+            {
+            case CL_MB:
+                i = 1;
+                j = 0;
+                do
+                {   k = 0;
+                    while (memory[0xB02 + j] != 0x0D)
+                    {   listingbuf[k] = memory[0xB02 + j];
+                        j++;
+                        k++;
+                    }
+                    listingbuf[k] = EOS;
+                    zprintf(TEXTPEN_LOG, "%d %s\n", i, listingbuf);
+                    i++;
+                    j++; // skip CR
+                } while (memory[0xB02 + j] != 0x03 && j < 0x8000 - 0xB02); // end marker
+                zprintf(TEXTPEN_LOG, "\n");
+            acase CL_MWB:
+                j = 0;
+                do
+                {   k = 0;
+                    while (memory[0x2002 + j] != 0x0D)
+                    {   listingbuf[k] = memory[0x2002 + j];
+                        j++;
+                        k++;
+                    }
+                    listingbuf[k] = EOS;
+                    zprintf(TEXTPEN_LOG, "%s\n", listingbuf);
+                    j++; // skip CR
+                } while (memory[0x2002 + j] != 0x03 && j < 0x8000 - 0x2002); // end marker
+                zprintf(TEXTPEN_LOG, "\n");
+            acase CL_TCT:
+                j = 0;
+                do
+                {   k = 0;
+                    while (memory[0x1801 + j] != 0x0D)
+                    {   i = (((memory[0x1801 + j] & 0xF0) >> 4) * 1000)
+                          + (((memory[0x1801 + j] & 0x0F) >> 0) *  100)
+                          + (((memory[0x1802 + j] & 0xF0) >> 4) *   10)
+                          + (((memory[0x1802 + j] & 0x0F) >> 0) *    1);
+                        j += 2;
+                        while (memory[0x1801 + j] != 0x0D)
+                        {   listingbuf[k] = memory[0x1801 + j];
+                            j++;
+                            k++;
+                    }   }
+                    listingbuf[k] = EOS;
+                    zprintf(TEXTPEN_LOG, "%04d %s\n", i, listingbuf);
+                    j++; // skip CR
+                } while ((memory[0x1801 + j] != 0xFE || memory[0x1802 + j] != 0x0D || memory[0x1803 + j] != 0xFF) && j < 0x8000 - 0x1801); // end marker
+                zprintf(TEXTPEN_LOG, "\n");
+            adefault:
+                zprintf(TEXTPEN_ERROR, "Unsupported language!\n\n"); // localize
+            }
+        acase BINBUG:
+        case PHUNSY:
+            if (numargs == 1)
+            {   if (!stricmp(thearg[1], "MWB"))
+                {   temp = CL_MWB;
+                } else
+                {   temp = -1;
+                    zprintf(TEXTPEN_ERROR, "Unsupported language!\n\n"); // localize
+            }   }
+            elif (whichgame == -1)
+            {   temp = -1;
+                zprintf(TEXTPEN_ERROR, "Unknown language!\n\n"); // localize
+            } else
+            {   temp = known[whichgame].complang;
+            }
+            switch (temp)
+            {
+            case CL_MWB:
+                j = 0;
+                do
+                {   k = 0;
+                    while (memory[0x2002 + j] != 0x0D)
+                    {   listingbuf[k] = memory[0x2002 + j];
+                        j++;
+                        k++;
+                    }
+                    listingbuf[k] = EOS;
+                    zprintf(TEXTPEN_LOG, "%s\n", listingbuf);
+                    j++; // skip CR
+                } while (memory[0x2002 + j] != 0x03 && j < 0x8000 - 0x2002); // end marker
+                zprintf(TEXTPEN_LOG, "\n");
+            adefault:
+                zprintf(TEXTPEN_ERROR, "Unsupported language!\n\n"); // localize
+            }
+        acase CD2650:
+            if (numargs == 1)
+            {   if     (!stricmp(thearg[1], "8KBASIC"))
+                {   temp = CL_8KB13;
+                } elif (!stricmp(thearg[1], "FORTH"  ))
+                {   temp = CL_FORTH;
+                } else
+                {   temp = -1;
+                    zprintf(TEXTPEN_ERROR, "Unsupported language!\n\n"); // localize
+            }   }
+            elif (whichgame == -1)
+            {   temp = -1;
+                zprintf(TEXTPEN_ERROR, "Unknown language!\n\n"); // localize
+            } else
+            {   temp = known[whichgame].complang;
+            }
+            switch (temp)
+            {
+            case CL_8KB13:
+                zstrncpy(listingbuf, (const char*) &memory[0x4000], 16 * KILOBYTE);
+                zprintf(TEXTPEN_LOG, "%s\n", listingbuf);
+            acase CL_FORTH:
+                found = 0x7000;
+                for (i = 0x7000; i < 0x8000; i += 64)
+                {   for (j = 0; j < 64; j++)
+                    {   if (memory[i + j] != 0x00 && memory[i + j] != 0x20)
+                        {   found = i;
+                }   }   }
+                for (i = 0x7000; i <= found; i += 64)
+                {   zstrncpy(listingbuf, (const char*) &memory[i], 64);
+                    zprintf(TEXTPEN_LOG, "%s\n", listingbuf);
+                }
+                zprintf(TEXTPEN_LOG, "\n");
+            adefault:
+                zprintf(TEXTPEN_ERROR, "Unsupported language!\n\n"); // localize
+            }
+        adefault:
+            zprintf(TEXTPEN_CLIOUTPUT, "%s\n\n", LLL(MSG_WRONGGUEST, "Wrong guest machine!"));
+        }
     acase MENUITEM_LOADBIN:
         if (allowable(TRUE))
         {   address1 = parse_expression((STRPTR) thearg[1], MAX_ADDR, FALSE);
@@ -2586,22 +2721,17 @@ EXPORT FLAG debug_command(void)
         }   }
     acase MENUITEM_READPORT:
         if (allowable(TRUE))
-        {   if (!thearg[1][0] || thearg[2][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_READPORT].desc_id, menuinfo1[MENUITEM_READPORT].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_READPORT, "Usage: READPORT <port>|CTRL|DATA\n\n"));
+        {   if (!stricmp(thearg[1], "CTRL"))
+            {   zprintf(TEXTPEN_CLIOUTPUT, "$%02X\n\n", readport(PORTC));
+            } elif (!stricmp(thearg[1], "DATA"))
+            {   zprintf(TEXTPEN_CLIOUTPUT, "$%02X\n\n", readport(PORTD));
             } else
-            {   if (!stricmp(thearg[1], "CTRL"))
-                {   zprintf(TEXTPEN_CLIOUTPUT, "$%02X\n\n", readport(PORTC));
-                } elif (!stricmp(thearg[1], "DATA"))
-                {   zprintf(TEXTPEN_CLIOUTPUT, "$%02X\n\n", readport(PORTD));
+            {   address1 = readbase((STRPTR) thearg[1], FALSE);
+                if (address1 >= 0 && address1 <= 255)
+                {   zprintf(TEXTPEN_CLIOUTPUT, "$%02X\n\n", readport(address1));
                 } else
-                {   address1 = readbase((STRPTR) thearg[1], FALSE);
-                    if (address1 >= 0 && address1 <= 255)
-                    {   zprintf(TEXTPEN_CLIOUTPUT, "$%02X\n\n", readport(address1));
-                    } else
-                    {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_READPORT].desc_id, menuinfo1[MENUITEM_READPORT].desc_str));
-                        zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_READPORT, "Usage: READPORT <port>|CTRL|DATA\n\n"));
-        }   }   }   }
+                {   commandusage(MENUITEM_READPORT);
+        }   }   }
     acase MENUITEM_REL:
         if (allowable(TRUE))
         {   address1 = parse_expression((STRPTR) thearg[1], MAX_ADDR, FALSE);
@@ -2658,7 +2788,7 @@ EXPORT FLAG debug_command(void)
         if (!HASDISK)
         {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n\n", LLL(MSG_WRONGGUEST, "Wrong guest machine!"));
         } elif (!drive[debugdrive].inserted)
-        {   zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_NODISK,       "No disk is inserted!\n\n"));
+        {   zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_NODISK, "No disk is inserted!\n\n"));
         } else
         {   dir_disk(TRUE, debugdrive);
             found2 = FALSE;
@@ -2994,9 +3124,6 @@ EXPORT FLAG debug_command(void)
         if (allowable(TRUE))
         {   if (machines[machine].drives < 2)
             {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n\n", LLL(MSG_WRONGGUEST, "Wrong guest machine!"));
-            } elif (!thearg[1][0] || !thearg[2][0] || thearg[3][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_SWAPDISKS].desc_id, menuinfo1[MENUITEM_SWAPDISKS].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_SWAPDISKS, "Usage: SWAPDISKS <1st-drive> <2nd-drive>\n\n"));
             } else
             {   address1 = parse_expression((STRPTR) thearg[1], machines[machine].drives - 1, FALSE);
                 address2 = parse_expression((STRPTR) thearg[2], machines[machine].drives - 1, FALSE);
@@ -3097,14 +3224,8 @@ EXPORT FLAG debug_command(void)
         }   }
     acase MENUFAKE_TU:
         if (allowable(TRUE))
-        {   if (thearg[1][0] < '0' || thearg[1][0] > '2' || thearg[1][1] || thearg[2][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "TU 0: %s\n" \
-                                           "TU 1: %s\n" \
-                                           "TU 2: %s\n",
-                                           LLL(menuinfo2[MENUOPT_TU_0].desc_id, menuinfo2[MENUOPT_TU_0].desc_str),
-                                           LLL(menuinfo2[MENUOPT_TU_1].desc_id, menuinfo2[MENUOPT_TU_1].desc_str),
-                                           LLL(menuinfo2[MENUOPT_TU_2].desc_id, menuinfo2[MENUOPT_TU_2].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, "Usage: TU 0|1|2\n\n");
+        {   if (thearg[1][0] < '0' || thearg[1][0] > '2' || thearg[1][1])
+            {   commandusage(MENUFAKE_TU);
             } else
             {   timeunit = thearg[1][0] - '0';
                 changetimeunitnames();
@@ -3297,8 +3418,7 @@ EXPORT FLAG debug_command(void)
                     }
                     zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_WP].desc_id, menuinfo1[MENUITEM_WP].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_WP, "Usage: WP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n"));
+                {   commandusage(MENUITEM_WP);
             }   }
             elif (thearg[4][0])
             {   // WP <start-address> <address/register> <condition> <value>
@@ -3308,8 +3428,7 @@ EXPORT FLAG debug_command(void)
                 address3 = parse_expression((STRPTR) thearg[4], MAX_ADDR, FALSE); // not really an address
                 DISCARD wp_add(address1, the1st, the2nd, address3, 0xFF, TRUE);
             } elif (thearg[3][0])
-            {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_WP].desc_id, menuinfo1[MENUITEM_WP].desc_str));
-                zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_WP, "Usage: WP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n"));
+            {   commandusage(MENUITEM_WP);
             } elif (thearg[2][0])
             {   // WP <start-address> <end-address>
                 address1 = parse_expression((STRPTR) thearg[1], LASTTOKEN, FALSE);
@@ -3328,8 +3447,7 @@ EXPORT FLAG debug_command(void)
                     }
                     zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_WP].desc_id, menuinfo1[MENUITEM_WP].desc_str));
-                    zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_WP, "Usage: WP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n"));
+                {   commandusage(MENUITEM_WP);
             }   }
             else
             {   // WP <start-address>[:mask]
@@ -3374,211 +3492,76 @@ EXPORT FLAG debug_command(void)
                 {   writeport(address1, (UBYTE) address2);
                    zprintf(TEXTPEN_CLIOUTPUT, "%s.\n\n", LLL(MSG_OK, "OK"));
                 } else
-                {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[MENUITEM_WRITEPORT].desc_id, menuinfo1[MENUITEM_WRITEPORT].desc_str));
-                     zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_WRITEPORT, "Usage: WRITEPORT <port>|CTRL|DATA <value>\n\n"));
+                {   commandusage(MENUITEM_WRITEPORT);
     }   }   }   }
 
     return FALSE;
 }
 
 MODULE void help_commands(int which)
-{   switch (which)
+{   int i, j,
+        length;
+
+    switch (which)
     {
-    case 0:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_ENGINE_DEBUGHELP,
-"General:\n"\
-"\"<message>                      send message to other player\n"\
-"CLEARCOV                        clear coverage report\n"\
-"CLS                             clear screen (of console window)\n"\
-"H|HELP|? [0|G]                  view general help\n"\
-"H|HELP|? 1|F                    view file help\n"\
-"H|HELP|? 2|D                    view disk help\n"\
-"H|HELP|? 3|E                    view edit help\n"\
-"H|HELP|? 4|V                    view view help\n"\
-"H|HELP|? 5|L                    view log help\n"\
-"H|HELP|? 6|R                    view run help\n"\
-"H|HELP|? 7|B                    view breakpoints help\n"\
-"H|HELP|? 8|S                    view symbols help\n"\
-"H|HELP|? 9|T                    view tools help\n"\
-"H|HELP|? 10|O                   view options help\n"\
-"H|HELP|? 11|A                   view graphics help\n"\
-"SAY|SPEAK|SPK <message>         speak message\n"\
-"SYS|SYSTEM                      quit emulator\n\n"
-        ));
-    acase 1:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP1,
-"File:\n"\
-"*<command>                      execute host OS command\n"\
-"ASM <filename>                  assemble source code\n"\
-"DISGAME [<start-addr> <end-addr>] [<filename>]\n"\
-"                                disassemble and show address range\n"\
-"ED|EDIT <filename>              edit source code\n"\
-"LOADBIN <start-addr> <filename> load binary to start-addr from filename\n"\
-"SAVEAOF|SAVEEOF\n"\
-" <start-addr> <end-addr> [<filename> [<game-start> [<block-size>]]]\n"\
-"SAVECMD|SAVEIMAG|SAVEMOD|SAVETVC\n"\
-" <start-addr> <end-addr> [<filename> [<game-start>]]\n"\
-"SAVEBIN|SAVEBPNF|SAVEHEX <start-addr> <end-addr> <filename>\n"\
-"                                save address range as filename\n"\
-"SAVESMS <end-addr> <filename>   save address $0 to end-addr as filename\n\n"
-        ));
-    acase 2:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP2,
-"Disk:\n"\
-"DEL|DELETE <filename>           delete file from floppy disk\n"\
-"DIR|LD|LDIR                     list files on floppy disk\n"\
-"DRIVE [<drive>]                 change debugger drive\n"\
-"EXTRACT [<filename>]            extract files from floppy disk\n"\
-"INJECT <filename>               inject files onto floppy disk\n"\
-"REN|RENAME <filename>           rename file on floppy disk\n"\
-"SWAPDISKS <1st-drive> <2nd-drive>\n"\
-"                                swap disks\n\n"
-        ));
-    acase 3:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP3,
-"Edit:\n"\
-"DOKE <address> [<value>]        change word at address to value\n"\
-"E|POKE [<address> [<value>]]    change byte at address to value\n"\
-"FPOKE <address> <value>         change byte on disk to value\n"\
-"WRITEPORT <port>|CTRL|DATA <value>\n"\
-"                                write to I/O port\n\n"
-        ));
-    acase 4:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP4,
-"View:\n"\
-"=                               list all known labels\n"\
-"= <addr>                        view addr as label and hexadecimal\n"\
-"COVER [<reporttype>]            view coverage report\n"\
-"D|PEEK <start-addr> [<end-addr>]\n"\
-"                                display address range as data\n"\
-"DIS [<start-addr> [<end-addr>]] disassemble address range as code\n"\
-"ERROR <number>                  show error message\n"\
-"FPEEK <start-addr> [<end-addr>] display address range from disk\n"\
-"HISTORY                         view command history\n"\
-"IM [<start-addr> <end-addr>] [<filename>]\n"\
-"                                view address range as imagery\n"\
-"READPORT <port>|CTRL|DATA       read from I/O port\n"\
-"V|VIEW BASIC                    view BASIC variables\n"\
-"V|VIEW BIOS                     view BIOS RAM\n"\
-"V|VIEW CPU                      view CPU status\n"\
-"V|VIEW PSG                      view PSGs/TMSes status\n"\
-"V|VIEW RAM                      view RAM\n"\
-"V|VIEW SCRN                     view screen contents\n"\
-"V|VIEW UDG                      view user-defined graphics\n"\
-"V|VIEW XVI                      view UVI/PVI status\n\n"
-        ));
-    acase 5:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP5,
-"Log:\n"\
-"L A                             log illegal memory accesses on/off\n"\
-"L B                             log BIOS calls on/off\n"\
-"L C                             log inefficient code on/off\n"\
-"L I                             log illegal instructions on/off\n"\
-"L N                             log interrupts on/off\n"\
-"L S                             log subroutine calls on/off\n"\
-"PL                              pause after logging on/off\n"\
-"T                               trace CPU on/off\n\n"
-        ));
-    acase 6:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP6,
-"Run:\n"\
-"G|P [<address>]                 pause/unpause\n" \
-"GI                              generate an interrupt\n"\
-"I                               ignore next instruction\n"\
-"J|JUMP <address>                jump to address\n"\
-"O                               step over subroutine\n"\
-"R <number>                      run to rasterline number\n"\
-"R F                             run to next frame\n"\
-"R I                             run to next interrupt\n"\
-"R L                             run to end of loop\n"\
-"R R                             run to next rasterline\n"\
-"R S                             run to end of subroutine\n"\
-"S                               step next instruction\n\n"
-        ));
-    acase 7:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP7,
-"Breakpoints:\n"\
-"BC|FC|IC|WC [<start-addr> [<end-addr>]]\n"\
-"                                clear bp/fp/ip/wp from address/port range\n"\
-"BL|FL|IL|WL                     list all breakpoints/watchpoints\n"\
-"BP|WP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n"\
-"                                add bp/wp to address range\n"\
-"FP <start-addr> [<end-addr>]    add disk watchpoint to address range\n"\
-"IP [<start-port> [<end-port>] [<addr/reg> <condition> <value>]]\n"\
-"                                add I/O port wp to port range\n"\
-"PB                              pause after breakpoints/watchpoints on/off\n"\
-"WR                              watch reads on/off\n"\
-"WW NONE|SOME|ALL                watch none/some/all writes\n\n"
-        ));
-    acase 8:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP8,
-"Symbols:\n"\
-"CLEARSYM [<label>]              clear symbol(s)\n"\
-"DEFSYM <label> <address> [C|D|P|U]\n"\
-"                                define symbol\n"\
-"LOADSYM [<filename>]            load symbol table from filename\n"\
-"SAVESYM <filename>              save symbol table as filename\n\n"
-        ));
-    acase 9:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP9,
-"Tools:\n"\
-"CO|COMP <1st-start> <1st-end> <2nd-start>\n"\
-"                                compare memory blocks\n"\
-"COPY|MOVE <source-start> <source-end> <target-start>\n"\
-"                                copy memory from source to target\n"\
-"FILL <start-addr> <end-addr> <value>\n"\
-"                                fill address range with value\n"\
-"FIND [[<start-addr> <end-addr>] <value>]\n"\
-"                                find value in address range\n"\
-"REL <source-addr> [*]<target-addr>\n"\
-"                                calculate relative offset of target-addr\n"\
-"SWAP <1st-start> <1st-end> <2nd-start>\n"\
-"                                swap memory blocks\n"\
-"TRAIN [<value>]                 make trainer\n\n"
-        ));
-    acase 10:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP10,
-"Options:\n"\
-"BASE [2|8|10|16|%%|@|!|$]        view/set default input base\n"\
-"CPU 0|1                         change CPU (2650/2650A vs. 2650B)\n"\
-"GR                              use guide ray on/off\n" \
-"N 0|1|2                         change notation\n"\
-"SPR 0|1|2                       change sprite display mode\n"\
-"TU 0|1|2                        change time unit\n"\
-"VB|VERBOSE 0|1|2                change verbosity\n"\
-"WARN                            assembler warnings on/off\n\n"
-        ));
-    acase 11:
-        zprintf
-        (   TEXTPEN_CLIOUTPUT,
-            GetCatalogStr(CatalogPtr, MSG_DEBUGHELP11,
-"Graphics:\n"\
-"DRAW 0|1|2|3                    change drawing mode\n"\
-"SPR 0|1|2                       change sprite display mode\n\n"
-        ));
-}   }
+    case   0: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_GENERAL, "General"    ));
+    acase  2: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_DISK,    "Disk"       ));
+    acase  3: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_EDIT,    "Edit"       ));
+    acase  4: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_VIEW,    "View"       ));
+    acase  5: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_LOG,     "Log"        ));
+    acase  6: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_RUN,     "Run"        ));
+    acase  7: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_BP,      "Breakpoints"));
+    acase  8: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_SYMBOLS, "Symbols"    ));
+    acase  9: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_TOOLS,   "Tools"      ));
+    acase 11: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_GRAPHICS_MENU,"Graphics"   ));
+#ifdef WIN32
+    acase  1: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_FILE,    "File"       ));
+    acase 10: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_OPTIONS ,"Options"    ));
+#endif
+#ifdef AMIGA
+    acase  1: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_PROJECT, "Project"    ));
+    acase 10: zprintf(TEXTPEN_CLIOUTPUT, "%s:\n", LLL(MSG_MENU_SETTINGS,"Settings"   ));
+#endif
+    }
+
+    for (i = 0; i < MENUITEMS; i++)
+    {   if (menuinfo1[i].submenu == which && menuinfo1[i].desc_str[0] != EOS)
+        {   if (menuinfo1[i].usage_str[0])
+            {   strcpy(gtempstring, menuinfo1[i].usage_str);
+            } else
+            {   strcpy(gtempstring, menuinfo1[i].command_str1);
+                if (menuinfo1[i].command_str2[0] != EOS)
+                {   strcat(gtempstring, "|");
+                    strcat(gtempstring, menuinfo1[i].command_str2);
+                    if (menuinfo1[i].command_str3[0] != EOS)
+                    {   strcat(gtempstring, "|");
+                        strcat(gtempstring, menuinfo1[i].command_str3);
+            }   }   }
+            length = strlen(gtempstring);
+            if (length < 32)
+            {   for (j = length; j < 32; j++)
+                {   strcat(gtempstring, " ");
+            }   }
+            else
+            {   strcat(gtempstring, "\n                                "); // 32 spaces
+            }                    
+            zprintf(TEXTPEN_CLIOUTPUT, "%s", gtempstring);
+            zprintf(TEXTPEN_VERBOSE,   "%s\n", menuinfo1[i].desc_str);
+    }   }
+    for (i = 0; i < MENUOPTS; i++)
+    {   if (menuinfo2[i].submenu == which)
+        {   strcpy(gtempstring, menuinfo2[i].usage_str);
+            length = strlen(gtempstring);
+            if (length < 32)
+            {   for (j = length; j < 32; j++)
+                {   strcat(gtempstring, " ");
+            }   }
+            else
+            {   strcat(gtempstring, "\n                                "); // 32 spaces
+            }                    
+            zprintf(TEXTPEN_CLIOUTPUT, "%s", gtempstring);
+            zprintf(TEXTPEN_VERBOSE,   "%s\n", menuinfo2[i].desc_str);
+}   }   }
 
 EXPORT void loadsym(TEXT* bufptr)
 {   int   address   = 0,
@@ -4925,9 +4908,9 @@ EXPORT void cd_progdir(void)
 
 MODULE FLAG check_range(int address1, int address2)
 {   if
-    (   address1 != OUTOFRANGE
-     && address2 != OUTOFRANGE
-     && address1 <= address2 // perhaps we might want a different error message for this case
+    (   (address1 >= 0 && address1 <= 0x7FFF) // don't just check against OUTOFRANGE because...
+     && (address2 >= 0 && address2 <= 0x7FFF) // ...we want to handle cases such as $8001 too
+     &&  address1 <= address2                 // perhaps we might want a different error message for this case
     )
     {   return TRUE;
     } // implied else
@@ -7308,7 +7291,7 @@ MODULE void commandusage(int command)
                                    LLL(menuinfo2[MENUOPT_DRIVE_1].desc_id, menuinfo2[MENUOPT_DRIVE_1].desc_str),
                                    LLL(menuinfo2[MENUOPT_DRIVE_2].desc_id, menuinfo2[MENUOPT_DRIVE_2].desc_str),
                                    LLL(menuinfo2[MENUOPT_DRIVE_3].desc_id, menuinfo2[MENUOPT_DRIVE_3].desc_str));
-        zprintf(TEXTPEN_CLIOUTPUT, LLL(MSG_USAGE_DRIVE, "Usage: DRIVE [<drive>]\n\n"));
+        zprintf(TEXTPEN_CLIOUTPUT, "%s: %s\n\n", LLL(MSG_USAGE, "Usage"), LLL(MSG_USAGE_DRIVE, "DRIVE [<drive>]"));
     acase MENUITEM_L_A:
     case MENUITEM_L_B:
     case MENUITEM_L_C:
@@ -7373,7 +7356,10 @@ MODULE void commandusage(int command)
                                    LLL(menuinfo2[MENUOPT_WW_ALL ].desc_id, menuinfo2[MENUOPT_WW_ALL ].desc_str));
         zprintf(TEXTPEN_CLIOUTPUT, "%s: WW NONE|SOME|ALL\n", LLL(MSG_USAGE, "Usage"));
     adefault:
-        if (menuinfo1[command].usage_id != (ULONG) -1)
+        if (menuinfo1[command].usage_id == (ULONG) -1)
+        {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", menuinfo1[command].desc_str);
+            zprintf(TEXTPEN_CLIOUTPUT, "%s: %s\n\n", LLL(MSG_USAGE, "Usage"),                                  menuinfo1[command].usage_str );
+        } else
         {   zprintf(TEXTPEN_CLIOUTPUT, "%s\n", LLL(menuinfo1[command].desc_id, menuinfo1[command].desc_str));
-            zprintf(TEXTPEN_CLIOUTPUT, LLL(menuinfo1[command].usage_id, menuinfo1[command].usage_str));
+            zprintf(TEXTPEN_CLIOUTPUT, "%s: %s\n\n", LLL(MSG_USAGE, "Usage"), LLL(menuinfo1[command].usage_id, menuinfo1[command].usage_str));
 }   }   }

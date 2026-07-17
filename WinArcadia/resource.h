@@ -1049,6 +1049,7 @@
 #define IDD_HOSTPADS_GW_LT              1537
 #define IDD_HOSTPADS_LT_GW              1538
 #define IDD_HOSTPADS_LT_LT              1539
+#define IDD_GAMEINFO_QWERTY             1540
 #define IDL_GAMEINFO_4TH                1607
 #define IDL_LEGEND7                     1608
 #define IDL_GAMEINFO_4THTEXT            1609
@@ -3745,9 +3746,9 @@
 #define ID_DEBUG_WARN                   40511
 #define ID_EMULATOR_FRAMEBASED          40512
 #define ID_EMULATOR_PIXELBASED          40513
-#define ID_DEBUG_EVAL                   40514
 #define ID_DEBUG_N_4                    40515
 #define ID_DEBUG_SWAPDISKS              40516
+#define ID_DEBUG_LIST                   40517
 #define ID_STATIC                       -1
 
 // Next default values for new objects
@@ -3755,7 +3756,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        657
-#define _APS_NEXT_COMMAND_VALUE         40517
+#define _APS_NEXT_COMMAND_VALUE         40518
 #define _APS_NEXT_CONTROL_VALUE         4394
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

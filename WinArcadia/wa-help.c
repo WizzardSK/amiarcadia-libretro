@@ -608,7 +608,9 @@ IMPORT       int                       candy[CANDIES],
                                        machine,
                                        memmap,
                                        oldcontrolkey,
+                                       phunsy_biosver,
                                        recmode,
+                                       selbst_biosver,
                                        style,
                                        supercpu,
                                        titleheight,
@@ -699,7 +701,9 @@ MODULE BOOL CALLBACK     PadsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 // CODE-------------------------------------------------------------------
 
 EXPORT void help_gameinfo(void)
-{   if (showpalladiumkeys1)
+{   if (ISQWERTY)
+    {   open_subwindow(SUBWINDOW_GAMEINFO, MAKEINTRESOURCE(IDD_GAMEINFO_QWERTY  ), GameInfoDlgProc);
+    } elif (showpalladiumkeys1)
     {   open_subwindow(SUBWINDOW_GAMEINFO, MAKEINTRESOURCE(IDD_GAMEINFO_LARGE   ), GameInfoDlgProc);
     } elif (machine == ARCADIA
 #ifndef MPT03ONEMERSON
@@ -1811,9 +1815,13 @@ MODULE BOOL CALLBACK ControlsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
          || machine == MIKIT
          || machine == PONG
         )
-        {   setdlgtext(hwnd, IDL_HOVER7            , MSG_CONTROLS_HOVER    , "Hover over a button for more information.\n" \
-                                                                             "Left-click to press a button.\n" \
-                                                                             "Right-click to redefine a button.");
+        {   if (machine == BINBUG)
+            {   setdlgtext(hwnd, IDL_HOVER7            , MSG_HOVER             , "Hover over a button for more information.");
+            } else
+            {   setdlgtext(hwnd, IDL_HOVER7            , MSG_CONTROLS_HOVER    , "Hover over a button for more information.\n" \
+                                                                                 "Left-click to press a button.\n" \
+                                                                                 "Right-click to redefine a button.");
+            }
             if (machines[machine].coinop || machine == PONG)
             {   setdlgtext(hwnd, IDL_CONTROLS_OVERLAY  , MSG_CONTROLS_OVERLAY2, "Overlay/guest key:");
             } else

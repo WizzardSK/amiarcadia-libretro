@@ -51,13 +51,16 @@
                                    screen[((x) * 2) + 1][y] = colour; \
                                    fgtable[y][((x) * 2)    ] = \
                                    fgtable[y][((x) * 2) + 1] = 1
-#define SETPIXEL(x, y, colour)     screen[x][y] = colour; \
+#define SETFGPIXEL(x, y, colour)   screen[x][y] = colour; \
                                    fgtable[y][x] = 1
+#define SETBGPIXEL(x, y, colour)   screen[x][y] = colour; \
+                                   fgtable[y][x] = 0
 #endif
 #ifdef AMIGA
 #define SETPONGPIXEL(x, y, colour) screen[ (x) * 2     ][y] = \
                                    screen[((x) * 2) + 1][y] = colour
-#define SETPIXEL(x, y, colour)     screen[x][y] = colour
+#define SETFGPIXEL(x, y, colour)   screen[x][y] = colour
+#define SETBGPIXEL(x, y, colour)   screen[x][y] = colour
 #endif
 
 // EXPORTED VARIABLES-----------------------------------------------------
@@ -2025,6 +2028,8 @@ EXPORT void draw_margins(void)
 {   FAST int x, y,
              y1, y2, y3, y4;
 
+    calc_margins(); // needed!
+
     switch (machine)
     {
     case ARCADIA:
@@ -2032,7 +2037,7 @@ EXPORT void draw_margins(void)
     case ELEKTOR:
         for (y = 0; y < machines[machine].height; y++)
         {   for (x = 0; x < machines[machine].width; x++)
-            {   screen[x][y] = GREY1;
+            {   SETBGPIXEL(x, y, GREY1);
         }   }
         if (!usemargins)
         {   return;
@@ -2041,110 +2046,110 @@ EXPORT void draw_margins(void)
         {
         case REGION_PAL:
             for (x = 6; x < 227; x++)
-            {   SETPIXEL(    x,  0, blankscreen_2621[ 0][x]);
+            {   SETFGPIXEL(    x,  0, blankscreen_2621[ 0][x]);
             }
             for (y = 1; y <= 42; y++)
             {   for (x = 0; x < 227; x++)
-                {   SETPIXEL(x,  y, blankscreen_2621[ y][x]);
+                {   SETFGPIXEL(x,  y, blankscreen_2621[ y][x]);
             }   }
             for (x = 0; x <= 48; x++)
-            {   SETPIXEL(    x, 43, blankscreen_2621[43][x]);
+            {   SETFGPIXEL(    x, 43, blankscreen_2621[43][x]);
             }
             for (y = 44; y < 312; y++)
             {   for (x = 6; x <= 48; x++)
-                {   SETPIXEL(x,  y, blankscreen_2621[ y][x]);
+                {   SETFGPIXEL(x,  y, blankscreen_2621[ y][x]);
             }   }
         acase REGION_NTSC:
             for (x = 6; x < 227; x++)
-            {   SETPIXEL(    x,  0, blankscreen_2622[ 0][x]);
+            {   SETFGPIXEL(    x,  0, blankscreen_2622[ 0][x]);
             }
             for (y = 1; y <= 19; y++)
             {   for (x = 0; x < 227; x++)
-                {   SETPIXEL(x,  y, blankscreen_2622[ y][x]);
+                {   SETFGPIXEL(x,  y, blankscreen_2622[ y][x]);
             }   }
             for (x = 0; x <= 48; x++)
-            {   SETPIXEL(    x, 20, blankscreen_2622[20][x]);
+            {   SETFGPIXEL(    x, 20, blankscreen_2622[20][x]);
             }
             for (y = 21; y < 262; y++)
             {   for (x = 6; x <= 48; x++)
-                {   SETPIXEL(x,  y, blankscreen_2622[ y][x]);
+                {   SETFGPIXEL(x,  y, blankscreen_2622[ y][x]);
         }   }   }
     acase PIPBUG:
         if (showleds)
         {   for (x = 0; x < machines[machine].width; x++)
-            {   SETPIXEL(x, machines[machine].height - PIPBUG_LEDHEIGHT    , GREY1);
-                SETPIXEL(x, machines[machine].height - PIPBUG_LEDHEIGHT + 1, GREY1);
+            {   SETFGPIXEL(x, machines[machine].height - PIPBUG_LEDHEIGHT    , GREY1);
+                SETFGPIXEL(x, machines[machine].height - PIPBUG_LEDHEIGHT + 1, GREY1);
                 for (y = machines[machine].height - PIPBUG_LEDHEIGHT + 2; y < machines[machine].height; y++)
-                {   screen[x][y] = BLACK; // not cy_bgc!
+                {   SETBGPIXEL(x, y, BLACK); // not cy_bgc!
         }   }   }
         if (!usemargins || pipbug_vdu != VDU_RADIOBULLETIN)
         {   return;
         }
         for (y = 0; y <= 42; y++)
         {   for (x = 0; x <= 83; x++)
-            {   SETPIXEL(x, y, RED);             // horizontal back porch  + vertical back porch
+            {   SETFGPIXEL(x, y, RED);             // horizontal back porch  + vertical back porch
             }
             for (x = 84; x <= 433; x++)
-            {   SETPIXEL(x, y, PINK);            //                          vertical back porch (43 lines)
+            {   SETFGPIXEL(x, y, PINK);            //                          vertical back porch (43 lines)
             }
             for (x = 434; x <= 482; x++)
-            {   SETPIXEL(x, y, RED);             // horizontal front porch + vertical back porch
+            {   SETFGPIXEL(x, y, RED);             // horizontal front porch + vertical back porch
             }
             for (x = 483; x <= 517; x++)
-            {   SETPIXEL(x, y, BLUE);            // horizontal retrace     + vertical back porch
+            {   SETFGPIXEL(x, y, BLUE);            // horizontal retrace     + vertical back porch
         }   }
         for (y = 43; y <= 298; y++)
         {   for (x = 0; x <= 83; x++)
-            {   SETPIXEL(x, y, ORANGE);          // horizontal back  porch (12*7=84 pixels)
+            {   SETFGPIXEL(x, y, ORANGE);          // horizontal back  porch (12*7=84 pixels)
             }
             for (x = 434; x <= 482; x++)
-            {   SETPIXEL(x, y, ORANGE);          // horizontal front porch ( 7*7=49 pixels)
+            {   SETFGPIXEL(x, y, ORANGE);          // horizontal front porch ( 7*7=49 pixels)
             }
             for (x = 483; x <= 517; x++)
-            {   SETPIXEL(x, y, CYAN);            // horizontal retrace     ( 5*7=35 pixels)
+            {   SETFGPIXEL(x, y, CYAN);            // horizontal retrace     ( 5*7=35 pixels)
         }   }
         for (y = 299; y <= 309; y++)
         {   for (x = 0; x <= 83; x++)
-            {   SETPIXEL(x, y, RED);             // horizontal back porch  + vertical front porch
+            {   SETFGPIXEL(x, y, RED);             // horizontal back porch  + vertical front porch
             }
             for (x = 84; x <= 433; x++)
-            {   SETPIXEL(x, y, PINK);            //                          vertical front porch (11 lines)
+            {   SETFGPIXEL(x, y, PINK);            //                          vertical front porch (11 lines)
             }
             for (x = 434; x <= 482; x++)
-            {   SETPIXEL(x, y, RED);             // horizontal front porch + vertical front porch
+            {   SETFGPIXEL(x, y, RED);             // horizontal front porch + vertical front porch
             }
             for (x = 483; x <= 517; x++)
-            {   SETPIXEL(x, y, BLUE);            // horizontal retrace     + vertical front porch
+            {   SETFGPIXEL(x, y, BLUE);            // horizontal retrace     + vertical front porch
         }   }
         for (y = 310; y <= 312; y++)
         {   for (x = 0; x <= 83; x++)
-            {   SETPIXEL(x, y, DARKRED);         // horizontal back porch  + vertical retrace
+            {   SETFGPIXEL(x, y, DARKRED);         // horizontal back porch  + vertical retrace
             }
             for (x = 84; x <= 433; x++)
-            {   SETPIXEL(x, y, PURPLE);          //                          vertical retrace (3 lines)
+            {   SETFGPIXEL(x, y, PURPLE);          //                          vertical retrace (3 lines)
             }
             for (x = 434; x <= 482; x++)
-            {   SETPIXEL(x, y, DARKRED);         // horizontal front porch + vertical retrace
+            {   SETFGPIXEL(x, y, DARKRED);         // horizontal front porch + vertical retrace
             }
             for (x = 483; x <= 517; x++)
-            {   SETPIXEL(x, y, DARKBLUE);        // horizontal retrace     + vertical retrace
+            {   SETFGPIXEL(x, y, DARKBLUE);        // horizontal retrace     + vertical retrace
         }   }
     acase BINBUG:
         if (showleds)
         {   for (y = 0; y < machines[machine].height - BINBUG_LEDHEIGHT; y++)
             {   for (x = 0; x < machines[machine].width; x++)
-                {   screen[x][y] = inverse ? WHITE : BLACK;
+                {   SETBGPIXEL(x, y, inverse ? WHITE : BLACK);
             }   }
             for (x = 0; x < machines[machine].width; x++)
-            {   SETPIXEL(x, machines[machine].height - BINBUG_LEDHEIGHT    , GREY1);
-                SETPIXEL(x, machines[machine].height - BINBUG_LEDHEIGHT + 1, GREY1);
+            {   SETFGPIXEL(x, machines[machine].height - BINBUG_LEDHEIGHT    , GREY1);
+                SETFGPIXEL(x, machines[machine].height - BINBUG_LEDHEIGHT + 1, GREY1);
                 for (y = machines[machine].height - BINBUG_LEDHEIGHT + 2; y < machines[machine].height; y++)
-                {   screen[x][y] = BLACK;
+                {   SETBGPIXEL(x, y, BLACK);
         }   }   }
         else
         {   for (y = 0; y < machines[machine].height; y++)
             {   for (x = 0; x < machines[machine].width; x++)
-                {   screen[x][y] = inverse ? WHITE : BLACK;
+                {   SETBGPIXEL(x, y, inverse ? WHITE : BLACK);
         }   }   }
 
         if (!usemargins)
@@ -2154,9 +2159,9 @@ EXPORT void draw_margins(void)
         for (y = 0; y <= 255; y++)
         {   for (x = 576; x <= 767; x++)
             {   if (x >= 642 && x <= 701)
-                {   SETPIXEL(x, y, CYAN);        // horizontal retrace
+                {   SETFGPIXEL(x, y, CYAN);        // horizontal retrace
                 } else
-                {   SETPIXEL(x, y, ORANGE);      // horizontal porch
+                {   SETFGPIXEL(x, y, ORANGE);      // horizontal porch
         }   }   }
 
         for (y = 256; y <= 312; y++)
@@ -2168,29 +2173,29 @@ EXPORT void draw_margins(void)
                 )
                 {   if (x >= 576)
                     {   if (x >= HPULSE_FIRST && x <= HPULSE_LAST)
-                        {   SETPIXEL(x, y, DARKBLUE); // horizontal retrace + vertical retrace
+                        {   SETFGPIXEL(x, y, DARKBLUE); // horizontal retrace + vertical retrace
                         } else
-                        {   SETPIXEL(x, y, DARKRED);  // horizontal porch   + vertical retrace
+                        {   SETFGPIXEL(x, y, DARKRED);  // horizontal porch   + vertical retrace
                     }   }
                     else
-                    {   SETPIXEL(    x, y, PURPLE);   //                      vertical retrace
+                    {   SETFGPIXEL(    x, y, PURPLE);   //                      vertical retrace
                 }   }
                 elif (y == 312 && x >= 384)
-                {   SETPIXEL(        x, y, GREY1);    // nonexistent half-scanline
+                {   SETFGPIXEL(        x, y, GREY1);    // nonexistent half-scanline
                 } else
                 {   if (x >= 576)
                     {   if (x >= HPULSE_FIRST && x <= HPULSE_LAST)
-                        {   SETPIXEL(x, y, BLUE);     // horizontal retrace + vertical porch
+                        {   SETFGPIXEL(x, y, BLUE);     // horizontal retrace + vertical porch
                         } else
-                        {   SETPIXEL(x, y, RED);      // horizontal porch   + vertical porch
+                        {   SETFGPIXEL(x, y, RED);      // horizontal porch   + vertical porch
                     }   }
                     else
-                    {   SETPIXEL(    x, y, PINK);     //                      vertical porch
+                    {   SETFGPIXEL(    x, y, PINK);     //                      vertical porch
         }   }   }   }
     acase TWIN:
         for (y = 0; y < machines[machine].height; y++)
         {   for (x = 0; x < machines[machine].width; x++)
-            {   screen[x][y] = inverse ? WHITE : BLACK;
+            {   SETBGPIXEL(x, y, inverse ? WHITE : BLACK);
         }   }
         if (!usemargins)
         {   return;
@@ -2198,19 +2203,19 @@ EXPORT void draw_margins(void)
 
         for (y = 0; y <= 249; y++)
         {   for (x = 560; x <= 699; x++)
-            {   SETPIXEL(x, y, ORANGE);          // horizontal porch
+            {   SETFGPIXEL(x, y, ORANGE);          // horizontal porch
         }   }
         for (y = 250; y <= 269; y++)
         {   for (x = 0; x <= 559; x++)
-            {   SETPIXEL(x, y, PINK);            //                      vertical porch
+            {   SETFGPIXEL(x, y, PINK);            //                      vertical porch
             }
             for (x = 560; x <= 699; x++)
-            {   SETPIXEL(x, y, RED);             // horizontal porch   + vertical porch
+            {   SETFGPIXEL(x, y, RED);             // horizontal porch   + vertical porch
         }   }
     acase CD2650:
         for (y = 0; y < machines[machine].height; y++)
         {   for (x = 0; x < machines[machine].width; x++)
-            {   screen[x][y] = inverse ? WHITE : BLACK;
+            {   SETBGPIXEL(x, y, inverse ? WHITE : BLACK);
         }   }
         if (!usemargins)
         {   return;
@@ -2219,48 +2224,48 @@ EXPORT void draw_margins(void)
         for (y = 0; y <= 191; y++)
         {   for (x = 640; x <= 903; x++)
             {   if (x >= 712 && x <= 775)
-                {   SETPIXEL(x, y, CYAN);        // horizontal retrace
+                {   SETFGPIXEL(x, y, CYAN);        // horizontal retrace
                 } else
-                {   SETPIXEL(x, y, ORANGE);      // horizontal porch
+                {   SETFGPIXEL(x, y, ORANGE);      // horizontal porch
         }   }   }
 
         for (y = 192; y <= 263; y++)
         {   for (x = 0; x <= 639; x++)
             {   if (y >= 216 && y <= 227)
-                {   SETPIXEL(x, y, PURPLE);      //                      vertical retrace
+                {   SETFGPIXEL(x, y, PURPLE);      //                      vertical retrace
                 } else
-                {   SETPIXEL(x, y, PINK);        //                      vertical porch
+                {   SETFGPIXEL(x, y, PINK);        //                      vertical porch
             }   }
 
             for (x = 640; x <= 903; x++)
             {   if (y >= 216 && y <= 227)
                 {   if (x >= 712 && x <= 775)
-                    {   SETPIXEL(x, y, DARKBLUE); // horizontal retrace + vertical retrace
+                    {   SETFGPIXEL(x, y, DARKBLUE); // horizontal retrace + vertical retrace
                     } else
-                    {   SETPIXEL(x, y, DARKRED);  // horizontal porch   + vertical retrace
+                    {   SETFGPIXEL(x, y, DARKRED);  // horizontal porch   + vertical retrace
                 }   }
                 else
                 {   if (x >= 712 && x <= 775)
-                    {   SETPIXEL(x, y, BLUE);     // horizontal retrace + vertical porch
+                    {   SETFGPIXEL(x, y, BLUE);     // horizontal retrace + vertical porch
                     } else
-                    {   SETPIXEL(x, y, RED);      // horizontal porch   + vertical porch
+                    {   SETFGPIXEL(x, y, RED);      // horizontal porch   + vertical porch
         }   }   }   }
     acase PHUNSY:
         if (showleds)
         {   for (y = 0; y < machines[machine].height - PHUNSY_LEDHEIGHT; y++)
             {   for (x = 0; x < machines[machine].width; x++)
-                {   screen[x][y] = inverse ? WHITE : BLACK;
+                {   SETBGPIXEL(x, y, inverse ? WHITE : BLACK);
             }   }
             for (x = 0; x < machines[machine].width; x++)
-            {   SETPIXEL(x, machines[machine].height - PHUNSY_LEDHEIGHT    , GREY1);
-                SETPIXEL(x, machines[machine].height - PHUNSY_LEDHEIGHT + 1, GREY1);
+            {   SETFGPIXEL(x, machines[machine].height - PHUNSY_LEDHEIGHT    , GREY1);
+                SETFGPIXEL(x, machines[machine].height - PHUNSY_LEDHEIGHT + 1, GREY1);
                 for (y = machines[machine].height - PHUNSY_LEDHEIGHT + 2; y < machines[machine].height; y++)
-                {   screen[x][y] = BLACK;
+                {   SETBGPIXEL(x, y, BLACK);
         }   }   }
         else
         {   for (y = 0; y < machines[machine].height; y++)
             {   for (x = 0; x < machines[machine].width; x++)
-                {   screen[x][y] = inverse ? WHITE : BLACK;
+                {   SETBGPIXEL(x, y, inverse ? WHITE : BLACK);
         }   }   }
 
         if (!usemargins)
@@ -2270,50 +2275,50 @@ EXPORT void draw_margins(void)
         for (y = 0; y <= 255; y++)
         {   for (x = 0; x <= 127; x++)
             {   if (x >= 26 && x <= 57)
-                {   SETPIXEL(x, y, CYAN);         // horizontal retrace
+                {   SETFGPIXEL(x, y, CYAN);         // horizontal retrace
                 } elif (x >= 66 && x <= 81)
-                {   SETPIXEL(x, y, WHITE);        // colourburst
+                {   SETFGPIXEL(x, y, WHITE);        // colourburst
                 } else
-                {   SETPIXEL(x, y, ORANGE);       // horizontal porch
+                {   SETFGPIXEL(x, y, ORANGE);       // horizontal porch
         }   }   }
 
         for (y = 256; y <= 312; y++)
         {   for (x = 128; x <= 511; x++)
             {   if (y >= 269 && y <= 272)
-                {   SETPIXEL(x, y, PURPLE);       //                      vertical retrace
+                {   SETFGPIXEL(x, y, PURPLE);       //                      vertical retrace
                 } else
-                {   SETPIXEL(x, y, PINK);         //                      vertical porch
+                {   SETFGPIXEL(x, y, PINK);         //                      vertical porch
             }   }
 
             for (x = 0; x <= 127; x++)
             {   if (y >= 269 && y <= 272)
                 {   if (x >= 26 && x <= 57)
-                    {   SETPIXEL(x, y, DARKBLUE); // horizontal retrace + vertical retrace
+                    {   SETFGPIXEL(x, y, DARKBLUE); // horizontal retrace + vertical retrace
                     } elif (x >= 66 && x <= 81)
-                    {   SETPIXEL(x, y, BLACK);    // colourburst        + vertical retrace
+                    {   SETFGPIXEL(x, y, BLACK);    // colourburst        + vertical retrace
                     } else
-                    {   SETPIXEL(x, y, DARKRED);  // horizontal porch   + vertical retrace
+                    {   SETFGPIXEL(x, y, DARKRED);  // horizontal porch   + vertical retrace
                 }   }
                 else
                 {   if (x >= 26 && x <= 57)
-                    {   SETPIXEL(x, y, BLUE);     // horizontal retrace + vertical porch
+                    {   SETFGPIXEL(x, y, BLUE);     // horizontal retrace + vertical porch
                     } elif (x >= 66 && x <= 81)
-                    {   SETPIXEL(x, y, GREY1);    // colourburst        + vertical porch
+                    {   SETFGPIXEL(x, y, GREY1);    // colourburst        + vertical porch
                     } else
-                    {   SETPIXEL(x, y, RED);      // horizontal porch   + vertical porch
+                    {   SETFGPIXEL(x, y, RED);      // horizontal porch   + vertical porch
         }   }   }   }
     acase SELBST:
         if (showleds)
         {   for (x = 0; x < machines[machine].width; x++)
-            {   SETPIXEL(x, machines[machine].height - SELBST_LEDHEIGHT    , GREY1);
-                SETPIXEL(x, machines[machine].height - SELBST_LEDHEIGHT + 1, GREY1);
+            {   SETFGPIXEL(x, machines[machine].height - SELBST_LEDHEIGHT    , GREY1);
+                SETFGPIXEL(x, machines[machine].height - SELBST_LEDHEIGHT + 1, GREY1);
                 for (y = machines[machine].height - SELBST_LEDHEIGHT + 2; y < machines[machine].height; y++)
-                {   screen[x][y] = BLACK; // not cy_bgc!
+                {   SETBGPIXEL(x, y, BLACK); // not cy_bgc!
         }   }   }
     acase PONG:
         for (y = 0; y < machines[machine].height; y++)
         {   for (x = 0; x < machines[machine].width; x++)
-            {   screen[x][y] = GREY1;
+            {   SETBGPIXEL(x, y, GREY1);
         }   }
         if (!usemargins)
         {   return;
@@ -2481,11 +2486,13 @@ EXPORT void fixupcolours(void)
     draw_margins();
 
 #ifdef AMIGA
-    changecolours();
+    redrawscreen();
     if (subwin[SUBWINDOW_PALETTE].hwnd)
-    {   update_sliders();
+    {   update_slider(0);
+        update_slider(1);
+        update_slider(2);
         updatewheel();
-        updatebrightness();
+        update_slider(3);
     }
     fixdebuggercolour();
 #endif

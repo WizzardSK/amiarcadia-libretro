@@ -170,8 +170,6 @@ MODULE void mikit_emuinput(void)
 EXPORT void mikit_setmemmap(void)
 {   int i, address, mirror;
 
-    game = FALSE;
-
     for (i = 0; i < 30; i++)
     {   memory[i] = mikit_bios[i];
     }

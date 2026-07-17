@@ -1,10 +1,10 @@
-#define DECIMALVERSION       "36.51"
-#define INTEGERVERSION       "36.51"
+#define DECIMALVERSION       "36.52"
+#define INTEGERVERSION       "36.52"
 #define MAJORVERSION         0x36
-#define MINORVERSION         0x51
-#define VERSIONSTRING        "\0$VER: AmiArcadia " INTEGERVERSION " (6.7.2026)" // d.m.yyyy format
-#define RELEASEDATE          "06-07-26" // dd-mm-yy format. Year *must* be only 2 digits!
-#define LONGDATE             "6 July 2026" // full month and year
+#define MINORVERSION         0x52
+#define VERSIONSTRING        "\0$VER: AmiArcadia " INTEGERVERSION " (18.7.2026)" // d.m.yyyy format
+#define RELEASEDATE          "18-07-26" // dd-mm-yy format. Year *must* be only 2 digits!
+#define LONGDATE             "18 July 2026" // full month and year
 #define COPYRIGHT            "© 2006-2026 James Jacobs of Amigan Software"
 // VERSIONSTRING needs a leading NUL for OS4 to correctly find it
 #define NEWCONFIGVERSION     "36.5"  // V36.5      +
@@ -964,6 +964,10 @@ typedef UWORD MEMFLAG;
 #define SENSITIVITY_DEFAULT     3
 #define SENSITIVITY_MAX         5
 
+// autofire
+#define DEF_DN                  1
+#define DEF_TO                  2
+
 #define STYLE_SIGNETICS1        0
 #define STYLE_SIGNETICS2        1
 #define STYLE_OLDCALM           2
@@ -1511,271 +1515,271 @@ typedef UWORD MEMFLAG;
 #define MENUITEM_EXTRACT           85
 #define MENUITEM_INJECT            86
 #define MENUITEM_RENAME            87
-#define MENUFAKE_DRIVE             88
+#define MENUITEM_SWAPDISKS         88
+#define MENUFAKE_DRIVE             89
 // "Debug|Edit »" submenu
-#define MENUITEM_DOKE              89
-#define MENUITEM_POKE              90
-#define MENUITEM_FPOKE             91
-#define MENUITEM_WRITEPORT         92
+#define MENUITEM_DOKE              90
+#define MENUITEM_POKE              91
+#define MENUITEM_FPOKE             92
+#define MENUITEM_WRITEPORT         93
 // "Debug|View »" submenu
-#define MENUITEM_EQUALS            93
-#define MENUITEM_COVER             94
-#define MENUITEM_PEEK              95
-#define MENUITEM_DIS               96
-#define MENUITEM_ERROR             97
-#define MENUITEM_FPEEK             98
-#define MENUITEM_HISTORY           99
-#define MENUITEM_IM               100
-#define MENUITEM_READPORT         101
-#define MENUITEM_VIEW_BASIC       102
-#define MENUITEM_VIEW_BIOS        103
-#define MENUITEM_VIEW_CPU         104
-#define MENUITEM_VIEW_PSG         105
-#define MENUITEM_VIEW_RAM         106
-#define MENUITEM_VIEW_SCRN        107
-#define MENUITEM_VIEW_UDG         108
-#define MENUITEM_VIEW_XVI         109
+#define MENUITEM_EQUALS            94
+#define MENUITEM_COVER             95
+#define MENUITEM_PEEK              96
+#define MENUITEM_DIS               97
+#define MENUITEM_ERROR             98
+#define MENUITEM_FPEEK             99
+#define MENUITEM_HISTORY          100
+#define MENUITEM_IM               101
+#define MENUITEM_LIST             102
+#define MENUITEM_READPORT         103
+#define MENUITEM_VIEW_BASIC       104
+#define MENUITEM_VIEW_BIOS        105
+#define MENUITEM_VIEW_CPU         106
+#define MENUITEM_VIEW_PSG         107
+#define MENUITEM_VIEW_RAM         108
+#define MENUITEM_VIEW_SCRN        109
+#define MENUITEM_VIEW_UDG         110
+#define MENUITEM_VIEW_XVI         111
 // "Debug|Log »" submenu
-#define MENUITEM_L_A              110
-#define MENUITEM_L_B              111
-#define MENUITEM_L_C              112
-#define MENUITEM_L_I              113
-#define MENUITEM_L_N              114
-#define MENUITEM_L_S              115
-#define MENUITEM_PL               116
-#define MENUITEM_T                117
+#define MENUITEM_L_A              112
+#define MENUITEM_L_B              113
+#define MENUITEM_L_C              114
+#define MENUITEM_L_I              115
+#define MENUITEM_L_N              116
+#define MENUITEM_L_S              117
+#define MENUITEM_PL               118
+#define MENUITEM_T                119
 // "Debug|Run »" submenu
-#define MENUITEM_G                118
-#define MENUITEM_GI               119
-#define MENUITEM_I                120
-#define MENUITEM_JUMP             121
-#define MENUITEM_O                122
-#define MENUITEM_S                123
-#define MENUITEM_R                124
-#define MENUITEM_R_F              125
-#define MENUITEM_R_I              126
-#define MENUITEM_R_L              127
-#define MENUITEM_R_R              128
-#define MENUITEM_R_S              129
+#define MENUITEM_G                120
+#define MENUITEM_GI               121
+#define MENUITEM_I                122
+#define MENUITEM_JUMP             123
+#define MENUITEM_O                124
+#define MENUITEM_S                125
+#define MENUITEM_R                126
+#define MENUITEM_R_F              127
+#define MENUITEM_R_I              128
+#define MENUITEM_R_L              129
+#define MENUITEM_R_R              130
+#define MENUITEM_R_S              131
 // "Debug|Breakpoints »" submenu
-#define MENUITEM_BP               130
-#define MENUITEM_BC               131
-#define MENUITEM_BL               132
-#define MENUITEM_FP               133
-#define MENUITEM_FC               134
-#define MENUITEM_FL               135
-#define MENUITEM_IP               136
-#define MENUITEM_IC               137
-#define MENUITEM_IL               138
-#define MENUITEM_WP               139
-#define MENUITEM_WC               140
-#define MENUITEM_WL               141
-#define MENUITEM_PB               142
-#define MENUITEM_WR               143
-#define MENUFAKE_WW               144
+#define MENUITEM_BP               132
+#define MENUITEM_BC               133
+#define MENUITEM_BL               134
+#define MENUITEM_FP               135
+#define MENUITEM_FC               136
+#define MENUITEM_FL               137
+#define MENUITEM_IP               138
+#define MENUITEM_IC               139
+#define MENUITEM_IL               140
+#define MENUITEM_WP               141
+#define MENUITEM_WC               142
+#define MENUITEM_WL               143
+#define MENUITEM_PB               144
+#define MENUITEM_WR               145
+#define MENUFAKE_WW               146
 // "Debug|Symbols »" submenu
-#define MENUITEM_CLEARSYM         145
-#define MENUITEM_DEFSYM           146
-#define MENUITEM_LOADSYM          147
-#define MENUITEM_SAVESYM          148
+#define MENUITEM_CLEARSYM         147
+#define MENUITEM_DEFSYM           148
+#define MENUITEM_LOADSYM          149
+#define MENUITEM_SAVESYM          150
 // "Debug|Tools »" submenu
-#define MENUITEM_COMP             149
-#define MENUITEM_COPY             150
-#define MENUITEM_FILL             151
-#define MENUITEM_FIND             152
-#define MENUITEM_REL              153
-#define MENUITEM_SWAP             154
-#define MENUITEM_TRAIN            155
+#define MENUITEM_COMP             151
+#define MENUITEM_COPY             152
+#define MENUITEM_FILL             153
+#define MENUITEM_FIND             154
+#define MENUITEM_REL              155
+#define MENUITEM_SWAP             156
+#define MENUITEM_TRAIN            157
 // "Debug|Options »" submenu
-#define MENUFAKE_BASE             156
-#define MENUFAKE_CPU              157
-#define MENUFAKE_N                158
-#define MENUFAKE_TU               159
-#define MENUFAKE_VERBOSITY        160
-#define MENUITEM_GR               161
-#define MENUITEM_WARN             162
+#define MENUFAKE_BASE             158
+#define MENUFAKE_CPU              159
+#define MENUFAKE_N                160
+#define MENUFAKE_TU               161
+#define MENUFAKE_VERBOSITY        162
+#define MENUITEM_GR               163
+#define MENUITEM_WARN             164
 // "Debug|Graphics »" submenu
-#define MENUFAKE_DRAW             163
-#define MENUFAKE_SPR              164
+#define MENUFAKE_DRAW             165
+#define MENUFAKE_SPR              166
 // "Debug" menu
-#define MENUITEM_TOOLSDEBUGGER    165
+#define MENUITEM_TOOLSDEBUGGER    167
 // "Tools" menu
-#define MENUITEM_VIEWMONITOR_CPU  166
-#define MENUITEM_VIEWMONITOR_PSGS 167
-#define MENUITEM_VIEWMONITOR_XVI  168
-#define MENUITEM_MUSIC            169
-#define MENUITEM_SERVER           170
-#define MENUITEM_CLIENT           171
-#define MENUITEM_CHEEVOS1         172
+#define MENUITEM_VIEWMONITOR_CPU  168
+#define MENUITEM_VIEWMONITOR_PSGS 169
+#define MENUITEM_VIEWMONITOR_XVI  170
+#define MENUITEM_MUSIC            171
+#define MENUITEM_SERVER           172
+#define MENUITEM_CLIENT           173
+#define MENUITEM_CHEEVOS1         174
 // "Peripherals" menu
-#define MENUITEM_CONTROLS         173
-#define MENUITEM_DIPSWITCHES      174
+#define MENUITEM_CONTROLS         175
+#define MENUITEM_DIPSWITCHES      176
 // "Peripherals|Left controller »" submenu
-#define MENUFAKE_LEFT             175
-#define MENUITEM_AUTOFIRE1        176
-#define MENUITEM_REQUIREBUTTON1   177
-#define MENUITEM_FORCEFEEDBACK1   178
+#define MENUFAKE_LEFT             177
+#define MENUITEM_AUTOFIRE1        178
+#define MENUITEM_REQUIREBUTTON1   179
+#define MENUITEM_FORCEFEEDBACK1   180
 // "Peripherals|Right controller »" submenu
-#define MENUFAKE_RIGHT            179
-#define MENUITEM_AUTOFIRE2        180
-#define MENUITEM_REQUIREBUTTON2   181
-#define MENUITEM_FORCEFEEDBACK2   182
+#define MENUFAKE_RIGHT            181
+#define MENUITEM_AUTOFIRE2        182
+#define MENUITEM_REQUIREBUTTON2   183
+#define MENUITEM_FORCEFEEDBACK2   184
 // "Peripherals" menu
-#define MENUITEM_TAPEDECK         183
-#define MENUITEM_FLOPPYDRIVE      184
-#define MENUITEM_INDUSTRIAL       185
-#define MENUITEM_PAPERTAPE        186
-#define MENUITEM_PRINTER          187
+#define MENUITEM_TAPEDECK         185
+#define MENUITEM_FLOPPYDRIVE      186
+#define MENUITEM_INDUSTRIAL       187
+#define MENUITEM_PAPERTAPE        188
+#define MENUITEM_PRINTER          189
 // "Settings|BIOS »" submenu
-#define MENUFAKE_ELEKTORBIOS      188
-#define MENUFAKE_PIPBUGBIOS       189
-#define MENUFAKE_BINBUGBIOS       190
-#define MENUFAKE_CD2650BIOS       191
-#define MENUFAKE_PHUNSYBIOS       192
-#define MENUFAKE_SELBSTBIOS       193
+#define MENUFAKE_ELEKTORBIOS      190
+#define MENUFAKE_PIPBUGBIOS       191
+#define MENUFAKE_BINBUGBIOS       192
+#define MENUFAKE_CD2650BIOS       193
+#define MENUFAKE_PHUNSYBIOS       194
+#define MENUFAKE_SELBSTBIOS       195
 // "Settings|Colours »" submenu
-#define MENUITEM_UNDITHER         194
-#define MENUITEM_DARKENBG         195
-#define MENUITEM_FLAGLINE         196
-#define MENUITEM_INVERSE          197
-#define MENUFAKE_COLOURSET        198
+#define MENUITEM_UNDITHER         196
+#define MENUITEM_DARKENBG         197
+#define MENUITEM_FLAGLINE         198
+#define MENUITEM_INVERSE          199
+#define MENUFAKE_COLOURSET        200
 // "Settings|DOS »" submenu
-#define MENUFAKE_BINBUGDOS        199
-#define MENUFAKE_TWINDOS          200
-#define MENUFAKE_CD2650DOS        201
+#define MENUFAKE_BINBUGDOS        201
+#define MENUFAKE_TWINDOS          202
+#define MENUFAKE_CD2650DOS        203
 // "Settings|Emulator »" submenu
-#define MENUITEM_AUTOSAVE         202
-#define MENUITEM_STARTUPUPDATES   203
-#define MENUITEM_CONFIRM          204
-#define MENUITEM_CREATEICONS      205
-#define MENUITEM_CONSOLE          206
-#define MENUITEM_EMUID            207
-#define MENUITEM_POST             208
-#define MENUITEM_RANDOMIZE        209
-#define MENUITEM_SENSEGAME        210
-#define MENUITEM_SHOWTOD          211
-#define MENUITEM_USESTUBS         212
-#define MENUFAKE_FRAMEBASED       213
-#define MENUFAKE_LOGTOFILE        214
-#define MENUITEM_PATHS            215
+#define MENUITEM_AUTOSAVE         204
+#define MENUITEM_STARTUPUPDATES   205
+#define MENUITEM_CONFIRM          206
+#define MENUITEM_CREATEICONS      207
+#define MENUITEM_CONSOLE          208
+#define MENUITEM_EMUID            209
+#define MENUITEM_POST             210
+#define MENUITEM_RANDOMIZE        211
+#define MENUITEM_SENSEGAME        212
+#define MENUITEM_SHOWTOD          213
+#define MENUITEM_USESTUBS         214
+#define MENUFAKE_FRAMEBASED       215
+#define MENUFAKE_LOGTOFILE        216
+#define MENUITEM_PATHS            217
 // "Settings|Filters »" submenu
-#define MENUFAKE_FILTER           216
-#define MENUITEM_SCANLINES        217
-#define MENUITEM_STRETCH43        218
-#define MENUFAKE_STRETCHING       219
+#define MENUFAKE_FILTER           218
+#define MENUITEM_SCANLINES        219
+#define MENUITEM_STRETCH43        220
+#define MENUFAKE_STRETCHING       221
 // "Settings|Graphics »" submenu
-#define MENUFAKE_SIZE             220
-#define MENUITEM_BEZEL            221
-#define MENUITEM_USEMARGINS       222
-#define MENUITEM_BLINK            223
-#define MENUITEM_DEJITTER         224
-#define MENUITEM_SKIES            225
-#define MENUITEM_CORNERS          226
-#define MENUITEM_FULLSCREEN       227
-#define MENUITEM_COOMER           228
-#define MENUITEM_NARROW           229
-#define MENUITEM_ROTATE           230
-#define MENUITEM_UNLIT            231
-#define MENUITEM_SHOWLEDS         232
+#define MENUFAKE_SIZE             222
+#define MENUITEM_BEZEL            223
+#define MENUITEM_USEMARGINS       224
+#define MENUITEM_BLINK            225
+#define MENUITEM_DEJITTER         226
+#define MENUITEM_SKIES            227
+#define MENUITEM_CORNERS          228
+#define MENUITEM_FULLSCREEN       229
+#define MENUITEM_COOMER           230
+#define MENUITEM_NARROW           231
+#define MENUITEM_ROTATE           232
+#define MENUITEM_UNLIT            233
+#define MENUITEM_SHOWLEDS         234
 // "Settings|Input »" submenu
-#define MENUITEM_ANALOG           233
-#define MENUITEM_SHOWPOSITIONS    234
-#define MENUITEM_SPRINGLOADED     235
-#define MENUITEM_SWAPPED          236
-#define MENUITEM_CALIBRATE        237
-#define MENUITEM_REARRANGE        238
-#define MENUITEM_REDEFINEKEYS     239
-#define MENUITEM_SENSITIVITY      240
-#define MENUITEM_LOWERCASEINPUT   241
-#define MENUITEM_CONFINE          242
-#define MENUITEM_ERASEDEL         243
-#define MENUITEM_AUTOCOIN         244
-#define MENUITEM_GUESTRMB         245
-#define MENUITEM_QUEUEKEYSTROKES  246
-#define MENUFAKE_KEYMAP           247
+#define MENUITEM_ANALOG           235
+#define MENUITEM_SHOWPOSITIONS    236
+#define MENUITEM_SPRINGLOADED     237
+#define MENUITEM_SWAPPED          238
+#define MENUITEM_CALIBRATE        239
+#define MENUITEM_REARRANGE        240
+#define MENUITEM_REDEFINEKEYS     241
+#define MENUITEM_SENSITIVITY      242
+#define MENUITEM_LOWERCASEINPUT   243
+#define MENUITEM_CONFINE          244
+#define MENUITEM_ERASEDEL         245
+#define MENUITEM_AUTOCOIN         246
+#define MENUITEM_GUESTRMB         247
+#define MENUITEM_QUEUEKEYSTROKES  248
+#define MENUFAKE_KEYMAP           249
 // "Settings|Language »" submenu
-#define MENUFAKE_LANGUAGE         248
+#define MENUFAKE_LANGUAGE         250
 // "Settings|Machine »" submenu
-#define MENUFAKE_MACHINE          249
+#define MENUFAKE_MACHINE          251
 // "Settings|Sound »" submenu
-#define MENUITEM_SOUND            250
-#define MENUITEM_ADJUSTSOUND      251
-#define MENUITEM_AMBIENT          252
-#define MENUITEM_FILTERED         253
-#define MENUITEM_RETUNE           254
-#define MENUITEM_SOUNDOUTPUT      255
+#define MENUITEM_SOUND            252
+#define MENUITEM_ADJUSTSOUND      253
+#define MENUITEM_AMBIENT          254
+#define MENUITEM_FILTERED         255
+#define MENUITEM_RETUNE           256
+#define MENUITEM_SOUNDOUTPUT      257
 // "Settings|Speed »" submenu
-#define MENUITEM_ADJUSTSPEED      256
-#define MENUITEM_PAUSED           257
-#define MENUITEM_AUTOPAUSE        258
-#define MENUITEM_EXACTSPEED       259
-#define MENUITEM_LIMITREFRESHES   260
-#define MENUITEM_TURBO            261
-#define MENUFAKE_REGION           262
-#define MENUFAKE_PRIORITY         263
+#define MENUITEM_ADJUSTSPEED      258
+#define MENUITEM_PAUSED           259
+#define MENUITEM_AUTOPAUSE        260
+#define MENUITEM_EXACTSPEED       261
+#define MENUITEM_LIMITREFRESHES   262
+#define MENUITEM_TURBO            263
+#define MENUFAKE_REGION           264
+#define MENUFAKE_PRIORITY         265
 // "Settings|Sprites »" submenu
-#define MENUITEM_COLLISIONS       264
-#define MENUFAKE_DEMULTIPLEX      265
+#define MENUITEM_COLLISIONS       266
+#define MENUFAKE_DEMULTIPLEX      267
 // "Settings|Trainers »" submenu
-#define MENUITEM_CHEATLIVES       266
-#define MENUITEM_CHEATTIME        267
-#define MENUITEM_INVINCIBILITY    268
-#define MENUITEM_LEVELSKIP        269
+#define MENUITEM_CHEATLIVES       268
+#define MENUITEM_CHEATTIME        269
+#define MENUITEM_INVINCIBILITY    270
+#define MENUITEM_LEVELSKIP        271
 // "Settings|VDU »" submenu
-#define MENUFAKE_PIPBUGVDU        270
-#define MENUFAKE_CD2650VDU        271
+#define MENUFAKE_PIPBUGVDU        272
+#define MENUFAKE_CD2650VDU        273
 // "Help" menu
-#define MENUITEM_GAMEINFO         272
-#define MENUITEM_HOSTPADS         273
-#define MENUITEM_HOSTKYBD         274
-#define MENUITEM_OPCODES          275
-#define MENUITEM_CODINGGUIDE      276
-#define MENUITEM_GAMINGGUIDE      277
-#define MENUITEM_MANUAL           278
-#define MENUITEM_UPDATE           279
-#define MENUITEM_REACTION         280
-#define MENUITEM_ABOUT            281
+#define MENUITEM_GAMEINFO         274
+#define MENUITEM_HOSTPADS         275
+#define MENUITEM_HOSTKYBD         276
+#define MENUITEM_OPCODES          277
+#define MENUITEM_CODINGGUIDE      278
+#define MENUITEM_GAMINGGUIDE      279
+#define MENUITEM_MANUAL           280
+#define MENUITEM_UPDATE           281
+#define MENUITEM_REACTION         282
+#define MENUITEM_ABOUT            283
 // "RetroAchievements" menu
-#define MENUITEM_CHEEVOS2         282
+#define MENUITEM_CHEEVOS2         284
 // menus
-#define MENUMENU_PROJECT          283
-#define MENUMENU_EDIT             284
-#define MENUMENU_VIEW             285
-#define MENUMENU_MACRO            286
-#define MENUMENU_DEBUG            287
-#define MENUMENU_TOOLS            288
-#define MENUMENU_PERIPHERALS      289
-#define MENUMENU_SETTINGS         290
-#define MENUMENU_HELP             291
+#define MENUMENU_PROJECT          285
+#define MENUMENU_EDIT             286
+#define MENUMENU_VIEW             287
+#define MENUMENU_MACRO            288
+#define MENUMENU_DEBUG            289
+#define MENUMENU_TOOLS            290
+#define MENUMENU_PERIPHERALS      291
+#define MENUMENU_SETTINGS         292
+#define MENUMENU_HELP             293
 // submenus
-#define MENUMENU_SORTBY           292
-#define MENUMENU_SPEEDINDICATOR   293
-#define MENUMENU_MACRO_ANIMS      294
-#define MENUMENU_MACRO_SOUNDS     295
-#define MENUMENU_DEBUG_GENERAL    296
-#define MENUMENU_DEBUG_FILE       297
-#define MENUMENU_DEBUG_DISK       298
-#define MENUMENU_DEBUG_EDIT       299
-#define MENUMENU_DEBUG_VIEW       300
-#define MENUMENU_DEBUG_LOG        301
-#define MENUMENU_DEBUG_RUN        302
-#define MENUMENU_DEBUG_BP         303
-#define MENUMENU_DEBUG_SYMBOLS    304
-#define MENUMENU_DEBUG_TOOLS      305
-#define MENUMENU_DEBUG_OPTIONS    306
-#define MENUMENU_DEBUG_GRAPHICS   307
-#define MENUMENU_LEFT             308
-#define MENUMENU_RIGHT            309
-#define MENUMENU_BIOS             310
-#define MENUMENU_DOS              311
-#define MENUMENU_FILTERS          312
-#define MENUMENU_MACHINE          313
-#define MENUMENU_SPRITES          314
-#define MENUMENU_TRAINERS         315
-#define MENUMENU_VDU              316
-// new ones
-#define MENUITEM_SWAPDISKS        317
-#define MENUITEMS                 318 // counting from 1 (ie. last entry is [MENUITEMS-1])
+#define MENUMENU_SORTBY           294
+#define MENUMENU_SPEEDINDICATOR   295
+#define MENUMENU_MACRO_ANIMS      296
+#define MENUMENU_MACRO_SOUNDS     297
+#define MENUMENU_DEBUG_GENERAL    298
+#define MENUMENU_DEBUG_FILE       299
+#define MENUMENU_DEBUG_DISK       300
+#define MENUMENU_DEBUG_EDIT       301
+#define MENUMENU_DEBUG_VIEW       302
+#define MENUMENU_DEBUG_LOG        303
+#define MENUMENU_DEBUG_RUN        304
+#define MENUMENU_DEBUG_BP         305
+#define MENUMENU_DEBUG_SYMBOLS    306
+#define MENUMENU_DEBUG_TOOLS      307
+#define MENUMENU_DEBUG_OPTIONS    308
+#define MENUMENU_DEBUG_GRAPHICS   309
+#define MENUMENU_LEFT             310
+#define MENUMENU_RIGHT            311
+#define MENUMENU_BIOS             312
+#define MENUMENU_DOS              313
+#define MENUMENU_FILTERS          314
+#define MENUMENU_MACHINE          315
+#define MENUMENU_SPRITES          316
+#define MENUMENU_TRAINERS         317
+#define MENUMENU_VDU              318
+#define MENUITEMS                 319 // counting from 1 (ie. last entry is [MENUITEMS-1])
 
 // "View" menu
 #define MENUOPT_SORTBYNAME          0
@@ -3533,12 +3537,12 @@ EXPORT struct KnownStruct
     FLAG   analog;
     UBYTE  sensitivity,
            demultiplex,
-           spriteflips; // PIPBUG: pipbug_biosver, SI50: s_id
+           spriteflips; // PIPBUG: pipbug_biosver, SI50: si50_id
     SBYTE  udgflips,    // SI50: s_is
            firstrow,
            lastrow;
     FLAG   swapped;
-    int    flagline;    // Arcadia: flagline, Interton/Elektor: darkenbg, PIPBUG: pipbug_baudrate, BINBUG: vdu, SI50: s_io, CD2650: vdu
+    int    flagline;    // Arcadia: flagline, Interton/Elektor: darkenbg, PIPBUG: pipbug_baudrate, BINBUG: vdu, SI50: si50_io, CD2650: vdu
     UBYTE  downframes,
            totalframes;
     UBYTE  dump;
@@ -3581,7 +3585,7 @@ EXPORT struct MenuStruct
                  maxargs;
     const ULONG  usage_id;
     const STRPTR usage_str;
-    const int    args;
+    const int    submenu;
 };
 EXPORT struct MachineStruct
 {   STRPTR cli;
@@ -3826,7 +3830,6 @@ EXPORT void break_pathname(STRPTR pathname, STRPTR path, STRPTR filename);
 EXPORT void buildlistbrowser(void);
 EXPORT void busypointer(void);
 EXPORT void calc_size(void);
-EXPORT void changecolours(void);
 EXPORT void changefilepart(STRPTR pathname, STRPTR path, STRPTR filename, STRPTR newfilename);
 EXPORT void checkmx(int which, int first, int last);
 EXPORT void cleanexit(SBYTE rc);
@@ -3920,7 +3923,7 @@ EXPORT void tick(int which, int ticked);
 EXPORT void tools_music(void);
 EXPORT void uncheckmx(int which);
 EXPORT void unlockgui(void);
-EXPORT void updatebiggads(void);
+EXPORT void update_toolbar(void);
 EXPORT void updatepointer(FLAG force, FLAG full);
 EXPORT void updatescreen(void);
 EXPORT void update_cpumonitortips(void);
@@ -3982,7 +3985,6 @@ EXPORT void wa_checkinput(void);
     EXPORT void setmonitorstring(int kind, struct Gadget* gadgetptr, STRPTR contents);
     EXPORT void uniconify(void);
     EXPORT void unlockscreen(void);
-    EXPORT void updatebrightness(void);
     EXPORT void updatesidebartips(void);
     EXPORT void updatewheel(void);
     EXPORT void update_memory_system(void);
@@ -4253,7 +4255,6 @@ EXPORT void savesym(FILE* symhandle);
 
 // engine1.c
 // misc
-EXPORT void command_changemachine(int whichmachine, int whichmemmap);
 EXPORT void fixextension(STRPTR extension, STRPTR passedfn, FLAG force, STRPTR suffix);
 EXPORT void project_open(void);
 EXPORT void settapespeed(void);
@@ -4349,7 +4350,6 @@ EXPORT void update_speed(void);
 
 // engine2.c
 // misc
-EXPORT void configure(void);
 EXPORT void dosidebar(void);
 EXPORT void enablegads(void);
 EXPORT void generate_autotext(void);
@@ -4404,7 +4404,7 @@ EXPORT void WriteByte(UBYTE what);
 EXPORT void WriteWord(UWORD what);
 EXPORT void WriteLong(ULONG what);
 // serialization
-EXPORT int parse_bytes(int mode);
+EXPORT int parse_bytes(void);
 EXPORT void serialize_cos(void);
 EXPORT void serialize_byte(UBYTE* var);
 EXPORT void serialize_byte_int(int* var);
@@ -4431,7 +4431,7 @@ EXPORT FLAG loadzip(STRPTR passedname, FLAG auditing, FLAG quiet);
 
 // engine3.c
 // misc
-EXPORT void changemachine(int whichmachine, int whichmemmap, FLAG user, int force, FLAG same);
+EXPORT void change_machine(int whichmachine, int whichmemmap, FLAG user);
 EXPORT void fix_keyrects(void);
 EXPORT int engine_load(FLAG silent);
 EXPORT void engine_reset(void);
@@ -4440,6 +4440,7 @@ EXPORT void longcomma(ULONG value, STRPTR out);
 EXPORT FLAG wantellipse(int localkey);
 EXPORT void zstrncpy(char* to, const char* from, size_t n);
 EXPORT void set_cpl(int newcpl);
+EXPORT void set_filename(void);
 // cpu monitor
 EXPORT FLAG getmoncolour(int whichmongad, ULONG* whichemupen, int* whichemubrush);
 EXPORT void update_monitor_cpu(FLAG force);
@@ -4462,7 +4463,7 @@ EXPORT void update_memory(FLAG force);
 // palette
 EXPORT void checkcolours(void);
 EXPORT int parse_hexbyte(void);
-EXPORT void update_sliders(void);
+EXPORT void update_slider(int which);
 // sound
 EXPORT FLAG nearby(int x1, int y1, int x2, int y2);
 EXPORT void play_ambient_sample(int whichsound);
@@ -4585,7 +4586,6 @@ EXPORT void handle_menu2(int command);
 EXPORT void updatemenu(int which);
 EXPORT void updatemenus(void);
 EXPORT void updatesmlgad(int which, ULONG state, FLAG now);
-EXPORT void updatesmlgads(void);
 
 // periph.c
 EXPORT int getdiskbytecolour(int viewingbyte);
@@ -4647,10 +4647,10 @@ EXPORT void pipbin_runcpu(void);
 EXPORT void pipbin_prtdemo(void);
 EXPORT void euy_margins(void);
 EXPORT void euy_printchar(UBYTE thechar, FLAG eti);
+EXPORT void periph_init(void);
 EXPORT void printer_eject(int whichprinter);
 EXPORT void printer_savepartial(int whichprinter);
 EXPORT void printer_changepixel(int whichprinter, int x, int y, int colour);
-EXPORT void printers_reset(void);
 EXPORT void printer_scroll(void);
 EXPORT void printer_copygfx(FLAG clip, int kind, FLAG wantasl, int whichprinter);
 EXPORT void pipbug_view_basic(void);

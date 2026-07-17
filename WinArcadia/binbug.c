@@ -23,9 +23,6 @@
 
 // DEFINES----------------------------------------------------------------
 
-// #define NINTHPIXEL
-// whether eg. the 8th X-pixel is duplicated into the 9th X-pixel
-
 #define BINBUG_FD1771_COMMAND  0xC // used for command AND status!
 #define BINBUG_FD1771_STATUS   0xC // used for command AND status!
 #define BINBUG_FD1771_TRACK    0xD
@@ -92,14 +89,12 @@ IMPORT       ULONG                    autofire[2],
                                       cpb,
                                       curdrive,
                                       cycles_2650,
-                                      downframes,
                                       frames,
                                       jf[2],
                                       oldcycles,
                                       region,
                                       swapped,
                                       timeoutat,
-                                      totalframes,
                                       tt_kybdtill,
                                       verbosedisk,
                                       verbosetape;
@@ -143,6 +138,7 @@ IMPORT       int                      ambient,
 IMPORT       struct DriveStruct       drive[DRIVES_MAX];
 IMPORT       struct IOPortStruct      ioport[258];
 IMPORT       struct KindStruct        filekind[KINDS];
+IMPORT       struct KnownStruct       known[KNOWNGAMES];
 IMPORT       struct MachineStruct     machines[MACHINES];
 IMPORT       struct PrinterStruct     printer[2];
 IMPORT       struct RTCStruct         rtc;
@@ -429,7 +425,6 @@ EXPORT void binbug_setmemmap(void)
         i, j,
         mirror;
 
-    game = FALSE;
     machines[BINBUG].cpf = fastbinbug ? 40000.0 : 20000.0;
     nextinst = 0;
 
@@ -550,7 +545,9 @@ EXPORT void binbug_emulate(void)
         pipbin_runcpu();
         draw_binbug();
     } else
-    {   for (cpuy = 0; cpuy <= 255; cpuy++)
+    {   fgc = inverse ? BLACK : WHITE;
+        bgc = inverse ? WHITE : BLACK;
+        for (cpuy = 0; cpuy <= 255; cpuy++)
         {   breakrastline();
             y1 = cpuy / 16;
             y2 = cpuy % 16;
@@ -566,7 +563,7 @@ EXPORT void binbug_emulate(void)
                 } elif (memory[0x7C00 + (y1 * 64) + x1] & 2)
                 {   t = dg640_gfx[tempvdu][y2];
                 } else
-                {   t = dg640_chars[tempvdu & 0x7F][y2];
+                {   t = dg640_chars[tempvdu & 0x7F][y2] << 1;
                     if (tempvdu & 0x80)
                     {   t = ~t;
                 }   }
@@ -577,16 +574,10 @@ EXPORT void binbug_emulate(void)
                     {   t = 0; // blank
                 }   }
 
-#ifdef NINTHPIXEL
                 if ((x2 <= 7 && (t & (0x80 >> x2))) || (x2 == 8 && (t & 1)))
-#else
-                if (x2 <= 7 && (t & (0x80 >> x2)))
-#endif
-                {   fgc = inverse ? BLACK : WHITE;
-                    changepixel(cpux, cpuy, fgc);
+                {   changepixel(cpux, cpuy, fgc);
                 } else
-                {   bgc = inverse ? WHITE : BLACK;
-                    changepixel(cpux, cpuy, bgc);
+                {   changebgpixel(cpux, cpuy, bgc);
                 }
                 DOCPU;
             }
@@ -688,9 +679,9 @@ EXPORT UBYTE binbug_readport(int port)
         else // port is not usable for input
         {   t = 0;
         }
-    acase 5:
+    acase 5: // parallel keyboard
         t = tt_kybdcode;
-        tt_kybdcode = 0xFF;
+        tt_kybdcode = NC; // $FF doesn't work for Poker
     acase 9:
         t = 0;
         switch (playerfire[0])
@@ -1155,12 +1146,22 @@ EXPORT void do_postamble(void)
 // MODULE CODE------------------------------------------------------------
 
 MODULE void binbug_playerinput(int source, int dest)
-{   FAST ULONG jg;
+{   FAST ULONG jg,
+               downframes,
+               totalframes;
 
     // dest is which side   (0 or 1) you want to set the registers of.
     // source is which side (0 or 1) you want to use to do it.
 
     // This doesn't currently support gameplay recording/playback.
+
+    if (whichgame == -1)
+    {   downframes  = DEF_DN;
+        totalframes = DEF_TO;
+    } else
+    {   downframes  = known[whichgame].downframes;
+        totalframes = known[whichgame].totalframes;
+    }
 
     if
     (   hostcontroller[source] == CONTROLLER_1STDJOY
@@ -2284,7 +2285,7 @@ MODULE void draw_binbug(void)
                 } elif (memory[0x7C00 + (y * 64) + x] & 2)
                 {   t = dg640_gfx[tempvdu][yy];
                 } else
-                {   t = dg640_chars[tempvdu & 0x7F][yy];
+                {   t = dg640_chars[tempvdu & 0x7F][yy] << 1;
                     if (tempvdu & 0x80)
                     {   t = ~t;
                 }   }
@@ -2299,12 +2300,9 @@ MODULE void draw_binbug(void)
                 {   if (t & (0x80 >> xx))
                     {   changepixel((x * DG640_CHARWIDTH) + xx, (y * DG640_CHARHEIGHT) + yy, colour);
                 }   }
-#ifdef NINTHPIXEL
                 if (t & 1)
                 {   changepixel((x * DG640_CHARWIDTH) + 8, (y * DG640_CHARHEIGHT) + yy, colour); // 9th pixel
-                }
-#endif
-}   }   }   }
+}   }   }   }   }
 
 EXPORT void binbug_inject_file(STRPTR thefilename)
 {   TRANSIENT int   freesize,

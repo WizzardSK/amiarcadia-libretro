@@ -5110,7 +5110,7 @@ EXPORT void macro_stop(void)
     }
 
     recmode = RECMODE_NORMAL;
-    updatesmlgads();
+    update_toolbar();
     updatemenus();
     settitle();
     normalpointer();
@@ -5118,7 +5118,7 @@ EXPORT void macro_stop(void)
 
 EXPORT void macro_restartplayback(void)
 {   offset = 0;
-    DISCARD parse_bytes(1); // this sets recmode = RECMODE_PLAY for us
+    DISCARD parse_bytes();
 }
 
 EXPORT void project_save(int kind)
@@ -5132,8 +5132,7 @@ EXPORT void project_save(int kind)
         zprintf(TEXTPEN_VERBOSE, "Wrote file %s, offset is %d...\n", fn_game, offset);
 #endif
         recmode = RECMODE_RECORD;
-        updatebiggads();
-        updatesmlgads();
+        update_toolbar();
         updatemenus();
         ghost_dips(TRUE);
         return;
@@ -5166,8 +5165,7 @@ EXPORT void project_save(int kind)
 
     if (kind == KIND_COR)
     {   macro_start();
-        updatebiggads();
-        updatesmlgads();
+        update_toolbar();
         updatemenus();
 }   }
 
@@ -5238,7 +5236,7 @@ EXPORT void engine_save(int kind, FLAG updatetitle)
     // assert(updatetitle == TRUE);
     recmode = RECMODE_RECORD;
     settitle();
-    updatesmlgads();
+    update_toolbar();
 
 #ifdef WIN32
     if (cheevos)

@@ -44,13 +44,11 @@ IMPORT       ULONG                 arcadia_viewcontrolsas,
                                    collisions,
                                    cycles_2650,
                                    demultiplex,
-                                   downframes,
                                    frames,
                                    jf[2],
                                    oldcycles,
                                    region,
-                                   swapped,
-                                   totalframes;
+                                   swapped;
 IMPORT       UBYTE*                IOBuffer;
 IMPORT       FLAG                  inframe,
                                    lmb, mmb, rmb;
@@ -554,7 +552,9 @@ EXPORT void uvi(void)
 }
 
 MODULE void a_playerinput(int source, int dest)
-{   FAST ULONG jg;
+{   FAST ULONG jg,
+               downframes,
+               totalframes;
 
     // dest   is which guest side (0 or 1) you want to set the registers of.
     // source is which host  side (0 or 1) you want to use to do it.
@@ -581,6 +581,14 @@ MODULE void a_playerinput(int source, int dest)
          || (dest == 1 && connected == NET_SERVER)
         )
         {   return;
+        }
+
+        if (whichgame == -1)
+        {   downframes  = DEF_DN;
+            totalframes = DEF_TO;
+        } else
+        {   downframes  = known[whichgame].downframes;
+            totalframes = known[whichgame].totalframes;
         }
 
         if
@@ -956,8 +964,6 @@ EXPORT void uviwrite(UWORD address, UBYTE data)
 
 EXPORT void arcadia_setmemmap(void)
 {   int i, address, mirror;
-
-    game = FALSE;
 
     if (randomizememory)
     {   for (i = 0; i <= 0x7FFF; i++)

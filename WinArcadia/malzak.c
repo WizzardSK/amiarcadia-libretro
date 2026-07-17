@@ -403,7 +403,6 @@ EXPORT void malzak_setmemmap(void)
 {   int   i, address, mirror;
     FILE* TheLocalHandle; // LocalHandle is a variable of winbase.h
 
-    game = FALSE;
     // assert(memmap == MEMMAP_MALZAK1 || memmap == MEMMAP_MALZAK2);
 
     for (i = 0x1000; i <= 0x7FFF; i++)

@@ -42,7 +42,6 @@ EXPORT void interton_setmemmap(void)
 
     // assert(!crippled);
     // assert(!inframe);
-    game = FALSE;
     bangercharging = FALSE;
 
     pvibase = 0x1F00;

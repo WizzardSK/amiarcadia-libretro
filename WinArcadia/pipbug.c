@@ -67,7 +67,8 @@
 
 // EXPORTED VARIABLES-----------------------------------------------------
 
-EXPORT       UBYTE                pitchangle,
+EXPORT       UBYTE                glow,
+                                  pitchangle,
                                   rotorspeed,
                                   windspeed,
                                   winddirection,
@@ -243,7 +244,6 @@ EXPORT void pipbug_setmemmap(void)
         i,
         mirror;
 
-    game = FALSE;
     machines[PIPBUG].cpf = fastpipbug ? 40000.0 : 20000.0;
     pipbug_changebios(FALSE);
 
@@ -3457,11 +3457,13 @@ EXPORT void printer_savepartial(int whichprinter)
         edit_savetext(FALSE, FALSE, whichprinter, TRUE);
 }   }
 
-EXPORT void printers_reset(void)
+EXPORT void periph_init(void)
 {   int i;
 #ifdef AMIGA
     int y;
 #endif
+
+    // Printers-----------------------------------------------------------
 
     prtscrollx             = 0;
     if (machine == TWIN)
@@ -3505,6 +3507,10 @@ EXPORT void printers_reset(void)
 
     printer_eject(0);
     printer_eject(1);
+
+    // Glows--------------------------------------------------------------
+
+    glow = 0;
 }
 
 #define TIPSPEEDRATIO   7.0   // dimensionless

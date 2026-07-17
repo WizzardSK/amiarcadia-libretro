@@ -191,7 +191,6 @@ EXPORT void phunsy_setmemmap(void)
 
     // assert(memmap == MEMMAP_PHUNSY);
 
-    game = FALSE;
     nextinst = -128;
     ticks = rate = 0;
 
@@ -392,7 +391,7 @@ EXPORT void phunsy_emulate(void)
                     if (phunsy_gfx[t][y2] & (0x20 >> x2))
                     {   changethisabspixel(fgc);
                     } else
-                    {   changethisabspixel(vdu_bgc);
+                    {   changethisbgpixel(vdu_bgc);
                 }   }
                 else
                 {   if (t == 0)
@@ -405,7 +404,7 @@ EXPORT void phunsy_emulate(void)
                     if (phunsy_chars[t][y2] & (0x20 >> x2))
                     {   changethisabspixel(vdu_fgc);
                     } else
-                    {   changethisabspixel(vdu_bgc);
+                    {   changethisbgpixel(vdu_bgc);
                 }   }
                 DOCPU;
         }   }
@@ -1944,7 +1943,7 @@ MODULE void draw_phunsy(void)
                     {   if (phunsy_gfx[imagery][yy] & (0x80 >> xx))
                         {   changepixel(128 - absxmin + (x * 6) + xx, (y * 8) + yy, fgc);
                         } else
-                        {   changepixel(128 - absxmin + (x * 6) + xx, (y * 8) + yy, vdu_bgc);
+                        {   changebgpixel(128 - absxmin + (x * 6) + xx, (y * 8) + yy, vdu_bgc);
             }   }   }   }
             else
             {   if (imagery == 0)
@@ -1959,7 +1958,7 @@ MODULE void draw_phunsy(void)
                     {   if (phunsy_chars[imagery][yy] & (0x20 >> xx))
                         {   changepixel(128 - absxmin + (x * 6) + xx, (y * 8) + yy, vdu_fgc);
                         } else
-                        {   changepixel(128 - absxmin + (x * 6) + xx, (y * 8) + yy, vdu_bgc);
+                        {   changebgpixel(128 - absxmin + (x * 6) + xx, (y * 8) + yy, vdu_bgc);
 }   }   }   }   }   }   }
 
 MODULE void phunsy_runcpu(void)

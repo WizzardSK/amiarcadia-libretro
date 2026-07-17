@@ -328,8 +328,8 @@ IMPORT       int                      binbug_baudrate,
                                       recmode,
                                       runtointerrupt,
                                       runtoloopend,
-                                      s_id,
-                                      s_io,
+                                      si50_id,
+                                      si50_io,
                                       selbst_biosver,
                                       starscroll,
                                       step,
@@ -354,8 +354,8 @@ IMPORT       UBYTE                    g_bank1[1024],
                                       lb_bank,
                                       malzak_field[16][16],
                                       memory_effects[512],
-                                      s_tapeport,
-                                      s_toggles,
+                                      si50_tapeport,
+                                      si50_toggles,
                                       keys_column[7],
                                       tapeskewage,
                                       tt_scrncode;
@@ -3162,10 +3162,10 @@ EXPORT void checkinterrupt(void)
                 ea = 0x000A;
             }
         acase INSTRUCTOR:
-            if (s_id == INTDIR_DIRECT)
+            if (si50_id == INTDIR_DIRECT)
             {   ea = 0x0007;
             } else
-            {   // assert(s_id == INTERRUPTS_INDIRECT);
+            {   // assert(si50_id == INTERRUPTS_INDIRECT);
                 /* Is it allowed for the address at $0007..$0008 to refer
                 to pages 1..3, or only page 0?
                 We don't allow it, but perhaps it is allowed:
@@ -3214,7 +3214,7 @@ EXPORT void checkinterrupt(void)
         else
         {   psu++;
         }
-        branch(machine == INSTRUCTOR && s_id == INTDIR_INDIRECT);
+        branch(machine == INSTRUCTOR && si50_id == INTDIR_INDIRECT);
         interrupt_2650 = FALSE;
 }   }
 
@@ -3499,8 +3499,8 @@ MODULE UBYTE cpuread_2650(int address)
             }   }
         acase INSTRUCTOR:
             // assert(address == S_IOPORT);
-            if (s_io == PARALLEL_MEMMAPPED)
-            {   t = s_toggles;
+            if (si50_io == PARALLEL_MEMMAPPED)
+            {   t = si50_toggles;
             } else
             {   t = memory[address];
             }
@@ -3802,7 +3802,7 @@ MODULE __inline void cpuwrite_2650(int address, UBYTE data)
         case MEMMAP_N:
         case MEMMAP_O:
             // assert(address == S_IOPORT);
-            if (s_io == PARALLEL_MEMMAPPED)
+            if (si50_io == PARALLEL_MEMMAPPED)
             {   glow = data;
             } else
             {   memory[address] = data;
@@ -3976,9 +3976,9 @@ EXPORT void do_tape(void)
                             {   tapebyte = LOWPULSE;
                     }   }   }
                 acase INSTRUCTOR:
-                    if     (s_tapeport == 0x10)
+                    if     (si50_tapeport == 0x10)
                     {   tapebyte = LOWPULSE;
-                    } elif (s_tapeport == 0x18)
+                    } elif (si50_tapeport == 0x18)
                     {   tapebyte = HIGHPULSE;
                     } else
                     {   tapebyte = 0x80;

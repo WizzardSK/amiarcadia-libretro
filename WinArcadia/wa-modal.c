@@ -2790,7 +2790,6 @@ MODULE BOOL CALLBACK PathsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             {   break_pathname(fn_bkgrnd, path_bkgrnd, file_bkgrnd);
                 DISCARD load_bmp(fn_bkgrnd);
             }
-            fixupcolours();
             make_stars();
             redrawscreen();
 

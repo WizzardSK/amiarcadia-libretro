@@ -202,6 +202,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -834,6 +835,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -1521,6 +1523,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -2164,6 +2167,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -2868,6 +2872,7 @@ BEGIN
             MENUITEM "FPEEK <start-adr> [<end-adr>]", ID_DEBUG_FPEEK
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-adr> <end-adr>] [<dateiname>]", ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -3499,6 +3504,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-adr> <end-adr>] [<dateiname>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -4333,6 +4339,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -4971,6 +4978,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -5675,6 +5683,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -6312,6 +6321,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -7011,6 +7021,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -7646,6 +7657,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -8325,6 +8337,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -8414,7 +8427,6 @@ BEGIN
                 MENUITEM "SWAP <1st-start> <1st-end> <2nd-start>", 
                                                         ID_DEBUG_SWAP
                 MENUITEM "TRAIN [<value>]",             ID_DEBUG_TRAIN
-                MENUITEM "EVAL <expression>",           ID_DEBUG_EVAL
             END
             POPUP "&Options"
             BEGIN
@@ -8984,6 +8996,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -9070,7 +9083,6 @@ BEGIN
             MENUITEM "REL <source-addr> [*]<target-addr>", ID_DEBUG_REL
             MENUITEM "SWAP <1st-start> <1st-end> <2nd-start>", ID_DEBUG_SWAP
             MENUITEM "TRAIN [<value>]",             ID_DEBUG_TRAIN
-            MENUITEM "EVAL <expression>",           ID_DEBUG_EVAL
         END
         POPUP "&Options"
         BEGIN
@@ -9736,13 +9748,13 @@ BEGIN
                     WS_EX_TRANSPARENT
 END
 
-IDD_CONTROLS_ARCADIA_SML DIALOG DISCARDABLE  0, 0, 248, 297
+IDD_CONTROLS_ARCADIA_SML DIALOG DISCARDABLE  0, 0, 248, 302
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Emerson Arcadia 2001 Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         310,IDC_CONTROLS,"Static",SS_BITMAP,7,155,233,135
+    CONTROL         310,IDC_CONTROLS,"Static",SS_BITMAP,7,160,233,135
     GROUPBOX        "View as",IDL_VIEWCONTROLSAS,7,3,104,49
     CONTROL         "Emerson Arcadia 2001",IDC_VIEWCONTROLSAS_EMERSON,"Button",
                     BS_AUTORADIOBUTTON | WS_GROUP,18,16,88,9
@@ -9769,8 +9781,8 @@ BEGIN
                     SS_SUNKEN
     RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,5,107,115,
                     10
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,9,124,231,24
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,9,124,231,29
 END
 
 IDD_MONITOR_XVI_PONG DIALOG DISCARDABLE  0, 0, 132, 101
@@ -9785,17 +9797,17 @@ BEGIN
     GROUPBOX        "Paddles",IDL_PADDLES,10,10,80,82
 END
 
-IDD_CONTROLS_INTERTON_SML DIALOG DISCARDABLE  0, 0, 248, 251
+IDD_CONTROLS_INTERTON_SML DIALOG DISCARDABLE  0, 0, 248, 256
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Interton VC 4000 Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         292,IDC_CONTROLS,"Static",SS_BITMAP,7,115,233,129
+    CONTROL         292,IDC_CONTROLS,"Static",SS_BITMAP,7,120,233,129
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,9,67,12
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,11,84,225,24
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,11,84,225,29
     LTEXT           "-",IDC_CONTROLS_OVERLAY,126,23,112,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     RTEXT           "Overlay:",IDL_CONTROLS_OVERLAY,5,24,115,10
@@ -10130,17 +10142,17 @@ BEGIN
                     167,392,8
 END
 
-IDD_CONTROLS_ELEKTOR_SML DIALOG DISCARDABLE  0, 0, 251, 251
+IDD_CONTROLS_ELEKTOR_SML DIALOG DISCARDABLE  0, 0, 251, 256
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Elektor TV Games Computer Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         290,IDC_CONTROLS,"Static",SS_BITMAP,10,117,233,123
+    CONTROL         290,IDC_CONTROLS,"Static",SS_BITMAP,10,122,233,123
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,9,98,12
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,9,85,232,26
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,9,85,232,31
     RTEXT           "Overlay:",IDL_CONTROLS_OVERLAY,8,27,105,10
     LTEXT           "-",IDC_CONTROLS_OVERLAY,118,26,97,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
@@ -10182,13 +10194,13 @@ BEGIN
                     165,75,13
 END
 
-IDD_CONTROLS_SI50_SML DIALOG DISCARDABLE  0, 0, 323, 297
+IDD_CONTROLS_SI50_SML DIALOG DISCARDABLE  0, 0, 323, 310
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Signetics Instructor 50 Controls (Small)"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         293,IDC_CONTROLS,"Static",SS_BITMAP,7,92,309,198
+    CONTROL         293,IDC_CONTROLS,"Static",SS_BITMAP,7,105,309,198
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,5,211,12
     LTEXT           "-",IDC_CONTROLS_OVERLAY,126,30,142,10,SS_CENTERIMAGE | 
@@ -10200,8 +10212,8 @@ BEGIN
     LTEXT           "-",IDC_CONTROLS_HOSTKEY,126,52,142,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,5,53,115,10
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,11,70,303,16
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,11,70,303,29
 END
 
 IDD_DIPS_ZACCARIA DIALOG DISCARDABLE  0, 0, 284, 171
@@ -11350,54 +11362,54 @@ BEGIN
                     228,179,217,13
 END
 
-IDD_CONTROLS_MALZAK DIALOG DISCARDABLE  0, 0, 254, 149
+IDD_CONTROLS_MALZAK DIALOG DISCARDABLE  0, 0, 254, 154
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Malzak Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         294,IDC_CONTROLS,"Static",SS_BITMAP,7,7,240,57
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,8,69,239,25
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,128,99,116,10,SS_CENTERIMAGE | 
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,10,69,235,30
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,128,104,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,128,109,116,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,128,114,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTPAD,128,120,116,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTPAD,128,125,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,128,131,116,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,128,136,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,7,99,115,10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,7,110,115,10
-    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,7,121,115,
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,7,104,115,10
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,7,115,115,10
+    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,7,126,115,
                     10
-    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,7,132,115,
+    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,7,137,115,
                     10
 END
 
-IDD_CONTROLS_GALAXIA DIALOG DISCARDABLE  0, 0, 335, 163
+IDD_CONTROLS_GALAXIA DIALOG DISCARDABLE  0, 0, 335, 168
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Galaxia Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         295,IDC_CONTROLS,"Static",SS_BITMAP,7,7,321,71
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,11,84,314,23
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,121,113,107,10,SS_CENTERIMAGE | 
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,11,84,314,28
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,131,118,107,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,121,123,107,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,131,128,107,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTPAD,121,134,107,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTPAD,131,139,107,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,121,145,107,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,131,150,107,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,0,113,115,10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,0,124,115,10
-    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,0,135,115,
-                    10
-    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,0,146,115,
-                    10
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,10,118,115,10
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,10,129,115,10
+    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,10,140,
+                    115,10
+    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,10,151,
+                    115,10
 END
 
 IDD_MONITOR_1PVI DIALOGEX 0, 0, 394, 97
@@ -12298,28 +12310,28 @@ BEGIN
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDVERT,388,1,1,259
 END
 
-IDD_CONTROLS_ASTROWARS DIALOG DISCARDABLE  0, 0, 382, 169
+IDD_CONTROLS_ASTROWARS DIALOG DISCARDABLE  0, 0, 382, 179
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Astro Wars Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         296,IDC_CONTROLS,"Static",SS_BITMAP,7,7,369,81
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,11,93,362,19
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,126,119,132,10,SS_CENTERIMAGE | 
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,11,93,362,29
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,126,129,132,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,126,129,132,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,126,139,132,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTPAD,126,140,132,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTPAD,126,150,132,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,126,151,132,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,126,161,132,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,5,119,115,10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,5,130,115,10
-    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,5,141,115,
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,5,129,115,10
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,5,140,115,10
+    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,5,151,115,
                     10
-    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,5,152,115,
+    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,5,162,115,
                     10
 END
 
@@ -13463,34 +13475,34 @@ BEGIN
                     TBS_AUTOTICKS | TBS_TOP | WS_TABSTOP,53,143,120,24
 END
 
-IDD_CONTROLS_8550 DIALOG DISCARDABLE  0, 0, 444, 294
+IDD_CONTROLS_8550 DIALOG DISCARDABLE  0, 0, 441, 306
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Pong Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         300,IDC_CONTROLS,"Static",SS_BITMAP,7,7,427,209
-    GROUPBOX        "View as",IDL_VIEWCONTROLSAS,8,243,117,43
+    GROUPBOX        "View as",IDL_VIEWCONTROLSAS,8,256,117,43
     CONTROL         "Interton Video 3000",IDC_VIEWCONTROLSAS_INTERTON3000,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,18,258,100,9
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,18,271,100,9
     CONTROL         "Sheen/Conic TVG-201(-4)",IDC_VIEWCONTROLSAS_SHEEN,
-                    "Button",BS_AUTORADIOBUTTON,18,269,100,9
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,11,222,419,16
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,264,243,121,10,SS_CENTERIMAGE | 
+                    "Button",BS_AUTORADIOBUTTON,18,282,100,9
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,11,222,419,28
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,264,256,121,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,264,253,120,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,264,266,120,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTPAD,264,264,121,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTPAD,264,277,121,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,264,275,121,11,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,264,288,121,11,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,151,243,107,
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,151,256,107,
                     10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,151,254,107,10
-    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,151,265,
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,151,267,107,10
+    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,151,278,
                     107,10
-    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,151,276,
+    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,151,289,
                     107,10
 END
 
@@ -13554,28 +13566,28 @@ BEGIN
                     192,158,179,14
 END
 
-IDD_CONTROLS_LASERBATTLE DIALOG DISCARDABLE  0, 0, 348, 175
+IDD_CONTROLS_LASERBATTLE DIALOG DISCARDABLE  0, 0, 348, 180
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Laser Battle Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         302,IDC_CONTROLS,"Static",SS_BITMAP,7,7,333,81
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,8,95,331,24
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,184,125,91,10,SS_CENTERIMAGE | 
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,8,95,331,29
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,184,130,91,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,184,135,91,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,184,140,91,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTPAD,184,146,91,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTPAD,184,151,91,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,184,157,91,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,184,162,91,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,63,125,115,10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,63,136,115,10
-    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,63,147,
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,63,130,115,10
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,63,141,115,10
+    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,63,152,
                     115,10
-    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,63,158,
+    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,63,163,
                     115,10
 END
 
@@ -14890,8 +14902,8 @@ BEGIN
     LTEXT           "-",IDC_CONTROLS_HOSTKEY,145,242,142,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,24,243,115,10
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,7,187,296,27
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,9,187,292,27
 END
 
 IDD_DIPS_8600 DIALOG DISCARDABLE  0, 0, 201, 220
@@ -14946,38 +14958,38 @@ BEGIN
                     TBS_AUTOTICKS | TBS_TOP | WS_TABSTOP,58,166,120,24
 END
 
-IDD_CONTROLS_8600 DIALOG DISCARDABLE  0, 0, 469, 265
+IDD_CONTROLS_8600 DIALOG DISCARDABLE  0, 0, 469, 275
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Pong Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         301,IDC_CONTROLS,"Static",SS_BITMAP,7,7,453,180
-    GROUPBOX        "View as",IDL_VIEWCONTROLSAS,8,215,107,40
+    GROUPBOX        "View as",IDL_VIEWCONTROLSAS,8,225,107,40
     CONTROL         "Coleco Telstar Galaxy",IDC_VIEWCONTROLSAS_TELSTAR,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,21,228,83,9
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,21,238,83,9
     CONTROL         "Philco Telejogo ][",IDC_VIEWCONTROLSAS_TELEJOGO,"Button",
-                    BS_AUTORADIOBUTTON,21,238,83,9
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,12,191,448,19
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,242,216,116,10,SS_CENTERIMAGE | 
+                    BS_AUTORADIOBUTTON,21,248,83,9
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,12,191,448,29
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,242,226,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,242,226,116,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,242,236,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTPAD,242,237,116,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTPAD,242,247,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,242,248,116,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTMOUSE,242,258,116,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,121,216,115,
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,121,226,115,
                     10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,121,227,115,10
-    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,121,238,
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,121,237,115,10
+    RTEXT           "Host gamepad button(s):",IDL_CONTROLS_HOSTPAD,121,248,
                     115,10
-    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,121,249,
+    RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,121,259,
                     115,10
 END
 
-IDD_CONTROLS_MIKIT_SML DIALOG DISCARDABLE  0, 0, 207, 260
+IDD_CONTROLS_MIKIT_SML DIALOG DISCARDABLE  0, 0, 207, 265
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "MIKIT 2650 Controls"
@@ -14985,9 +14997,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,5,191,12
-    CONTROL         307,IDC_CONTROLS,"Static",SS_BITMAP,7,94,193,160
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,9,62,188,25
+    CONTROL         307,IDC_CONTROLS,"Static",SS_BITMAP,7,99,193,160
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,9,62,188,30
     LTEXT           "-",IDC_CONTROLS_OVERLAY,120,24,79,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     LTEXT           "-",IDC_CONTROLS_GUESTKEY,120,36,79,10,SS_CENTERIMAGE | 
@@ -15017,7 +15029,7 @@ BEGIN
     LTEXT           "-",IDC_CONTROLS_HOSTKEY,126,52,142,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,5,53,115,10
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,276,31,301,35
 END
 
@@ -16427,7 +16439,7 @@ CAPTION "PHUNSY Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         563,IDC_CONTROLS,"Static",SS_BITMAP,7,7,188,145
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,10,156,182,27
     LTEXT           "-",IDC_CONTROLS_OVERLAY,120,190,72,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
@@ -16458,7 +16470,7 @@ BEGIN
     LTEXT           "-",IDC_CONTROLS_HOSTKEY,126,46,142,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,5,47,115,10
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,278,24,187,35
 END
 
@@ -16468,15 +16480,15 @@ STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION |
 CAPTION "BINBUG Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         429,IDC_CONTROLS,"Static",SS_BITMAP,7,7,248,178
+    CONTROL         429,IDC_CONTROLS,"Static",SS_BITMAP,7,7,193,178
     CTEXT           "Hover over a button for more information.",IDL_HOVER7,
                     13,190,182,19,SS_CENTERIMAGE
-    LTEXT           "-",IDC_CONTROLS_GUESTKEY,123,214,72,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_GUESTKEY,123,215,72,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "-",IDC_CONTROLS_HOSTKEY,123,224,72,10,SS_CENTERIMAGE | 
+    LTEXT           "-",IDC_CONTROLS_HOSTKEY,123,225,72,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,13,214,105,10
-    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,13,225,105,10
+    RTEXT           "Overlay/guest key:",IDL_CONTROLS_GUESTKEY,13,215,105,10
+    RTEXT           "Host key(s):",IDL_CONTROLS_HOSTKEY,13,226,105,10
 END
 
 IDD_CONTROLS_ARCADIA_BIG DIALOG DISCARDABLE  0, 0, 481, 401
@@ -16495,7 +16507,7 @@ BEGIN
                     BS_AUTORADIOBUTTON,18,36,88,9
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,121,5,144,12
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,276,64,194,53
     LTEXT           "-",IDC_CONTROLS_OVERLAY,126,62,142,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
@@ -16525,7 +16537,7 @@ BEGIN
     CONTROL         433,IDC_CONTROLS,"Static",SS_BITMAP,7,91,467,253
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,8,98,12
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,276,29,194,55
     LTEXT           "-",IDC_CONTROLS_OVERLAY,126,27,142,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
@@ -16555,7 +16567,7 @@ BEGIN
     CONTROL         434,IDC_CONTROLS,"Static",SS_BITMAP,10,91,467,244
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,9,98,12
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,223,28,250,56
     RTEXT           "Overlay:",IDL_CONTROLS_OVERLAY,8,28,105,10
     LTEXT           "-",IDC_CONTROLS_OVERLAY,118,27,98,10,SS_CENTERIMAGE | 
@@ -17502,13 +17514,13 @@ BEGIN
                     SS_SUNKEN
 END
 
-IDD_CONTROLS_MPT03_BIG DIALOG DISCARDABLE  0, 0, 481, 359
+IDD_CONTROLS_MPT03_BIG DIALOG DISCARDABLE  0, 0, 481, 361
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Emerson Arcadia 2001 Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         431,IDC_CONTROLS,"Static",SS_BITMAP,7,124,467,269
+    CONTROL         431,IDC_CONTROLS,"Static",SS_BITMAP,7,124,400,228
     GROUPBOX        "View as",IDL_VIEWCONTROLSAS,7,3,104,49
     CONTROL         "Emerson Arcadia 2001",IDC_VIEWCONTROLSAS_EMERSON,"Button",
                     BS_AUTORADIOBUTTON | WS_GROUP,18,16,88,9
@@ -17535,17 +17547,17 @@ BEGIN
                     SS_SUNKEN
     RTEXT           "Host mouse button(s):",IDL_CONTROLS_HOSTMOUSE,5,107,115,
                     10
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
                     IDL_HOVER7,276,62,195,55
 END
 
-IDD_CONTROLS_MPT03_SML DIALOG DISCARDABLE  0, 0, 248, 275
+IDD_CONTROLS_MPT03_SML DIALOG DISCARDABLE  0, 0, 248, 280
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Emerson Arcadia 2001 Controls"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         291,IDC_CONTROLS,"Static",SS_BITMAP,7,154,233,135
+    CONTROL         291,IDC_CONTROLS,"Static",SS_BITMAP,7,159,233,114
     GROUPBOX        "View as",IDL_VIEWCONTROLSAS,7,3,104,49
     CONTROL         "Emerson Arcadia 2001",IDC_VIEWCONTROLSAS_EMERSON,"Button",
                     BS_AUTORADIOBUTTON | WS_GROUP,18,16,88,9
@@ -17555,8 +17567,8 @@ BEGIN
                     BS_AUTORADIOBUTTON,18,36,88,9
     CONTROL         "Large image?",IDC_LARGEIMAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,121,5,117,12
-    CTEXT           "Hover over a button for more information. Left-click to press a button. Right-click to redefine a button.",
-                    IDL_HOVER7,9,123,231,25
+    CTEXT           "Hover over a button for more information.\nLeft-click to press a button.\nRight-click to redefine a button.",
+                    IDL_HOVER7,9,123,231,30
     LTEXT           "-",IDC_CONTROLS_OVERLAY,126,62,112,10,SS_CENTERIMAGE | 
                     SS_SUNKEN
     RTEXT           "Overlay:",IDL_CONTROLS_OVERLAY,5,63,115,10
@@ -18485,7 +18497,7 @@ BEGIN
     ICON            IDI_ARCADIA,IDL_GLYPH,8,36,20,20
 END
 
-IDD_CONTROLS_RADIOBULLETIN DIALOG DISCARDABLE  0, 0, 686, 210
+IDD_CONTROLS_RADIOBULLETIN DIALOG DISCARDABLE  0, 0, 686, 207
 STYLE DS_MODALFRAME | DS_CENTERMOUSE | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "PIPBUG Controls (DS2000) (Small)"
@@ -19114,6 +19126,39 @@ BEGIN
                     SS_SUNKEN
 END
 
+IDD_GAMEINFO_QWERTY DIALOG DISCARDABLE  0, 0, 306, 92
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Game Information"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "0",IDC_AUTOSENSE1,131,7,167,9,SS_NOPREFIX | 
+                    SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "1",IDC_AUTOSENSE2,131,17,167,9,SS_NOPREFIX | 
+                    SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "2",IDC_AUTOSENSE3,131,27,168,9,SS_NOPREFIX | 
+                    SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "3",IDC_AUTOSENSE4,131,37,167,9,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "4",IDC_AUTOSENSE5,131,47,167,9,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "5",IDC_AUTOSENSE6,131,57,167,9,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "6",IDC_AUTOSENSE7,131,67,167,9,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "7",IDC_AUTOSENSE8,131,77,167,9,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "Game name:",IDL_AUTOLABEL1,38,7,86,8
+    LTEXT           "Credits, Year:",IDL_AUTOLABEL2,38,17,86,8
+    LTEXT           "Machine:",IDL_AUTOLABEL4,38,37,86,8
+    LTEXT           "Size:",IDL_AUTOLABEL5,38,47,86,8
+    LTEXT           "CRC32/64:",IDL_AUTOLABEL6,38,57,86,8
+    LTEXT           "Language:",IDL_AUTOLABEL7,38,67,86,8
+    LTEXT           "Start address:",IDL_AUTOLABEL8,38,77,86,8
+    LTEXT           "Reference:",IDL_AUTOLABEL3,38,27,86,8
+    ICON            IDI_ARCADIA,IDL_GLYPH,8,36,20,20
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -19329,8 +19374,8 @@ IDI_E_MAZES             ICON    DISCARDABLE     "e-mazes.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 36,5,1,1
- PRODUCTVERSION 36,5,1,1
+ FILEVERSION 36,5,2,1
+ PRODUCTVERSION 36,5,2,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -19348,14 +19393,14 @@ BEGIN
             VALUE "Comments", "Think Signetics. Sig 'em! We want you to have the best.\0"
             VALUE "CompanyName", "Amigan Software\0"
             VALUE "FileDescription", "WinArcadia multi-emulator\0"
-            VALUE "FileVersion", "36.51\0"
+            VALUE "FileVersion", "36.52\0"
             VALUE "InternalName", "WinArcadia\0"
             VALUE "LegalCopyright", "Copyright © 2006-2026 James Jacobs\0"
             VALUE "LegalTrademarks", "WinArcadia\0"
             VALUE "OriginalFilename", "WinArcadia.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "WinArcadia\0"
-            VALUE "ProductVersion", "36.51\0"
+            VALUE "ProductVersion", "36.52\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -19404,9 +19449,9 @@ END
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO DISCARDABLE 
 BEGIN
-    IDD_CONTROLS_SI50_SML, DIALOG
+    IDD_CONTROLS_8550, DIALOG
     BEGIN
-        BOTTOMMARGIN, 277
+        BOTTOMMARGIN, 294
     END
 
     IDD_FURNACE, DIALOG
@@ -19617,6 +19662,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -20261,6 +20307,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -20969,6 +21016,7 @@ BEGIN
             MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
             MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                     ID_DEBUG_IM
+            MENUITEM "LIST",                        ID_DEBUG_LIST
             MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
             MENUITEM SEPARATOR
             MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC
@@ -21633,6 +21681,7 @@ BEGIN
                 MENUITEM "HISTORY",                     ID_DEBUG_HISTORY
                 MENUITEM "IM [<start-addr> <end-addr>] [<filename>]", 
                                                         ID_DEBUG_IM
+                MENUITEM "LIST",                        ID_DEBUG_LIST
                 MENUITEM "READPORT <port>|CTRL|DATA",   ID_DEBUG_READPORT
                 MENUITEM SEPARATOR
                 MENUITEM "V|VIEW BASIC",                ID_DEBUG_VIEW_BASIC

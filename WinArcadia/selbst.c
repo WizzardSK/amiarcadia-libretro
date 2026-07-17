@@ -188,7 +188,6 @@ MODULE void selbst_emuinput(void)
 EXPORT void selbst_setmemmap(void)
 {   int i, address, mirror;
 
-    game = FALSE;
     machines[SELBST].cpf = fastselbst ? 20000.0 : 0.02;
 
     switch (selbst_biosver)

@@ -173,9 +173,7 @@ EXPORT ULONG  analog                   = FALSE,
               bangfrom,
               crc64_h,
               crc64_l,
-              downframes               = 4,
-              frames,
-              totalframes              = 16;
+              frames;
 EXPORT TEXT   asciiname_long[259][9 + 1],
               friendly[FRIENDLYLENGTH + 1],
            // "$1234 (DRAWBALLLOWERHALF)"
@@ -370,7 +368,6 @@ EXPORT int    aifffile                 = FALSE,
 EXPORT UBYTE  blank,
               button[2][8]             = { { 1,2,3,4,5,6,7,8 }, { 1,2,3,4,5,6,7,8 } },
               coverage_io[258],
-              glow                     = 0,
               guestvolume[GUESTCHANNELS],
               oldkeys[KEYS],
               OutputBuffer[18],
@@ -584,7 +581,7 @@ IMPORT       UBYTE                    acca,
                                       psu,
                                       psl,
                                       r[7],
-                                      s_toggles,
+                                      si50_toggles,
                                       aw_dips1, aw_dips2,
                                       ga_dips,
                                       lb_dips,
@@ -647,6 +644,7 @@ IMPORT       int                      angles,
                                       fastcd2650,
                                       fastpipbug,
                                       fastselbst,
+                                      filesize,
                                       flagline,
                                       hostcontroller[2],
                                       hostvolume,
@@ -678,9 +676,9 @@ IMPORT       int                      angles,
                                       serializemode,
                                       serving,
                                       sidebarwidth,
-                                      s_io,
-                                      s_id,
-                                      s_is,
+                                      si50_io,
+                                      si50_id,
+                                      si50_is,
                                       slice_2650,
                                       speedup,
                                       step,
@@ -1046,14 +1044,12 @@ EXPORT void emu_unpause(void)
 EXPORT void cripple(void)
 {   crippled = TRUE;
     updatemenus();
-    updatebiggads();
-    updatesmlgads();
+    update_toolbar();
 }
 EXPORT void uncripple(void)
 {   crippled = FALSE;
     updatemenus();
-    updatebiggads();
-    updatesmlgads();
+    update_toolbar();
 }
 
 EXPORT void fixextension(STRPTR extension, STRPTR passedfn, FLAG force, STRPTR suffix)
@@ -1455,7 +1451,6 @@ EXPORT void project_open(void)
     }
 #endif
 // how to do this for IBM-PC?
-
     setselection();
 
     sound_off(FALSE);
@@ -4427,7 +4422,7 @@ MODULE void aserialize_int(STRPTR label, int* value, int lowest, int highest)
         if (temp >= lowest && temp <= highest)
         {   *value = temp;
         } else
-        {   zprintf(TEXTPEN_ERROR, "%s: integer value of %d is out of range! (Range is %d..%d.)\n", label, temp, lowest, highest);
+        {   zprintf(TEXTPEN_ERROR, "%s: integer value of %d is out of range! (Range is %d..%d. Defaulting to %d.)\n", label, temp, lowest, highest, *value);
         }
         while (IOBuffer[offset] != CR && IOBuffer[offset] != LF)
         {   offset++;
@@ -4963,7 +4958,7 @@ MODULE void serializeconfig(void)
         aserialize_int((char*) tempstring , &recentgame[i]          ,            -1, KNOWNGAMES - 1); // -1..KNOWNGAMES-1
     }
     aserialize_int("region"               , (int*) &region          ,             0, 1); // ntsc, pal
-    aserialize_int("regionstart"          , &regionstart            ,             0, 32767 - 256);
+    aserialize_int("regionstart"          , &regionstart            ,             0, 32768 - 256);
     aserialize_int("robot_left"           , &robotspeed[0]          ,             0, ROBOTSPEED_INFINITE);
     aserialize_int("robot_right"          , &robotspeed[1]          ,             0, ROBOTSPEED_INFINITE);
 #ifdef WIN32
@@ -4976,10 +4971,10 @@ MODULE void serializeconfig(void)
     aserialize_int("sensitivity_left"     , &sensitivity[0]         ,             1, 5); // very low, low, medium, high, very high
     aserialize_int("sensitivity_right"    , &sensitivity[1]         ,             1, 5); // very low, low, medium, high, very high
     aserialize_int("sidebarwidth"         , &sidebarwidth           ,             0, 65535);
-    aserialize_int("si50_intselector"     , &s_is                   ,             0, 1); // AC line, keyboard
-    aserialize_int("si50_interrupts"      , &s_id                   ,             0, 1); // direct, indirect
-    aserialize_int("si50_parallelio"      , &s_io                   ,             0, 2); // memory mapped, extended, non-extended
-    aserialize_ubyte("si50_toggles"       , &s_toggles);
+    aserialize_int("si50_intselector"     , &si50_is                ,             0, 1); // AC line, keyboard
+    aserialize_int("si50_interrupts"      , &si50_id                ,             0, 1); // direct, indirect
+    aserialize_int("si50_parallelio"      , &si50_io                ,             0, 2); // memory mapped, extended, non-extended
+    aserialize_ubyte("si50_toggles"       , &si50_toggles);
 #ifdef AMIGA
     if (serializemode == SERIALIZE_WRITE && wsm == 1)
     {   aserialize_int("size"             , &windowed_size          ,             1, 6); // 1..6
@@ -5292,9 +5287,9 @@ EXPORT void reopen_subwindows(void)
     {   return;
     }
 
-#ifdef WIN32
-    if (subwin[SUBWINDOW_OUTPUT      ].need) open_output(FALSE);
-#endif
+/* #ifdef WIN32
+    if (subwin[SUBWINDOW_OUTPUT      ].need) open_output(FALSE); // since it will be always empty there is no point reopening it
+#endif */
 
     if (subwin[SUBWINDOW_CONTROLS    ].need) view_controls();
     if (subwin[SUBWINDOW_DIPS        ].need) edit_dips();
@@ -5332,26 +5327,6 @@ EXPORT void reopen_subwindow(int which)
 {   if (subwin[which].hwnd)
     {   close_subwindow(which);
         subwin[which].need = TRUE;
-        reopen_subwindows();
-}   }
-
-EXPORT void command_changemachine(int whichmachine, int whichmemmap)
-{   if (crippled)
-    {   return;
-    }
-
-    if (memmap != whichmemmap)
-    {   changemachine(whichmachine, whichmemmap, TRUE, 0, FALSE);
-        update_opcodes(); // because our INTERTON emulation has a different length for the $10 opcode
-        updatemenus();
-        updatebiggads();
-        updatesmlgads();
-        settitle();
-#ifdef WIN32
-        free_display();
-        make_display();
-#endif
-        redrawscreen(); // needed for eg. AmiPIPBUG dividers
         reopen_subwindows();
 }   }
 

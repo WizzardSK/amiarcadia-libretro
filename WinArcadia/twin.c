@@ -306,7 +306,6 @@ EXPORT void twin_setmemmap(void)
 {   int address,
         i, j;
 
-    game = FALSE;
     whichcpu = 0; // master
 
     for (address     =     0; address <=   0xFF; address++)

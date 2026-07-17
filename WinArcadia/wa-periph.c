@@ -41,7 +41,7 @@ IMPORT       UBYTE                 KeyMatrix[SCANCODES / 8],
                                    windspeed,
                                    winddirection,
                                    yawsensordir,
-                                   s_toggles,
+                                   si50_toggles,
                                    tapeskewage;
 IMPORT       UWORD                 linearx,
                                    lineary,
@@ -103,9 +103,9 @@ IMPORT       int                   angles,
                                    recmode,
                                    robotspeed[2],
                                    serving,
-                                   s_id,
-                                   s_is,
-                                   s_io,
+                                   si50_id,
+                                   si50_is,
+                                   si50_io,
                                    size,
                                    tapeframe,
                                    tapekind,
@@ -1755,13 +1755,13 @@ MODULE BOOL CALLBACK SI50DIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             DestroyWindow(hwnd);
             subwin[SUBWINDOW_DIPS].hwnd = NULL;
             updatemenu(MENUITEM_DIPSWITCHES);
-        acase IDC_INTERRUPTS_DIRECT:    s_id = INTDIR_DIRECT;
-        acase IDC_INTERRUPTS_INDIRECT:  s_id = INTDIR_INDIRECT;
-        acase IDC_INTSELECTOR_ACLINE:   s_is = INTSEL_ACLINE;
-        acase IDC_INTSELECTOR_KYBD:     s_is = INTSEL_KYBD;
-        acase IDC_PARALLEL_MEMMAPPED:   s_io = PARALLEL_MEMMAPPED;
-        acase IDC_PARALLEL_EXTENDED:    s_io = PARALLEL_EXTENDED;
-        acase IDC_PARALLEL_NONEXTENDED: s_io = PARALLEL_NONEXTENDED;
+        acase IDC_INTERRUPTS_DIRECT:    si50_id = INTDIR_DIRECT;
+        acase IDC_INTERRUPTS_INDIRECT:  si50_id = INTDIR_INDIRECT;
+        acase IDC_INTSELECTOR_ACLINE:   si50_is = INTSEL_ACLINE;
+        acase IDC_INTSELECTOR_KYBD:     si50_is = INTSEL_KYBD;
+        acase IDC_PARALLEL_MEMMAPPED:   si50_io = PARALLEL_MEMMAPPED;
+        acase IDC_PARALLEL_EXTENDED:    si50_io = PARALLEL_EXTENDED;
+        acase IDC_PARALLEL_NONEXTENDED: si50_io = PARALLEL_NONEXTENDED;
         adefault:
             if
             (   LOWORD(wParam) >= IDC_PARALLEL_BIT7
@@ -1770,9 +1770,9 @@ MODULE BOOL CALLBACK SI50DIPsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
             {   i = LOWORD(wParam) - IDC_PARALLEL_BIT7;
 
                 if (SendMessage(GetDlgItem(hwnd, IDC_PARALLEL_BIT7 + i), BM_GETCHECK, 0, 0) == BST_CHECKED)
-                {   s_toggles |= 128 >> i;
+                {   si50_toggles |= 128 >> i;
                 } else
-                {   s_toggles &= ~(128 >> i);
+                {   si50_toggles &= ~(128 >> i);
         }   }   }
 
         si50_updatedips(FALSE);

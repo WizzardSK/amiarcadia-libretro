@@ -1341,6 +1341,7 @@ MODULE BOOL CALLBACK MemoryDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
         if (regionstart >= 32 * KILOBYTE)
         {   regionstart = 0;
         }
+        regionlevel = regionstart / MEMGADGETS;
 
         GetWindowRect(GetDlgItem(hwnd, IDC_MEMMAP), &localrect);
         thepoint.x        = localrect.left;
@@ -3564,7 +3565,9 @@ EXPORT void update_palette(FLAG full)
     }
     already = TRUE;
 
-    update_sliders();
+    update_slider(0);
+    update_slider(1);
+    update_slider(2);
 
     // filled colours-----------------------------------------------------
 

@@ -97,22 +97,15 @@ EXPORT       int                      base                     = BASE_HEX,
                                       clicked                  = -1,
                                       cpl,
                                       filesize,
-                                      firstrow                 = 26,
                                       found_dirs,
                                       key1                     =  2,
                                       key2                     =  1,
                                       key3                     =  3,
                                       key4                     =  0,
-                                      lastrow                  = -1,
                                       nextinst,
-                                      p1bgcol[4],
-                                      p2bgcol[4],
-                                      p1sprcol[6],
-                                      p2sprcol[6],
                                       ppc,
                                       runtoframe               = FALSE,
                                       speedup                  = SPEED_4QUARTERS,
-                                      udgflips                 =  0,
                                       usecsperframe[2],
                                       whichoverlay;
 EXPORT       float                    chan_hertz[GUESTCHANNELS];
@@ -122,9 +115,7 @@ EXPORT       float                    chan_hertz[GUESTCHANNELS];
 IMPORT       FLAG                     allglyphs,
                                       bangercharging,
                                       inframe,
-                                      halted,
-                                      multisprite[4],
-                                      protect[4];
+                                      halted;
 IMPORT       SBYTE                    galaxia_scrolly;
 IMPORT       UBYTE                    abeff1, abeff2,
                                       aw_dips1, aw_dips2,
@@ -158,8 +149,8 @@ IMPORT       UBYTE                    abeff1, abeff2,
                                       r[7],
                                       rr,
                                       rate,
-                                      s_tapeport,
-                                      s_toggles,
+                                      si50_tapeport,
+                                      si50_toggles,
                                       selbst_char,
                                       squeal,
                                       startaddr_h,
@@ -174,8 +165,7 @@ IMPORT       UWORD                    iar,
                                       mirror_r[32768],
                                       mirror_w[32768],
                                       ras[8];
-IMPORT       ULONG                    analog,
-                                      arcadia_viewcontrolsas,
+IMPORT       ULONG                    arcadia_viewcontrolsas,
                                       autoframeskip,
                                       bangfrom,
                                       pong8550_viewcontrolsas,
@@ -185,7 +175,6 @@ IMPORT       ULONG                    analog,
                                       crc64_h,
                                       crc64_l,
                                       cycles_2650,
-                                      downframes,
                                       elektor_bigctrls,
                                       fractionator,
                                       frames,
@@ -197,7 +186,6 @@ IMPORT       ULONG                    analog,
                                       pencolours[COLOURSETS][PENS],
                                       region,
                                       sound,
-                                      totalframes,
                                       tt_kybdtill,
                                       turbo,
                                       si50_bigctrls,
@@ -209,11 +197,9 @@ IMPORT       int                      ambient,
                                       ay[4], // analog paddle Y-coords
                                       bangercharge,
                                       belling[2],
-                                      binbug_baudrate,
                                       binbug_biosver,
                                       binbug_dosver,
                                       cd2650_biosver,
-                                      cd2650_vdu,
                                       cheevos,
                                       climode,
                                       coinop_1p,
@@ -235,10 +221,8 @@ IMPORT       int                      ambient,
                                       cpb,
                                       crippled,
                                       currentgame,
-                                      darkenbg,
                                       elektor_biosver,
                                       exactspeed,
-                                      fastselbst,
                                       filter,
                                       firstdoscodecomment, lastdoscodecomment,
                                       flagline,
@@ -260,9 +244,7 @@ IMPORT       int                      ambient,
                                       offset,
                                       papertapemode[2],
                                       phunsy_biosver,
-                                      pipbug_baudrate,
                                       pipbug_biosver,
-                                      pipbug_periph,
                                       pipbug_vdu,
                                       pong_variant,
                                       post,
@@ -275,7 +257,6 @@ IMPORT       int                      ambient,
                                       score[2],
                                       selbst_biosver,
                                       sensegame,
-                                      sensitivity[2],
                                       serializemode,
                                       showbuiltin,
                                       showleds,
@@ -286,12 +267,11 @@ IMPORT       int                      ambient,
                                       sortby,
                                       speakoffset,
                                       spriteflip,
-                                      spriteflips,
                                       style,
                                       supercpu,
-                                      s_io,
-                                      s_is,
-                                      s_id,
+                                      si50_io,
+                                      si50_is,
+                                      si50_id,
                                       table_duration_2650[256],
                                       table_size_2650[256],
                                       tapeframe,
@@ -463,239 +443,6 @@ MODULE void write_log_string(STRPTR string);
 
 // CODE-------------------------------------------------------------------
 
-EXPORT void configure(void)
-{   int i,
-        newmachine;
-
-    if (whichgame != -1)
-    {   newmachine = known[whichgame].machine;
-    } else
-    {   newmachine = machine;
-    }
-
-    switch (newmachine)
-    {
-    case INTERTON:
-        if
-        (   whichgame == I_TETRISPOS1
-         || whichgame == I_TETRISPOS2
-         || whichgame == I_TETRISPOS3
-        )
-        {   machines[newmachine].digipos[0] = 0x0C;
-            machines[newmachine].digipos[1] = 0x34;
-            machines[newmachine].digipos[2] = 0x58;
-        } else
-        {   machines[newmachine].digipos[0] =    1;
-            machines[newmachine].digipos[1] =  112;
-            machines[newmachine].digipos[2] =  225;
-        }
-    acase ELEKTOR:
-        if
-        (   whichgame == ENTERPRISE1POS1
-         || whichgame == ENTERPRISE1POS2
-         || whichgame == HAMISH1POS1
-         || whichgame == HAMISH1POS2
-         || whichgame == HAMISH1POS3
-         || whichgame == LAUNCHINGPOS1
-         || whichgame == LAUNCHINGPOS2
-        )
-        {   machines[newmachine].digipos[0] =   0;
-            machines[newmachine].digipos[1] =   1;
-         // machines[newmachine].digipos[2] = 225;
-        } else
-        {   machines[newmachine].digipos[0] =   1;
-            machines[newmachine].digipos[1] = 111;
-         // machines[newmachine].digipos[2] = 225;
-    }   }
-
-    ppc = machines[newmachine].ppc;
-    if (whichgame == -1)
-    {   downframes      = 4;
-        totalframes     = 16;
-        if (machine == ARCADIA || machine == INTERTON)
-        {   set_cpl(227);
-        } elif (machine == ELEKTOR)
-        {   set_cpl(226);
-        }
-        for (i = 0; i < 6; i++)
-        {   p1sprcol[i] =
-            p2sprcol[i] = 0;
-        }
-        for (i = 0; i < 4; i++)
-        {   p1bgcol[i]  =
-            p2bgcol[i]  = 0;
-        }
-        key1            = 2;
-        key2            = 1;
-        key3            = 3;
-        key4            = 0;
-        sensitivity[0]  =
-        sensitivity[1]  = SENSITIVITY_DEFAULT;
-        firstrow        = 26;
-        lastrow         = -1;
-        udgflips        =
-        spriteflips     = 0;
-        for (i = 0; i < 4; i++)
-        {   protect[    i] =
-            multisprite[i] = FALSE;
-        }
-        pipbug_periph   = PERIPH_PRINTER;
-        // we deliberately leave region, flagline, darkenbg, s_io, s_is, s_id alone
-
-        if (machine == MALZAK || machine == ZACCARIA || machine == PONG)
-        {   changemachine(newmachine, memmap,                      FALSE, 0, FALSE);
-        } else
-        {   changemachine(newmachine, machines[newmachine].memmap, FALSE, 0, FALSE);
-        }
-        whichoverlay    = memmapinfo[memmap].overlay;
-    } else
-    {   switch (newmachine)
-        {
-        case ELEKTOR: elektor_biosver = known[whichgame].bios;
-        acase PIPBUG: pipbug_biosver  = known[whichgame].bios;
-                      if (known[whichgame].swapped == PIPBUG_BAUDRATE_ANY)
-                      {   switch (pipbug_biosver)
-                          {
-                          case  PIPBUG_ARTEMIS:     pipbug_baudrate = PIPBUG_BAUDRATE_4800;
-                          acase PIPBUG_HYBUG:       pipbug_baudrate = PIPBUG_BAUDRATE_300;
-                          acase PIPBUG_PIPBUG1BIOS: pipbug_baudrate = BAUDRATE_DEFAULTPIPBUG1;
-                          acase PIPBUG_PIPBUG2BIOS: pipbug_baudrate = BAUDRATE_DEFAULTPIPBUG2;
-                      }   }
-                      else
-                      {   pipbug_baudrate = known[whichgame].swapped;
-                      }
-                      if (known[whichgame].flagline != VDU_ANY)
-                      {   pipbug_vdu      = known[whichgame].flagline;
-                      }
-                      switch (pipbug_vdu)
-                      {
-                      case  VDU_ELEKTERMINAL:  docommand2(MENUOPT_ELEKTERMINAL);
-                      acase VDU_LCVDU_NARROW:  docommand2(MENUOPT_LCVDU_NARROW);
-                      acase VDU_LCVDU_WIDE:    docommand2(MENUOPT_LCVDU_WIDE);
-                      acase VDU_RADIOBULLETIN: docommand2(MENUOPT_RADIOBULLETIN);
-                      acase VDU_SVT100:        docommand2(MENUOPT_SVT100);
-                      acase VDU_VT100:         docommand2(MENUOPT_VT100);
-                      }
-                      switch (whichgame)
-                      {
-                      case  FURNACEPOS1:
-                      case  FURNACEPOS2:
-                      case  FURNACEPOS3:      pipbug_periph = PERIPH_FURNACE;
-                      acase LINEARISATIEPOS1:
-                      case  LINEARISATIEPOS2: pipbug_periph = PERIPH_LINEARISATIE;
-                      acase MAGNETOMETERPOS:  pipbug_periph = PERIPH_MAGNETOMETER;
-                      adefault:               pipbug_periph = PERIPH_PRINTER;
-                      }
-        acase BINBUG: binbug_biosver  = known[whichgame].bios;
-                      if (known[whichgame].swapped == BINBUG_BAUDRATE_ANY)
-                      {   switch (binbug_biosver)
-                          {
-                          case BINBUG_61:  binbug_baudrate = BINBUG_BAUDRATE_150;
-                                           cpb             = 6667; // 6666.6' CPU cycles per teletype bit (150 baud at 1 MHz or 300 baud at 2 MHz)
-                          adefault:        binbug_baudrate = BINBUG_BAUDRATE_300;
-                                           cpb             = 3333; // 3333.3' CPU cycles per teletype bit (300 baud at 1 MHz or 600 baud at 2 MHz)
-                      }   }
-                      else
-                      {   binbug_baudrate = known[whichgame].swapped;
-                      }
-        acase CD2650: cd2650_biosver  = known[whichgame].bios;
-                      cd2650_vdu      = known[whichgame].flagline;
-        acase PHUNSY: phunsy_biosver  = known[whichgame].bios;
-        acase SELBST: selbst_biosver  = known[whichgame].bios;
-        }
-        changemachine(known[whichgame].machine, known[whichgame].memmap, FALSE, 0, FALSE);
-
-        switch (machine)
-        {
-        case ARCADIA:
-            if (known[whichgame].bios != REGION_ANY)
-            {   region    = (ULONG) known[whichgame].bios;
-            }
-            flagline      =         known[whichgame].flagline;
-        acase INTERTON:
-            darkenbg      =         known[whichgame].flagline;
-        acase ELEKTOR:
-            darkenbg      =         known[whichgame].flagline;
-            if (whichgame == SUBMARINESRACINGPOS)
-            {   ppc       = 2;
-            }
-        acase INSTRUCTOR:
-            s_id          = (int)   known[whichgame].spriteflips;
-            s_is          = (int)   known[whichgame].udgflips;
-            s_io          =         known[whichgame].flagline;
-        acase PHUNSY:
-            startaddr_h   = (UBYTE) (known[whichgame].startaddr / 256);
-            startaddr_l   = (UBYTE) (known[whichgame].startaddr % 256);
-        acase SELBST:
-            fastselbst    =         known[whichgame].flagline ? FALSE : TRUE;
-            machines[SELBST].cpf = fastselbst ? 20000.0 : 0.02;
-            // is update_speed() needed?
-        }
-        sensitivity[0]    =
-        sensitivity[1]    = (int)   known[whichgame].sensitivity;
-        analog            = (ULONG) known[whichgame].analog;
-        if (machine != PIPBUG)
-        {   swapped       = (ULONG) known[whichgame].swapped;
-        }
-        downframes        = (ULONG) known[whichgame].downframes;
-        totalframes       = (ULONG) known[whichgame].totalframes;
-        key1              = (int)   known[whichgame].key1;
-        key2              = (int)   known[whichgame].key2;
-        key3              = (int)   known[whichgame].key3;
-        key4              = (int)   known[whichgame].key4;
-        for (i = 0; i < 4; i++)
-        {   p1bgcol[i]    = (int)   known[whichgame].p1bgcol[i];
-            p2bgcol[i]    = (int)   known[whichgame].p2bgcol[i];
-        }
-        for (i = 0; i < 6; i++)
-        {   p1sprcol[i]   = (int)   known[whichgame].p1sprcol[i];
-            p2sprcol[i]   = (int)   known[whichgame].p2sprcol[i];
-        }
-        if (known[whichgame].firstcodecomment != -1)
-        {   // assert(known[whichgame].lastcodecomment != -1);
-            for (i = known[whichgame].firstcodecomment; i <= known[whichgame].lastcodecomment; i++)
-            {   memflags[codecomment[i].address] |= COMMENTED;
-        }   }
-        whichoverlay      = (int)   known[whichgame].whichoverlay;
-        if ((machine == ARCADIA || machine == INTERTON || machine == ELEKTOR) && known[whichgame].cpl)
-        {   set_cpl(        (int)   known[whichgame].cpl);
-        } else
-        {   set_cpl(                227);
-        }
-
-        make_stars();
-
-        if (machine != PIPBUG && machine != INSTRUCTOR) // because these machines use these known[] structure fields for other purposes
-        {   if (known[whichgame].demultiplex || known[whichgame].spriteflips || known[whichgame].udgflips)
-            {   firstrow    =  known[whichgame].firstrow;
-                lastrow     =  known[whichgame].lastrow;
-                udgflips    =  known[whichgame].udgflips;
-                spriteflips =  known[whichgame].spriteflips;
-                if (machine == INTERTON || machine == ELEKTOR)
-                {   multisprite[0] = (known[whichgame].demultiplex & 0x80) ? TRUE : FALSE;
-                    multisprite[1] = (known[whichgame].demultiplex & 0x40) ? TRUE : FALSE;
-                    multisprite[2] = (known[whichgame].demultiplex & 0x20) ? TRUE : FALSE;
-                    multisprite[3] = (known[whichgame].demultiplex & 0x10) ? TRUE : FALSE;
-                    protect[    0] = (known[whichgame].demultiplex & 0x08) ? FALSE : TRUE;
-                    protect[    1] = (known[whichgame].demultiplex & 0x04) ? FALSE : TRUE;
-                    protect[    2] = (known[whichgame].demultiplex & 0x02) ? FALSE : TRUE;
-                    protect[    3] = (known[whichgame].demultiplex & 0x01) ? FALSE : TRUE;
-                } elif (machine == ARCADIA)
-                {   protect[0]     = (known[whichgame].demultiplex & 0x08) ? TRUE : FALSE;
-                    protect[1]     = (known[whichgame].demultiplex & 0x04) ? TRUE : FALSE;
-                    protect[2]     = (known[whichgame].demultiplex & 0x02) ? TRUE : FALSE;
-                    protect[3]     = (known[whichgame].demultiplex & 0x01) ? TRUE : FALSE;
-            }   }
-            else
-            {   spriteflips = 0;
-                udgflips = 0;
-        }   }
-
-#ifdef VERBOSE
-        zprintf(TEXTPEN_VERBOSE, "Autosensed game #%d.\n", whichgame);
-#endif
-}   }
-
 EXPORT void generate_autotext(void)
 {   int i, j,
         thesize = 0; // initialized to avoid spurious SAS/C compiler warnings
@@ -706,8 +453,7 @@ EXPORT void generate_autotext(void)
     strcpy((char*) autotext[AUTOLINE_MACHINE], memmapinfo[memmap].name);
 
     if (machines[machine].coinop || machine == PONG || machine == TYPERIGHT)
-    {   whichgame = -1;
-        strcpy((char*) autotext[AUTOLINE_GAMENAME ], memmapinfo[memmap].name);
+    {   strcpy((char*) autotext[AUTOLINE_GAMENAME ], memmapinfo[memmap].name);
         strcpy((char*) autotext[AUTOLINE_CREDITS  ], memmapinfo[memmap].credits);
         strcpy((char*) autotext[AUTOLINE_REFERENCE], "-");
         strcpy((char*) autotext[AUTOLINE_CRC32    ], LLL(MSG_ENGINE_NOTAPPLICABLE, "n/a"));
@@ -2208,14 +1954,14 @@ EXPORT void dosidebar(void)
         } else
         {   switch (auditlist[sidebar[currentgame]].memmap)
             {
-            case  MEMMAP_ASTROWARS:   command_changemachine(ZACCARIA, MEMMAP_ASTROWARS);
-            acase MEMMAP_GALAXIA:     command_changemachine(ZACCARIA, MEMMAP_GALAXIA);
-            acase MEMMAP_LASERBATTLE: command_changemachine(ZACCARIA, MEMMAP_LASERBATTLE);
-            acase MEMMAP_LAZARIAN:    command_changemachine(ZACCARIA, MEMMAP_LAZARIAN);
-            acase MEMMAP_MALZAK1:     command_changemachine(MALZAK  , MEMMAP_MALZAK1);
-            acase MEMMAP_MALZAK2:     command_changemachine(MALZAK  , MEMMAP_MALZAK2);
-            acase MEMMAP_8550:        command_changemachine(PONG    , MEMMAP_8550);
-            acase MEMMAP_8600:        command_changemachine(PONG    , MEMMAP_8600);
+            case  MEMMAP_ASTROWARS:   change_machine(ZACCARIA, MEMMAP_ASTROWARS  , TRUE);
+            acase MEMMAP_GALAXIA:     change_machine(ZACCARIA, MEMMAP_GALAXIA    , TRUE);
+            acase MEMMAP_LASERBATTLE: change_machine(ZACCARIA, MEMMAP_LASERBATTLE, TRUE);
+            acase MEMMAP_LAZARIAN:    change_machine(ZACCARIA, MEMMAP_LAZARIAN   , TRUE);
+            acase MEMMAP_MALZAK1:     change_machine(MALZAK  , MEMMAP_MALZAK1    , TRUE);
+            acase MEMMAP_MALZAK2:     change_machine(MALZAK  , MEMMAP_MALZAK2    , TRUE);
+            acase MEMMAP_8550:        change_machine(PONG    , MEMMAP_8550       , TRUE);
+            acase MEMMAP_8600:        change_machine(PONG    , MEMMAP_8600       , TRUE);
     }   }   }
 
 #ifdef AMIGA
@@ -2608,11 +2354,11 @@ EXPORT void serialize_cos(void)
     acase INSTRUCTOR:
         for (i =    0x0; i <= 0x17FF; i++) /*   6K   */ serialize_byte(&memory[i]);
         for (i = 0x2000; i <= 0x7FFF; i++) /*  24K   */ serialize_byte(&memory[i]);
-        serialize_byte(&s_toggles);
-        serialize_byte_int(&s_io);
-        serialize_byte_int(&s_id);
-        serialize_byte_int(&s_is);
-        serialize_byte(&s_tapeport);
+        serialize_byte(&si50_toggles);
+        serialize_byte_int(&si50_io);
+        serialize_byte_int(&si50_id);
+        serialize_byte_int(&si50_is);
+        serialize_byte(&si50_tapeport);
         serialize_byte(&ioport[0xFD].contents);
         serialize_byte(&ioport[0xFC].contents);
     acase TWIN:
@@ -4110,7 +3856,7 @@ EXPORT void help_update(FLAG quiet)
     {   saymessage(LLL(MSG_UPDATE_NO, "You are up to date."));
 }   }
 
-EXPORT int parse_bytes(int mode)
+EXPORT int parse_bytes(void)
 {   TRANSIENT int   banktouse,
                     bankoffset,
                     i, j,
@@ -4119,6 +3865,8 @@ EXPORT int parse_bytes(int mode)
                     newmemmap,
                     tempsize;
     PERSIST   TEXT  tempstring[80 + 1];
+
+    // mode is 0 for normal load, or 1 when looping playback.
 
     // assert(!crippled);
     // assert(!inframe);
@@ -4150,7 +3898,7 @@ EXPORT int parse_bytes(int mode)
     switch (kind)
     {
     case KIND_CMD:
-        changemachine(BINBUG, MEMMAP_BINBUG, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        change_machine(BINBUG, MEMMAP_BINBUG, FALSE);
         if (!load_cmd(filesize))
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "CMD");
             say((STRPTR) tempstring);
@@ -4159,7 +3907,7 @@ EXPORT int parse_bytes(int mode)
         engine_reset();
     return 2;
     case KIND_IMAG:
-        changemachine(CD2650, MEMMAP_CD2650, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        change_machine(CD2650, MEMMAP_CD2650, FALSE);
         if (!load_imag(filesize))
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "IMAG");
             say((STRPTR) tempstring);
@@ -4168,7 +3916,7 @@ EXPORT int parse_bytes(int mode)
         engine_reset();
     return 2;
     case KIND_MOD:
-        changemachine(TWIN, MEMMAP_TWIN, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        change_machine(TWIN, MEMMAP_TWIN, FALSE);
         if (!load_mod(filesize))
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "MOD");
             say((STRPTR) tempstring);
@@ -4183,7 +3931,7 @@ EXPORT int parse_bytes(int mode)
         }
 #endif
         if (machine != ELEKTOR)
-        {   changemachine(ELEKTOR, MEMMAP_F, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        {   change_machine(ELEKTOR, MEMMAP_F, FALSE);
         }
         if (load_eof(filesize) == 0)
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "EOF");
@@ -4340,7 +4088,6 @@ EXPORT int parse_bytes(int mode)
         DISCARD load_bmp(fn_bkgrnd);
         if (filter != FILTER_3D && filter != FILTER_HQX)
         {   fixupcolours();
-            make_stars();
             drawpixelroutine();
             redrawscreen();
         }
@@ -4375,11 +4122,16 @@ EXPORT int parse_bytes(int mode)
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "TVC");
             return 0;
         }
-        changemachine(ELEKTOR, MEMMAP_F, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
         startaddr_h  = ReadByteAt(3);
         startaddr_l  = ReadByteAt(4);
         cheevosize   = filesize;
         memcpy(cheevomem, IOBuffer, cheevosize);
+        if (sensegame)
+        {   autosense(); // this sets whichgame but not machine
+        }
+        if (whichgame == -1)
+        {   wantmemmap = MEMMAP_F;
+        }
     acase KIND_AOF:
         if (ReadByteAt(0) != ':')
         {   sprintf((char*) tempstring, LLL(MSG_CORRUPTFILE, "Corrupt %s file!"), "AOF");
@@ -4390,6 +4142,23 @@ EXPORT int parse_bytes(int mode)
         {   return 0;
         }
 #endif
+        if (sensegame)
+        {   autosense(); // this sets whichgame but not machine
+        }
+        if (whichgame == -1)
+        {   switch (machine)
+            {
+            case PIPBUG:
+            case BINBUG:
+            case INSTRUCTOR:
+            case CD2650:
+            case SELBST:
+            case MIKIT:
+                ; // OK
+            adefault:
+                say((STRPTR) LLL(MSG_BADFORMAT, "This file format is not supported for this guest!"));
+            return 0;
+        }   }
     acase KIND_COS:
     case KIND_COR:
 #ifdef WIN32
@@ -4431,7 +4200,28 @@ EXPORT int parse_bytes(int mode)
             say((STRPTR) tempstring);
         return 0;
         }
-        changemachine(memmapinfo[newmemmap].machine, newmemmap, FALSE, 0, (FLAG) ((mode == 1) ? TRUE : FALSE));
+        if
+        (   machine == ARCADIA
+         || machine == INTERTON
+         || machine == ELEKTOR
+         || machine == PIPBUG
+         || machine == BINBUG
+         || machine == INSTRUCTOR
+         || machine == CD2650
+         || machine == PHUNSY
+         || machine == SELBST
+         || machine == MIKIT
+        ) // not TWIN, PONG, TYPERIGHT, coin-ops (they have no games in known[])
+        {   whichgame = (int) ReadWordAt(36);
+            if (whichgame < 0 || whichgame >= KNOWNGAMES)
+            {   whichgame = -1;
+#ifdef VERBOSE
+                zprintf(TEXTPEN_VERBOSE, "Unknown game!\n");
+#endif
+        }   }
+        else
+        {   whichgame = -1;
+        }
     acase KIND_BIN:
         if (filesize > 32 * KILOBYTE)
         {   say((STRPTR) LLL(MSG_ENGINE_TOOLARGE, "File is too large or corrupt!"));
@@ -4439,6 +4229,21 @@ EXPORT int parse_bytes(int mode)
         }
         startaddr_h = startaddr_l = 0;
         cheevosize = filesize;
+        if (sensegame)
+        {   autosense(); // this sets whichgame but not machine
+        }
+        if (whichgame == -1)
+        {   switch (machine)
+            {
+            case ARCADIA:
+            case INTERTON:
+            case INSTRUCTOR:
+            case PHUNSY:
+                ; // OK
+            adefault:
+                say((STRPTR) LLL(MSG_BADFORMAT, "This file format is not supported for this guest!"));
+            return 0;
+        }   }
     adefault: // eg. ILBM/ACBM/BMP/PCX/GIF/TIFF/PNG/IFFANIM/PSG/YM/MNG/AVIANIM/MIDI/SMUS/ASCII/ICON
         say((STRPTR) LLL(MSG_NOTFORLOADING, "This file format is not supported for loading!"));
     return 0;
@@ -4456,77 +4261,10 @@ EXPORT int parse_bytes(int mode)
     );
 #endif
 
-    if (mode == 0)
-    {   whichgame = -1;
-        switch (kind)
-        {
-        case KIND_COS:
-        case KIND_COR:
-            if
-            (   machine == ARCADIA
-             || machine == INTERTON
-             || machine == ELEKTOR
-             || machine == PIPBUG
-             || machine == BINBUG
-             || machine == INSTRUCTOR
-             || machine == CD2650
-             || machine == PHUNSY
-             || machine == SELBST
-             || machine == MIKIT
-            ) // not TWIN, PONG, TYPERIGHT, coin-ops (they have no games in known[])
-            {   whichgame = (int) ReadWordAt(36);
-                if (whichgame < 0 || whichgame >= KNOWNGAMES)
-                {   whichgame = -1;
-#ifdef VERBOSE
-                    zprintf(TEXTPEN_VERBOSE, "Unknown game!\n");
-#endif
-            }   }
-        acase KIND_BIN:
-            if (sensegame)
-            {   autosense(); // this sets whichgame but not machine
-            }
-            if (whichgame == -1)
-            {   switch (machine)
-                {
-                case ARCADIA:
-                case INTERTON:
-                case INSTRUCTOR:
-                case PHUNSY:
-                    ; // OK
-                adefault:
-                    say((STRPTR) LLL(MSG_BADFORMAT, "This file format is not supported for this guest!"));
-                return 0;
-            }   }
-        acase KIND_TVC:
-            if (sensegame)
-            {   autosense(); // this sets whichgame but not machine
-            }
-            if (whichgame == -1)
-            {   wantmemmap = MEMMAP_F;
-            }
-        acase KIND_AOF:
-            if (sensegame)
-            {   autosense(); // this sets whichgame but not machine
-            }
-            if (whichgame == -1)
-            {   switch (machine)
-                {
-                case PIPBUG:
-                case BINBUG:
-                case INSTRUCTOR:
-                case CD2650:
-                case SELBST:
-                case MIKIT:
-                    ; // OK
-                adefault:
-                    say((STRPTR) LLL(MSG_BADFORMAT, "This file format is not supported for this guest!"));
-                return 0;
-        }   }   }
-
-        configure();
-    }
-
     game = TRUE; // must be done before engine_reset()!
+    if (whichgame != -1)
+    {   change_machine(known[whichgame].machine, known[whichgame].memmap, FALSE);
+    }
 
     switch (kind)
     {
@@ -4786,9 +4524,8 @@ EXPORT int parse_bytes(int mode)
             {   macro_start();
     }   }   }
 
-    generate_autotext();
     updatemenus();
-    updatesmlgads();
+    update_toolbar();
 
 #ifdef WIN32
     if (cheevos && kind == KIND_BIN || kind == KIND_TVC || kind == KIND_COS || kind == KIND_COR)

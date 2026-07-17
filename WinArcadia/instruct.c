@@ -29,11 +29,11 @@
 EXPORTED VARIABLES----------------------------------------------------- */
 
 EXPORT       UBYTE                    keys_column[7],
-                                      s_tapeport    = 0,
-                                      s_toggles     = 0;
-EXPORT       int                      s_id          = INTDIR_DEFAULT,
-                                      s_is          = INTSEL_DEFAULT,
-                                      s_io          = PARALLEL_DEFAULT;
+                                      si50_tapeport = 0,
+                                      si50_toggles  = 0;
+EXPORT       int                      si50_id       = INTDIR_DEFAULT,
+                                      si50_is       = INTSEL_DEFAULT,
+                                      si50_io       = PARALLEL_DEFAULT;
 
 // IMPORTED VARIABLES-----------------------------------------------------
 
@@ -90,7 +90,7 @@ IMPORT const struct CodeCommentStruct codecomment[];
 
 // MODULE VARIABLES-------------------------------------------------------
 
-MODULE       UBYTE                    s_position = 0;
+MODULE       UBYTE                    si50_position = 0;
 
 // MODULE FUNCTIONS-------------------------------------------------------
 
@@ -113,10 +113,10 @@ MODULE void si50_emuinput(void)
         keys_column[5] = (UBYTE)  (t & 0x0F)      ;
         t = IOBuffer[offset++];
         keys_column[6] = (UBYTE) ((t & 0xF0) >> 4);
-        s_id          = (t & 8) >> 3; // 0/8 -> 0/1
-        s_is          = (t & 4) >> 2; // 0/4 -> 0/1
-        s_io          = (t & 3);      // 0..2
-        s_toggles = IOBuffer[offset++];
+        si50_id          = (t & 8) >> 3; // 0/8 -> 0/1
+        si50_is          = (t & 4) >> 2; // 0/4 -> 0/1
+        si50_io          = (t & 3);      // 0..2
+        si50_toggles = IOBuffer[offset++];
     } else
     {   // assert(recmode == RECMODE_NORMAL || recmode == RECMODE_RECORD);
 
@@ -194,12 +194,12 @@ MODULE void si50_emuinput(void)
         OutputBuffer[2] = ((keys_column[4] & 0x0F) << 4)
                         |  (keys_column[5] & 0x0F);
         OutputBuffer[3] = (UBYTE) (((keys_column[6] & 0x0F) << 4)
-                        |  ((ULONG) s_id         << 3) // 0/1 -> 0/8
-                        |  ((ULONG) s_is         << 2) // 0/1 -> 0/4
-                        |           s_io);             // 0..2
-        OutputBuffer[4] =   s_toggles;
+                        |  ((ULONG) si50_id         << 3) // 0/1 -> 0/8
+                        |  ((ULONG) si50_is         << 2) // 0/1 -> 0/4
+                        |           si50_io);             // 0..2
+        OutputBuffer[4] =   si50_toggles;
 
-/* We only support recording/playing back s_id/intselector/io/toggles
+/* We only support recording/playing back si50_id/intselector/io/toggles
    once per frame, but in theory they could get altered by the user, and then
    read by the game, many times per frame. */
 
@@ -262,8 +262,6 @@ EXPORT void si50_viewscreen(void)
 EXPORT void si50_setmemmap(void)
 {   int i,
         address;
-
-    game = FALSE;
 
     if (randomizememory)
     {   for (i =      0; i <= 0x17FF; i++)
@@ -373,7 +371,7 @@ EXPORT void si50_emulate(void)
     {   psu &= ~(PSU_S);
     }
     if ((keys_column[0] & 2) && !(old_column0 & 2))
-    {   if (s_is == INTSEL_KYBD)
+    {   if (si50_is == INTSEL_KYBD)
         {   interrupt_2650 = TRUE;
             checkinterrupt();
     }   }
@@ -386,7 +384,7 @@ EXPORT void si50_emulate(void)
         // "reset to game" command also calls macro_stop(), but we (deliberately) don't.
     }
 
-    if (s_is == INTSEL_ACLINE)
+    if (si50_is == INTSEL_ACLINE)
     {   interrupt_2650 = TRUE;
         checkinterrupt();
     }
@@ -431,8 +429,8 @@ EXPORT UBYTE si50_readport(int port)
     switch (port)
     {
     case 0x07:
-        if (s_io == PARALLEL_EXTENDED)
-        {   t = s_toggles;
+        if (si50_io == PARALLEL_EXTENDED)
+        {   t = si50_toggles;
         }
     acase 0xFC:
         t = ioport[0xFC].contents;
@@ -440,7 +438,7 @@ EXPORT UBYTE si50_readport(int port)
         t = ioport[0xFD].contents;
     acase 0xFE:
         if (frames % 2)
-        {   switch (s_position)
+        {   switch (si50_position)
             {
             case 0: // they want the 4th column
                 t = (UBYTE) (keys_column[3] ^ 0xFF);
@@ -461,8 +459,8 @@ EXPORT UBYTE si50_readport(int port)
         {   t = 0xFF;
         }
     acase PORTD:
-        if (s_io == PARALLEL_NONEXTENDED)
-        {   t = s_toggles;
+        if (si50_io == PARALLEL_NONEXTENDED)
+        {   t = si50_toggles;
         }
     adefault:
         t = 0;
@@ -478,50 +476,50 @@ EXPORT void si50_writeport(int port, UBYTE data)
     switch (port)
     {
     case 0x07:
-        if (s_io == PARALLEL_EXTENDED)
+        if (si50_io == PARALLEL_EXTENDED)
         {   glow = data;
         }
         if (verbosetape && (iar == 0x1EBC || iar == 0x1F07))
         {   zprintf(TEXTPEN_TAPE, "%c", r[0]);
         }
     acase 0xF8:
-        s_tapeport = data;
+        si50_tapeport = data;
     acase 0xF9:
-        if (s_position == 8)
+        if (si50_position == 8)
         {   return; // this is maybe supposed to clear the entire display or something? (which we haven't implemented)
         }
 
         if
         (   data == 0
-         && (   (s_position == 0 && zeroed[s_position] < 2) // for some reason the USE BIOS likes to write zeroes *twice* to this position
-             || zeroed[s_position] < 1 // and only *once* to all the other positions
+         && (   (si50_position == 0 && zeroed[si50_position] < 2) // for some reason the USE BIOS likes to write zeroes *twice* to this position
+             || zeroed[si50_position] < 1 // and only *once* to all the other positions
         )   )
-        {   zeroed[s_position]++;
+        {   zeroed[si50_position]++;
             return;
         }
-        zeroed[s_position] = 0;
+        zeroed[si50_position] = 0;
 \
-        digitleds[s_position] = data;
-        drawsegments(s_position);
+        digitleds[si50_position] = data;
+        drawsegments(si50_position);
     acase 0xFA:
         switch (data)
         {
-        case  0x80: s_position = 7;
-        acase 0x40: s_position = 6;
-        acase 0x20: s_position = 5;
-        acase 0x10: s_position = 4;
-        acase 0x08: s_position = 3;
-        acase 0x04: s_position = 2;
-        acase 0x02: s_position = 1;
-        acase 0x01: s_position = 0;
-        adefault:   s_position = 8; // eg. data of $00 (which does happen)
+        case  0x80: si50_position = 7;
+        acase 0x40: si50_position = 6;
+        acase 0x20: si50_position = 5;
+        acase 0x10: si50_position = 4;
+        acase 0x08: si50_position = 3;
+        acase 0x04: si50_position = 2;
+        acase 0x02: si50_position = 1;
+        acase 0x01: si50_position = 0;
+        adefault:   si50_position = 8; // eg. data of $00 (which does happen)
         }
     acase 0xFB:
         ioport[0xFC].contents = iar % 256;
         ioport[0xFD].contents = iar / 256;
     // PORTC is handled by 2650 core
     acase PORTD:
-        if (s_io == PARALLEL_NONEXTENDED)
+        if (si50_io == PARALLEL_NONEXTENDED)
         {   glow = data;
     }   }
 
@@ -1000,7 +998,7 @@ EXPORT void si50_reset(void)
     }
 
     // tape deck
-    s_tapeport    = 0;
+    si50_tapeport    = 0;
 
     // game
     if (game)
@@ -1010,35 +1008,35 @@ EXPORT void si50_reset(void)
 }   }
 
 EXPORT void si50_updatedips(FLAG force)
-{   PERSIST UBYTE old_s_toggles;
-    PERSIST int old_s_id,
-                old_s_is,
-                old_s_io;
+{   PERSIST UBYTE old_si50_toggles;
+    PERSIST int   old_si50_id,
+                  old_si50_is,
+                  old_si50_io;
 
     if (machine != INSTRUCTOR || !subwin[SUBWINDOW_DIPS].hwnd)
     {   return;
     }
 
-    if (force || s_id != old_s_id)
-    {   old_s_id = s_id;
-        ra_set(SUBWINDOW_DIPS, IDC_INTERRUPTS_DIRECT, IDC_INTERRUPTS_INDIRECT, s_id);
+    if (force || si50_id != old_si50_id)
+    {   old_si50_id = si50_id;
+        ra_set(SUBWINDOW_DIPS, IDC_INTERRUPTS_DIRECT, IDC_INTERRUPTS_INDIRECT, si50_id);
     }
-    if (force || s_is != old_s_is)
-    {   old_s_is = s_is;
-        ra_set(SUBWINDOW_DIPS, IDC_INTSELECTOR_ACLINE, IDC_INTSELECTOR_KYBD, s_is);
+    if (force || si50_is != old_si50_is)
+    {   old_si50_is = si50_is;
+        ra_set(SUBWINDOW_DIPS, IDC_INTSELECTOR_ACLINE, IDC_INTSELECTOR_KYBD, si50_is);
     }
-    if (force || s_io != old_s_io)
-    {   old_s_io = s_io;
-        ra_set(SUBWINDOW_DIPS, IDC_PARALLEL_MEMMAPPED, IDC_PARALLEL_NONEXTENDED, s_io);
+    if (force || si50_io != old_si50_io)
+    {   old_si50_io = si50_io;
+        ra_set(SUBWINDOW_DIPS, IDC_PARALLEL_MEMMAPPED, IDC_PARALLEL_NONEXTENDED, si50_io);
     }
 
-    if (force || (s_toggles & 128) != (old_s_toggles & 128)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT7, s_toggles & 128);
-    if (force || (s_toggles &  64) != (old_s_toggles &  64)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT6, s_toggles &  64);
-    if (force || (s_toggles &  32) != (old_s_toggles &  32)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT5, s_toggles &  32);
-    if (force || (s_toggles &  16) != (old_s_toggles &  16)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT4, s_toggles &  16);
-    if (force || (s_toggles &   8) != (old_s_toggles &   8)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT3, s_toggles &   8);
-    if (force || (s_toggles &   4) != (old_s_toggles &   4)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT2, s_toggles &   4);
-    if (force || (s_toggles &   2) != (old_s_toggles &   2)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT1, s_toggles &   2);
-    if (force || (s_toggles &   1) != (old_s_toggles &   1)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT0, s_toggles &   1);
-    old_s_toggles = s_toggles;
+    if (force || (si50_toggles & 128) != (old_si50_toggles & 128)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT7, si50_toggles & 128);
+    if (force || (si50_toggles &  64) != (old_si50_toggles &  64)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT6, si50_toggles &  64);
+    if (force || (si50_toggles &  32) != (old_si50_toggles &  32)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT5, si50_toggles &  32);
+    if (force || (si50_toggles &  16) != (old_si50_toggles &  16)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT4, si50_toggles &  16);
+    if (force || (si50_toggles &   8) != (old_si50_toggles &   8)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT3, si50_toggles &   8);
+    if (force || (si50_toggles &   4) != (old_si50_toggles &   4)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT2, si50_toggles &   4);
+    if (force || (si50_toggles &   2) != (old_si50_toggles &   2)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT1, si50_toggles &   2);
+    if (force || (si50_toggles &   1) != (old_si50_toggles &   1)) bu_select(SUBWINDOW_DIPS, IDC_PARALLEL_BIT0, si50_toggles &   1);
+    old_si50_toggles = si50_toggles;
 }

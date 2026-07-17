@@ -240,7 +240,6 @@ EXPORT void cd2650_setmemmap(void)
         biosend = 0, // initialized to avoid a spurious SAS/C warning
         i, j;
 
-    game = FALSE;
     machines[CD2650].cpf = fastcd2650 ? 29832.0 : 19888.0;
     nextinst = 0;
 
@@ -1739,7 +1738,7 @@ EXPORT void cd2650_changebios(void)
     {   if (cd2650_vdu == VDU_ASCII)
         {   cd2650_vdu = VDU_LOWERCASE;
     }   }
-    changemachine(CD2650, memmap, TRUE, 2, TRUE); // calls cd2650_updatecharset()
+    change_machine(CD2650, memmap, FALSE); // calls cd2650_updatecharset()
     updatemenus();
     engine_reset();
     redrawscreen(); // important!

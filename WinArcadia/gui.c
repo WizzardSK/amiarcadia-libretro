@@ -19,6 +19,7 @@
     #define ALL_REACTION_CLASSES
     #define ALL_REACTION_MACROS
     #include <reaction/reaction.h>
+    #include <proto/intuition.h>
 #endif
 
 #include "aa.h"
@@ -32,490 +33,490 @@
 // EXPORTED VARIABLES-----------------------------------------------------
 
 EXPORT const struct MenuStruct menuinfo1[MENUITEMS] = {
-{ "PROJECT.RESETTOGAME"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //   0
-{ "PROJECT.JUMPTOBIOS"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.REINITIALIZE"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.OPEN"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.REVERT"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.QUICKLOAD"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVECOS"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.ACBM"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.ILBM"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.BMP"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.GIF"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  10
-{ "PROJECT.SAVESCRN.PCX"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.PNG"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.TIFF"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.ASCII"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.SAVESCRN.ASM"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.QUICKSAVE"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.AUDIT"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.REGISTER"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT1"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT2"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  20
-{ "PROJECT.RECENT3"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT4"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT5"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT6"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT7"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.RECENT8"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.ICONIFY"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.UNICONIFY"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "PROJECT.QUIT"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "EDIT.MEMORY"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  30 MENUITEM_EDITMEMORY
-{ "EDIT.PALETTE"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  31 MENUITEM_PALETTE
-{ "EDIT.SCREEN"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  32 MENUITEM_SCREENEDITOR
-{ "EDIT.SPRITES"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  33 MENUITEM_SPRITEVIEWER
-{ "EDIT.COPYSCREEN"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "EDIT.COPYTEXT"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "EDIT.PASTETEXT"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "EDIT.EMPTYCLIPBOARD"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.HIGHSCORES"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.DEBUGGER"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.MENUBAR"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  40
-{ "VIEW.POINTER"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.SIDEBAR"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.STATUSBAR"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.TITLEBAR"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.TOOLBAR"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "VIEW.BUILTINGAMES"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.STARTRECORDING"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.RESTARTPLAYBACK"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.STOP"                     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.LOOP"                     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  50
-{ "MACRO.ANIMS.ANIM"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.ANIMS.GIF"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.ANIMS.MNG"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.ANIMS.APNG"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.SOUNDS.8SVX"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.SOUNDS.AIFF"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.SOUNDS.SMUS"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.SOUNDS.MIDI"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.SOUNDS.PSG"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.SOUNDS.WAV"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  60
-{ "MACRO.SOUNDS.YM"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.GENERATE"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  62 MENUITEM_GENERATE
-{ "MACRO.RUNREXX"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ "MACRO.REPEATREXX"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         },
-{ ""                               , MSG_MENUHELP_QUOTES      , "Send message to other player"                   , "\""      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //  65 MENUITEM_QUOTES
-{ ""                               , MSG_MENUHELP_CLEARCOV    , "Clear coverage report"                          , "CLEARCOV", ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CLEARCOV
-{ ""                               , MSG_MENUHELP_CLS         , "Clear screen (of console window)"               , "CLS"     , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CLS
-{ ""                               , MSG_MENUHELP_HELP        , "View help"                                      , "H"       , "HELP" , "?"  , 0, 1,                 -1, ""                                                                         }, //  68 MENUITEM_HELP
-{ ""                               , MSG_MENUHELP_SAY         , "Speak message"                                  , "SAY"     , "SPEAK", "SPK", 1, 1,                 -1, ""                                                                         }, //     MENUITEM_SAY
-{ ""                               , MSG_MENUHELP_SYSTEM      , "Quit emulator"                                  , "SYS"     , "SYSTEM",""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SYSTEM
-{ ""                               , MSG_MENUHELP_ASTERISK    , "Execute host OS command"                        , "*"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_ASTERISK
-{ ""                               , MSG_MENUHELP_ASM         , "Assemble source code"                           , "ASM"     , ""     , ""   , 1, 1, MSG_USAGE_ASM     , "Usage: ASM <filename>\n\n"                                                }, //     MENUITEM_ASM
-{ ""                               , MSG_MENUHELP_DISGAME     , "Disassemble and show address range"             , "DISGAME" , ""     , ""   , 0, 3, MSG_USAGE_DISGAME , "Usage: DISGAME [<start-address> <end-address>] [<filename>]\n\n"          }, //     MENUITEM_DISGAME
-{ ""                               , MSG_MENUHELP_EDIT        , "Edit source code"                               , "ED"      , "EDIT" , ""   , 1, 1, MSG_USAGE_ED      , "Usage: ED|EDIT <filename>\n\n"                                            }, //     MENUITEM_EDIT
-{ ""                               , MSG_MENUHELP_LOADBIN     , "Load binary to start-addr from filename"        , "LOADBIN" , ""     , ""   , 2, 2, MSG_USAGE_LOADBIN , "Usage: LOADBIN <start-address> <filename>\n\n"                            }, //     MENUITEM_LOADBIN
-{ ""                               , MSG_MENUHELP_SAVEAOF     , "Save address range as filename (AOF/EOF)"       , "SAVEAOF" , "SAVEEOF",""  , 2, 5, MSG_USAGE_SAVEAOF , "Usage: SAVEAOF|SAVEEOF <start-address> <end-address> [<filename> [<game-start> [<block-size>]]]\n\n"}, // MENUITEM_SAVEAOF
-{ ""                               , MSG_MENUHELP_SAVEBIN     , "Save address range as filename (BIN)"           , "SAVEBIN" , ""     , ""   , 3, 3, MSG_USAGE_SAVEBIN , "Usage: SAVEBIN <start-address> <end-address> <filename>\n\n"              }, //     MENUITEM_SAVEBIN
-{ ""                               , MSG_MENUHELP_SAVEBPNF    , "Save address range as filename (BPNF)"          , "SAVEBPNF", ""     , ""   , 3, 3, MSG_USAGE_SAVEBPNF, "Usage: SAVEBPNF <start-address> <end-address> <filename>\n\n"             }, //  78 MENUITEM_SAVEBPNF
-{ ""                               , MSG_MENUHELP_SAVECMD     , "Save address range as filename (CMD/IMAG/MOD)"  , "SAVECMD","SAVEIMAG","SAVEMOD",2,4,MSG_USAGE_SAVECMD, "Usage: SAVECMD|SAVEIMAG|SAVEMOD <start-address> <end-address> [<filename> [<game-start>]]\n\n"}, // MENUITEM_SAVECMD
-{ ""                               , MSG_MENUHELP_SAVEHEX     , "Save address range as filename (Intel hex)"     , "SAVEHEX" , ""     , ""   , 3, 3, MSG_USAGE_SAVEHEX , "Usage: SAVEHEX <start-address> <end-address> <filename>\n\n"              }, //     MENUITEM_SAVEHEX
-{ ""                               , MSG_MENUHELP_SAVESMS     , "Save address $0 to end-addr as filename (SMS)"  , "SAVESMS" , ""     , ""   , 2, 2, MSG_USAGE_SAVESMS , "Usage: SAVESMS <end-address> <filename>\n\n"                              }, //     MENUITEM_SAVESMS
-{ ""                               , MSG_MENUHELP_SAVETVC     , "Save address range as filename (TVC)"           , "SAVETVC" , ""     , ""   , 2, 4, MSG_USAGE_SAVETVC , "Usage: SAVETVC <start-address> <end-address> [<filename> [<game-start>]]\n\n"}, //  MENUITEM_SAVETVC
-{ ""                               , MSG_MENUHELP_DELETE      , "Delete file from floppy disk"                   , "DEL"     , "DELETE",""   , 1, 1, MSG_USAGE_DELETE  , "Usage: DEL|DELETE <filename>\n\n"                                         }, //     MENUITEM_DELETE
-{ ""                               , MSG_MENUHELP_DIR         , "List files on floppy disk"                      , "DIR"     , "LD"   , "LDIR",0, 0,                 -1, ""                                                                         }, //     MENUITEM_DIR
-{ ""                               , MSG_MENUHELP_EXTRACT     , "Extract files from floppy disk"                 , "EXTRACT" , ""     , ""   , 0, 1, MSG_USAGE_EXTRACT , "Usage: EXTRACT [<filename>]\n\n"                                          }, //     MENUITEM_EXTRACT
-{ ""                               , MSG_MENUHELP_INJECT      , "Inject file onto floppy disk"                   , "INJECT"  , ""     , ""   , 1, 1, MSG_USAGE_INJECT  , "Usage: INJECT <filename>\n\n"                                             }, //     MENUITEM_INJECT
-{ ""                               , MSG_MENUHELP_RENAME      , "Rename file on floppy disk"                     , "REN"     , "RENAME",""   , 2, 2, MSG_USAGE_RENAME  , "Usage: REN|RENAME <oldname> <newname>\n\n"                                }, //     MENUITEM_RENAME
-{ ""                               , 0                        , ""                                               , "DRIVE"   , ""     , ""   , 0, 1,                 -1, ""                                                                         }, //  88 MENUFAKE_DRIVE
-{ ""                               , MSG_MENUHELP_DOKE        , "Change word at address to value"                , "DOKE"    , ""     , ""   , 1, 2, MSG_USAGE_DOKE    , "Usage: DOKE <address> [<value>]\n\n"                                      }, //     MENUITEM_DOKE
-{ ""                               , MSG_MENUHELP_POKE        , "Change byte at address to value"                , "E"       , "POKE" , "PM" , 0, 2, MSG_USAGE_E       , "Usage: E|POKE [<address> [<value>]]\n\n"                                  }, //     MENUITEM_POKE
-{ ""                               , MSG_MENUHELP_FPOKE       , "Change byte on disk to value"                   , "FPOKE"   , ""     , ""   , 2, 2, MSG_USAGE_FPOKE   , "Usage: FPOKE <address> <value>\n\n"                                       }, //     MENUITEM_FPOKE
-{ ""                               , MSG_MENUHELP_WRITEPORT   , "Write to I/O port"                              , "WRITEPORT",""     , ""   , 2, 2, MSG_USAGE_WRITEPORT,"Usage: WRITEPORT <port>|CTRL|DATA <value>\n\n"                            }, //     MENUITEM_WRITEPORT
-{ ""                               , MSG_MENUHELP_EQUALS      , "List any or all known labels"                   , "="       , ""     , ""   , 0, 1, MSG_USAGE_EQUALS  , "Usage: = [<address>]\n\n"                                                 }, //     MENUITEM_EQUALS
-{ ""                               , MSG_MENUHELP_COVER       , "View coverage report"                           , "COVER"   , ""     , ""   , 0, 1, MSG_USAGE_COVER   , "Usage: COVER [<reporttype>]\n\n"                                          }, //     MENUITEM_COVER
-{ ""                               , MSG_MENUHELP_PEEK        , "Display address range as data"                  , "D"       , "PEEK" , "DM" , 1, 2, MSG_USAGE_D       , "Usage: D|PEEK <start-address> [<end-address>]\n\n"                        }, //     MENUITEM_PEEK
-{ ""                               , MSG_MENUHELP_DIS         , "Disassemble address range as code"              , "DIS"     , "DI"   , ""   , 0, 2, MSG_USAGE_DIS     , "Usage: DIS [<start-address> [<end-address>]]\n\n"                         }, //     MENUITEM_DIS
-{ ""                               , MSG_MENUHELP_ERROR       , "Show error message"                             , "ERROR"   , ""     , ""   , 1, 1, MSG_USAGE_ERROR   , "Usage: ERROR <number>\n\n"                                                }, //     MENUITEM_ERROR
-{ ""                               , MSG_MENUHELP_FPEEK       , "Display address range from disk"                , "FPEEK"   , ""     , ""   , 1, 2, MSG_USAGE_FPEEK   , "Usage: FPEEK <startaddr> [<endaddr>]\n\n"                                 }, //  98 MENUITEM_FPEEK
-{ ""                               , MSG_MENUHELP_HISTORY     , "View command history"                           , "HISTORY" , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_HISTORY
-{ ""                               , MSG_MENUHELP_IM          , "View address range as imagery"                  , "IM"      , ""     , ""   , 0, 3, MSG_USAGE_IM      , "Usage: IM [<start-address> <end-address>] [<filename>]\n\n"               }, //     MENUITEM_IM
-{ ""                               , MSG_MENUHELP_READPORT    , "Read from I/O port"                             , "READPORT", ""     , ""   , 1, 1, MSG_USAGE_READPORT, "Usage: READPORT <port>|CTRL|DATA\n\n"                                     }, //     MENUITEM_READPORT
-{ ""                               , MSG_MENUHELP_VIEW_BASIC  , "View BASIC variables"                           , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_BASIC
-{ ""                               , MSG_MENUHELP_VIEW_BIOS   , "View BIOS RAM"                                  , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_BIOS
-{ ""                               , MSG_MENUHELP_VIEW_CPU    , "View CPU status"                                , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_CPU
-{ ""                               , MSG_MENUHELP_VIEW_PSG    , "View PSGs/TMSes status"                         , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_PSG
-{ ""                               , MSG_MENUHELP_VIEW_RAM    , "View RAM"                                       , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_RAM
-{ ""                               , MSG_MENUHELP_VIEW_SCRN   , "View screen contents"                           , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_SCRN
-{ ""                               , MSG_MENUHELP_VIEW_UDG    , "View user-defined graphics"                     , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, // 108 MENUITEM_VIEW_UDG
-{ ""                               , MSG_MENUHELP_VIEW_XVI    , "View UVI/PVI status"                            , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_VIEW_XVI
-{ ""                               , MSG_MENUHELP_L_A         , "Log illegal memory accesses on/off"             , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_L_A
-{ ""                               , MSG_MENUHELP_L_B         , "Log BIOS calls on/off"                          , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_L_B
-{ ""                               , MSG_MENUHELP_L_C         , "Log inefficient code on/off"                    , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_L_C
-{ ""                               , MSG_MENUHELP_L_I         , "Log illegal instructions on/off"                , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_L_I
-{ ""                               , MSG_MENUHELP_L_N         , "Log interrupts on/off"                          , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_L_N
-{ ""                               , MSG_MENUHELP_L_S         , "Log subroutine calls on/off"                    , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUITEM_L_S
-{ ""                               , MSG_MENUHELP_PL          , "Pause after logging on/off"                     , "PL"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_PL
-{ ""                               , MSG_MENUHELP_T           , "Trace CPU on/off"                               , "T"       , "SS"   , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_T
-{ ""                               , MSG_MENUHELP_G           , "Pause/unpause & optionally set breakpoint"      , "G"       , "P"    , "GO" , 0, 1, MSG_USAGE_G       , "Usage: G|P [<address>]\n\n"                                               }, // 118 MENUITEM_G
-{ ""                               , MSG_MENUHELP_GI          , "Generate an interrupt"                          , "GI"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_GI
-{ ""                               , MSG_MENUHELP_I           , "Ignore next instruction"                        , "I"       , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_I
-{ ""                               , MSG_MENUHELP_JUMP        , "Jump to address"                                , "J"       , "JUMP" , ""   , 1, 1, MSG_USAGE_JUMP    , "Usage: J|JUMP <address>\n\n"                                              }, //     MENUITEM_JUMP
-{ ""                               , MSG_MENUHELP_O           , "Step over subroutine"                           , "O"       , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_O
-{ ""                               , MSG_MENUHELP_S           , "Step next instruction"                          , "S"       , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_S
-{ ""                               , MSG_MENUHELP_R           , "Run to rasterline number"                       , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "Usage: R F|I|L|R|S|<number>\n\n"                                          }, //     MENUITEM_R
-{ ""                               , MSG_MENUHELP_R_F         , "Run to next frame"                              , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "Usage: R F|I|L|R|S|<number>\n\n"                                          }, //     MENUITEM_R_F
-{ ""                               , MSG_MENUHELP_R_I         , "Run to next interrupt"                          , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "Usage: R F|I|L|R|S|<number>\n\n"                                          }, //     MENUITEM_R_I
-{ ""                               , MSG_MENUHELP_R_L         , "Run to end of loop"                             , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "Usage: R F|I|L|R|S|<number>\n\n"                                          }, //     MENUITEM_R_L
-{ ""                               , MSG_MENUHELP_R_R         , "Run to next rasterline"                         , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "Usage: R F|I|L|R|S|<number>\n\n"                                          }, // 128 MENUITEM_R_R
-{ ""                               , MSG_MENUHELP_R_S         , "Run to end of subroutine"                       , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "Usage: R F|I|L|R|S|<number>\n\n"                                          }, //     MENUITEM_R_S
-{ ""                               , MSG_MENUHELP_BP          , "Add code breakpoints to address range"          , "BP"      , "SB"   , ""   , 1, 5, MSG_USAGE_BP      , "Usage: BP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n" }, //     MENUITEM_BP
-{ ""                               , MSG_MENUHELP_BC          , "Clear code breakpoints from address range"      , "BC"      , "DB"   , ""   , 0, 2, MSG_USAGE_BC      , "Usage: BC [<start-address> [<end-address>]]\n\n"                          }, //     MENUITEM_BC
-{ ""                               , MSG_MENUHELP_BL          , "List all code breakpoints"                      , "BL"      , "LB"   , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_BL
-{ ""                               , MSG_MENUHELP_FP          , "Add disk watchpoints to address range"          , "FP"      , ""     , ""   , 1, 2, MSG_USAGE_FP      , "Usage: FP <start-address> [<end-address>]\n\n"                            }, //     MENUITEM_FP
-{ ""                               , MSG_MENUHELP_FC          , "Clear disk watchpoints from address range"      , "FC"      , ""     , ""   , 0, 2, MSG_USAGE_FC      , "Usage: FC [<start-address> [<end-address>]]\n\n"                          }, //     MENUITEM_FC
-{ ""                               , MSG_MENUHELP_FL          , "List all disk watchpoints"                      , "FL"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_FL
-{ ""                               , MSG_MENUHELP_IP          , "Add I/O port watchpoints to port range"         , "IP"      , ""     , ""   , 0, 5, MSG_USAGE_IP      , "Usage: IP [<start-port> [<end-port>] [<addr/reg> <condition> <value>]]\n\n"},//     MENUITEM_IP
-{ ""                               , MSG_MENUHELP_IC          , "Clear I/O port watchpoints from port range"     , "IC"      , ""     , ""   , 0, 2, MSG_USAGE_IC      , "Usage: IC [<start-port> [<end-port>]]\n\n"                                }, //     MENUITEM_IC
-{ ""                               , MSG_MENUHELP_IL          , "List all I/O port watchpoints"                  , "IL"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 138 MENUITEM_IL
-{ ""                               , MSG_MENUHELP_WP          , "Add data watchpoints to address range"          , "WP"      , "ST"   , ""   , 1, 5, MSG_USAGE_WP      , "Usage: WP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]\n\n" }, //     MENUITEM_WP
-{ ""                               , MSG_MENUHELP_WC          , "Clear data watchpoints from address range"      , "WC"      , "DT"   , ""   , 0, 2, MSG_USAGE_WC      , "Usage: WC [<start-address> [<end-address>]]\n\n"                          }, //     MENUITEM_WC
-{ ""                               , MSG_MENUHELP_WL          , "List all data watchpoints"                      , "WL"      , "LT"   , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_WL
-{ ""                               , MSG_MENUHELP_PB          , "Pause after breakpoints/watchpoints on/off"     , "PB"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_PB
-{ ""                               , MSG_MENUHELP_WR          , "Watch reads on/off"                             , "WR"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_WR
-{ ""                               , 0                        , ""                                               , "WW"      , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUFAKE_WW
-{ ""                               , MSG_MENUHELP_CLEARSYM    , "Clear symbol(s)"                                , "CLEARSYM", ""     , ""   , 0, 1, MSG_USAGE_CLEARSYM, "Usage: CLEARSYM [<label>]\n\n"                                            }, //     MENUITEM_CLEARSYM
-{ ""                               , MSG_MENUHELP_DEFSYM      , "Define symbol"                                  , "DEFSYM"  , ""     , ""   , 2, 3, MSG_USAGE_DEFSYM  , "Usage: DEFSYM <label> <address> [C|D|P|U]\n\n"                            }, //     MENUITEM_DEFSYM
-{ ""                               , MSG_MENUHELP_LOADSYM     , "Load symbol table from filename"                , "LOADSYM" , ""     , ""   , 0, 1, MSG_USAGE_LOADSYM , "Usage: LOADSYM [<filename>]\n\n"                                          }, //     MENUITEM_LOADSYM
-{ ""                               , MSG_MENUHELP_SAVESYM     , "Save symbol table as filename"                  , "SAVESYM" , ""     , ""   , 1, 1, MSG_USAGE_SAVESYM , "Usage: SAVESYM <filename>\n\n"                                            }, // 148 MENUITEM_SAVESYM
-{ ""                               , MSG_MENUHELP_COMP        , "Compare memory blocks"                          , "CO"      , "COMP" , ""   , 3, 3, MSG_USAGE_CO      , "Usage: CO|COMP <1st-start> <1st-end> <2nd-start>\n\n"                     }, //     MENUITEM_COMP
-{ ""                               , MSG_MENUHELP_COPY        , "Copy memory from source to target"              , "COPY"    , "MOVE" , ""   , 3, 3, MSG_USAGE_COPY    , "Usage: COPY|MOVE <source-start> <source-end> <target-start>\n\n"          }, //     MENUITEM_COPY
-{ ""                               , MSG_MENUHELP_FILL        , "Fill address range with value"                  , "FILL"    , ""     , ""   , 3, 3, MSG_USAGE_F       , "Usage: FILL <start-address> <end-address> <value>\n\n"                    }, //     MENUITEM_FILL
-{ ""                               , MSG_MENUHELP_FIND        , "Find value in address range"                    , "FIND"    , ""     , ""   , 0, 3,                 -1, ""                                                                         }, //     MENUITEM_FIND
-{ ""                               , MSG_MENUHELP_REL         , "Calculate relative offset of target-addr"       , "REL"     , ""     , ""   , 2, 2, MSG_USAGE_REL     , "Usage: REL <source-addr> [*]<target-addr>\n\n"                            }, //     MENUITEM_REL
-{ ""                               , MSG_MENUHELP_SWAP        , "Swap memory blocks"                             , "SWAP"    , ""     , ""   , 3, 3, MSG_USAGE_SWAP    , "Usage: SWAP <1st-start> <1st-end> <2nd-start>\n\n"                        }, //     MENUITEM_SWAP
-{ ""                               , MSG_MENUHELP_TRAIN       , "Make trainer"                                   , "TRAIN"   , ""     , ""   , 0, 1, MSG_USAGE_TRAIN   , "Usage: TRAIN [<value>]\n\n"                                               }, //     MENUITEM_TRAIN
-{ ""                               , 0                        , ""                                               , "BASE"    , ""     , ""   , 0, 1,                 -1, ""                                                                         }, //     MENUFAKE_BASE
-{ ""                               , 0                        , ""                                               , "CPU"     , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUFAKE_CPU
-{ ""                               , 0                        , ""                                               , "N"       , ""     , ""   , 1, 1,                 -1, ""                                                                         }, // 158 MENUFAKE_N
-{ ""                               , 0                        , ""                                               , "TU"      , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUFAKE_TU
-{ ""                               , 0                        , ""                                               , "VB"      , "VERBOSE",""  , 1, 1,                 -1, ""                                                                         }, //     MENUFAKE_VERBOSITY
-{ ""                               , MSG_MENUHELP_GR          , "Use guide ray on/off"                           , "GR"      , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_GR
-{ ""                               , MSG_MENUHELP_WARN        , "Assembler warnings on/off"                      , "WARN"    , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_WARN
-{ ""                               , 0                        , ""                                               , "DRAW"    , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUFAKE_DRAW
-{ ""                               , 0                        , ""                                               , "SPR"     , ""     , ""   , 1, 1,                 -1, ""                                                                         }, //     MENUFAKE_SPR
-{ "DEBUG.DEBUGGER"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_TOOLSDEBUGGER
-{ "TOOLS.CPU"                      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_VIEWMONITOR_CPU
-{ "TOOLS.PSG"                      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_VIEWMONITOR_PSGS
-{ "TOOLS.XVI"                      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 168 MENUITEM_VIEWMONITOR_XVI
-{ "TOOLS.MUSIC"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_MUSIC
-{ "TOOLS.SERVER"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SERVER
-{ "TOOLS.CLIENT"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CLIENT
-{ "TOOLS.RETROACHIEVEMENTS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CHEEVOS1
-{ "PERIPHERALS.CONTROLS"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CONTROLS
-{ "PERIPHERALS.DIPSWITCHES"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_DIPSWITCHES
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_LEFT
-{ "PERIPHERALS.LEFT.AUTOFIRE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_AUTOFIRE1
-{ "PERIPHERALS.LEFT.REQUIREBUTTON" , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_REQUIREBUTTON1
-{ "PERIPHERALS.LEFT.FORCEFEEDBACK" , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 178 MENUITEM_FORCEFEEDBACK1
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_RIGHT
-{ "PERIPHERALS.RIGHT.AUTOFIRE"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_AUTOFIRE2
-{ "PERIPHERALS.RIGHT.REQUIREBUTTON", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_REQUIREBUTTON2
-{ "PERIPHERALS.RIGHT.FORCEFEEDBACK", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_FORCEFEEDBACK2
-{ "PERIPHERALS.TAPEDECK"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_TAPEDECK
-{ "PERIPHERALS.FLOPPYDRIVE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_FLOPPYDRIVE
-{ "PERIPHERALS.INDUSTRIAL"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_INDUSTRIAL
-{ "PERIPHERALS.PAPERTAPE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_PAPERTAPE
-{ "PERIPHERALS.PRINTER"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_PRINTER
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 188 MENUFAKE_ELEKTORBIOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_PIPBUGBIOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_BINBUGBIOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_CD2650BIOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_PHUNSYBIOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_SELBSTBIOS
-{ "SETTINGS.COLOURS.ARTEFACTS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_UNDITHER
-{ "SETTINGS.COLOURS.DARKENBG"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_DARKENBG
-{ "SETTINGS.COLOURS.FLAGLINE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_FLAGLINE
-{ "SETTINGS.COLOURS.INVERSE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_INVERSE
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 198 MENUFAKE_COLOURSET
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_BINBUGDOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_TWINDOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_CD2650DOS
-{ "SETTINGS.EMULATOR.AUTOSAVE"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_AUTOSAVE
-{ "SETTINGS.EMULATOR.UPDATES"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_STARTUPUPDATES
-{ "SETTINGS.EMULATOR.CONFIRMQUIT"  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CONFIRM
-{ "SETTINGS.EMULATOR.ICONS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CREATEICONS
-{ "SETTINGS.EMULATOR.CONSOLE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CONSOLE
-{ "SETTINGS.EMULATOR.IDENTIFY"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_EMUID
-{ "SETTINGS.EMULATOR.POST"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 208 MENUITEM_POST
-{ "SETTINGS.EMULATOR.RANDOMIZE"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEE_RANDOMIZE
-{ "SETTINGS.EMULATOR.SENSEGAME"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SENSEGAME
-{ "SETTINGS.EMULATOR.SHOWTIPS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SHOWTOD
-{ "SETTINGS.EMULATOR.STUBS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_USESTUBS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_FRAMEBASED
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_LOGTOFILE
-{ "SETTINGS.EMULATOR.PATHS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_PATHS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_FILTER
-{ "SETTINGS.FILTERS.SCANLINES"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SCANLINES
-{ "SETTINGS.FILTERS.STRETCHWINDOWED",0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 218 MENUITEM_STRETCH43
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_STRETCHING
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_SIZE
-{ "SETTINGS.GRAPHICS.BEZEL"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_BEZEL
-{ "SETTINGS.GRAPHICS.BLANKING"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_USEMARGINS
-{ "SETTINGS.GRAPHICS.BLINK"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_BLINK
-{ "SETTINGS.GRAPHICS.DEJITTER"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_DEJITTER
-{ "SETTINGS.GRAPHICS.SKIES"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SKIES
-{ "SETTINGS.GRAPHICS.INTERSECTIONS", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CORNERS
-{ "SETTINGS.GRAPHICS.FULLSCREEN"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_FULLSCREEN
-{ "SETTINGS.GRAPHICS.INVERTFLASHED", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 228 MENUITEM_COOMER
-{ "SETTINGS.GRAPHICS.NARROW"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_NARROW
-{ "SETTINGS.GRAPHICS.ROTATE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_ROTATE
-{ "SETTINGS.GRAPHICS.UNLIT"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_UNLIT
-{ "SETTINGS.GRAPHICS.SHOWLEDS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SHOWLEDS
-{ "SETTINGS.INPUT.ANALOG"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_ANALOG
-{ "SETTINGS.INPUT.POSITIONS"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SHOWPOSITIONS
-{ "SETTINGS.INPUT.SPRINGS"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SPRINGLOADED
-{ "SETTINGS.INPUT.SWAPPED"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SWAPPED
-{ "SETTINGS.INPUT.CALIBRATE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CALIBRATE
-{ "SETTINGS.INPUT.REARRANGE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 238 MENUITEM_REARRANGE
-{ "SETTINGS.INPUT.REDEFINE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_REDEFINEKEYS
-{ "SETTINGS.INPUT.SENSITIVITY"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SENSITIVITY
-{ "SETTINGS.INPUT.LOWERCASE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_LOWERCASEINPUT
-{ "SETTINGS.INPUT.CONFINE"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CONFINE
-{ "SETTINGS.INPUT.ERASEDELETED"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_ERASEDEL
-{ "SETTINGS.INPUT.AUTOCOIN"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_AUTOCOIN
-{ "SETTINGS.INPUT.GUESTRMB"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_GUESTRMB
-{ "SETTINGS.INPUT.QUEUEKEYSTROKES" , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_QUEUEKEYSTROKES
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_KEYMAP
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 248 MENUFAKE_LANGUAGE
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_MACHINE
-{ "SETTINGS.SOUND.ENABLED"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SOUND
-{ "SETTINGS.SOUND.ADJUST"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_ADJUSTSOUND
-{ "SETTINGS.SOUND.AMBIENT"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_AMBIENT
-{ "SETTINGS.SOUND.FILTERED"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_FILTERED
-{ "SETTINGS.SOUND.RETUNE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_RETUNE
-{ "SETTINGS.SOUND.OUTPUT"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_SOUNDOUTPUT
-{ "SETTINGS.SPEED.ADJUST"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_ADJUSTSPEED
-{ "SETTINGS.SPEED.PAUSED"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_PAUSED
-{ "SETTINGS.SPEED.AUTOPAUSE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 258 MENUITEM_AUTOPAUSE
-{ "SETTINGS.SPEED.EXACT"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_EXACTSPEED
-{ "SETTINGS.SPEED.LIMITREFRESHES"  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_LIMITREFRESHES
-{ "SETTINGS.SPEED.TURBO"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_TURBO
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_REGION
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_PRIORITY
-{ "SETTINGS.SPRITES.COLLISIONS"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_COLLISIONS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_DEMULTIPLEX
-{ "SETTINGS.TRAINERS.CHEATLIVES"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CHEATLIVES
-{ "SETTINGS.TRAINERS.CHEATTIME"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CHEATTIME
-{ "SETTINGS.TRAINERS.INVINCIBILITY", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 268 MENUITEM_INVINCIBILITY
-{ "SETTINGS.TRAINERS.SKIPLEVEL"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_LEVELSKIP
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_PIPBUGVDU
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUFAKE_CD2650VDU
-{ "HELP.GAMEINFO"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_GAMEINFO
-{ "HELP.HOSTPADS"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_HOSTPADS
-{ "HELP.HOSTKYBD"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_HOSTKYBD
-{ "HELP.OPCODES"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_OPCODES
-{ "HELP.CODINGGUIDE"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CODINGGUIDE
-{ "HELP.GAMINGGUIDE"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_GAMINGGUIDE
-{ "HELP.MANUAL"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 278 MENUITEM_MANUAL
-{ "HELP.UPDATE"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_UPDATE
-{ "HELP.REACTION"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_REACTION
-{ "HELP.ABOUT"                     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_ABOUT
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUITEM_CHEEVOS2
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_PROJECT
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_EDIT
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_VIEW
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_MACRO
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_TOOLS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_PERIPHERALS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 290 MENUMENU_SETTINGS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_HELP
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_SORTBY
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_SPEEDINDICATOR
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_MACRO_ANIMS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_MACRO_SOUNDS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_GENERAL
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_FILE
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_DISK
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_EDIT
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 300 MENUMENU_DEBUG_VIEW
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_LOG
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_RUN
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_BP
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_SYMBOLS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_TOOLS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_OPTIONS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DEBUG_GRAPHICS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_LEFT
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_RIGHT
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 310 MENUMENU_BIOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_DOS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_FILTERS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_MACHINE
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_SPRITES
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, //     MENUMENU_TRAINERS
-{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                                         }, // 316 MENUMENU_VDU
-// new ones
-{ ""                               , MSG_MENUHELP_SWAPDISKS   , "Swap disks"                                     , "SWAPDISKS",""     , ""   , 2, 2, MSG_USAGE_SWAPDISKS,"Usage: SWAPDISKS <1st-drive> <2nd-drive>\n\n"                             }, // 317 MENUITEM_SWAPDISKS
+{ "PROJECT.RESETTOGAME"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //   0
+{ "PROJECT.JUMPTOBIOS"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.REINITIALIZE"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.OPEN"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.REVERT"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.QUICKLOAD"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVECOS"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.ACBM"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.ILBM"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.BMP"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.GIF"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  10
+{ "PROJECT.SAVESCRN.PCX"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.PNG"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.TIFF"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.ASCII"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.SAVESCRN.ASM"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.QUICKSAVE"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.AUDIT"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.REGISTER"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT1"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT2"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  20
+{ "PROJECT.RECENT3"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT4"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT5"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT6"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT7"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.RECENT8"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.ICONIFY"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.UNICONIFY"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PROJECT.QUIT"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "EDIT.MEMORY"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  30 MENUITEM_EDITMEMORY
+{ "EDIT.PALETTE"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  31 MENUITEM_PALETTE
+{ "EDIT.SCREEN"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  32 MENUITEM_SCREENEDITOR
+{ "EDIT.SPRITES"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  33 MENUITEM_SPRITEVIEWER
+{ "EDIT.COPYSCREEN"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "EDIT.COPYTEXT"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "EDIT.PASTETEXT"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "EDIT.EMPTYCLIPBOARD"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.HIGHSCORES"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.DEBUGGER"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.MENUBAR"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  40
+{ "VIEW.POINTER"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.SIDEBAR"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.STATUSBAR"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.TITLEBAR"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.TOOLBAR"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "VIEW.BUILTINGAMES"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.STARTRECORDING"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.RESTARTPLAYBACK"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.STOP"                     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.LOOP"                     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  50
+{ "MACRO.ANIMS.ANIM"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.ANIMS.GIF"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.ANIMS.MNG"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.ANIMS.APNG"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.SOUNDS.8SVX"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.SOUNDS.AIFF"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.SOUNDS.SMUS"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.SOUNDS.MIDI"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.SOUNDS.PSG"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.SOUNDS.WAV"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  60
+{ "MACRO.SOUNDS.YM"                , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.GENERATE"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  62 MENUITEM_GENERATE
+{ "MACRO.RUNREXX"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "MACRO.REPEATREXX"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ ""                               , MSG_MENUHELP_QUOTES      , "Send message to other player"                   , "\""      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_GENERAL }, //  65 MENUITEM_QUOTES
+{ ""                               , MSG_MENUHELP_CLEARCOV    , "Clear coverage report"                          , "CLEARCOV", ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_GENERAL }, //     MENUITEM_CLEARCOV
+{ ""                               , MSG_MENUHELP_CLS         , "Clear screen (of console window)"               , "CLS"     , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_GENERAL }, //     MENUITEM_CLS
+{ ""                               , MSG_MENUHELP_HELP        , "View help"                                      , "H"       , "HELP" , "?"  , 0, 1,                 -1, ""                                                              , IN_DEBUG_GENERAL }, //  68 MENUITEM_HELP
+{ ""                               , MSG_MENUHELP_SAY         , "Speak message"                                  , "SAY"     , "SPEAK", "SPK", 1, 1,                 -1, ""                                                              , IN_DEBUG_GENERAL }, //     MENUITEM_SAY
+{ ""                               , MSG_MENUHELP_SYSTEM      , "Quit emulator"                                  , "SYS"     , "SYSTEM",""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_GENERAL }, //     MENUITEM_SYSTEM
+{ ""                               , MSG_MENUHELP_ASTERISK    , "Execute host OS command"                        , "*"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_FILE    }, //     MENUITEM_ASTERISK
+{ ""                               , MSG_MENUHELP_ASM         , "Assemble source code"                           , "ASM"     , ""     , ""   , 1, 1, MSG_USAGE_ASM     , "ASM <filename>"                                                , IN_DEBUG_FILE    }, //     MENUITEM_ASM
+{ ""                               , MSG_MENUHELP_DISGAME     , "Disassemble and show address range"             , "DISGAME" , ""     , ""   , 0, 3, MSG_USAGE_DISGAME , "DISGAME [<start-address> <end-address>] [<filename>]"          , IN_DEBUG_FILE    }, //     MENUITEM_DISGAME
+{ ""                               , MSG_MENUHELP_EDIT        , "Edit source code"                               , "ED"      , "EDIT" , ""   , 1, 1, MSG_USAGE_ED      , "ED|EDIT <filename>"                                            , IN_DEBUG_FILE    }, //     MENUITEM_EDIT
+{ ""                               , MSG_MENUHELP_LOADBIN     , "Load binary to start-addr from filename"        , "LOADBIN" , ""     , ""   , 2, 2, MSG_USAGE_LOADBIN , "LOADBIN <start-address> <filename>"                            , IN_DEBUG_FILE    }, //     MENUITEM_LOADBIN
+{ ""                               , MSG_MENUHELP_SAVEAOF     , "Save address range as filename (AOF/EOF)"       , "SAVEAOF" , "SAVEEOF",""  , 2, 5, MSG_USAGE_SAVEAOF , "SAVEAOF|SAVEEOF <start-address> <end-address> [<filename> [<game-start> [<block-size>]]]",IN_DEBUG_FILE}, // MENUITEM_SAVEAOF
+{ ""                               , MSG_MENUHELP_SAVEBIN     , "Save address range as filename (BIN)"           , "SAVEBIN" , ""     , ""   , 3, 3, MSG_USAGE_SAVEBIN , "SAVEBIN <start-address> <end-address> <filename>"              , IN_DEBUG_FILE    }, //     MENUITEM_SAVEBIN
+{ ""                               , MSG_MENUHELP_SAVEBPNF    , "Save address range as filename (BPNF)"          , "SAVEBPNF", ""     , ""   , 3, 3, MSG_USAGE_SAVEBPNF, "SAVEBPNF <start-address> <end-address> <filename>"             , IN_DEBUG_FILE    }, //     MENUITEM_SAVEBPNF
+{ ""                               , MSG_MENUHELP_SAVECMD     , "Save address range as filename (CMD/IMAG/MOD)"  , "SAVECMD","SAVEIMAG","SAVEMOD",2,4,MSG_USAGE_SAVECMD, "SAVECMD|SAVEIMAG|SAVEMOD <start-address> <end-address> [<filename> [<game-start>]]",IN_DEBUG_FILE}, // MENUITEM_SAVECMD
+{ ""                               , MSG_MENUHELP_SAVEHEX     , "Save address range as filename (Intel hex)"     , "SAVEHEX" , ""     , ""   , 3, 3, MSG_USAGE_SAVEHEX , "SAVEHEX <start-address> <end-address> <filename>"              , IN_DEBUG_FILE    }, //  80 MENUITEM_SAVEHEX
+{ ""                               , MSG_MENUHELP_SAVESMS     , "Save address $0 to end-addr as filename (SMS)"  , "SAVESMS" , ""     , ""   , 2, 2, MSG_USAGE_SAVESMS , "SAVESMS <end-address> <filename>"                              , IN_DEBUG_FILE    }, //     MENUITEM_SAVESMS
+{ ""                               , MSG_MENUHELP_SAVETVC     , "Save address range as filename (TVC)"           , "SAVETVC" , ""     , ""   , 2, 4, MSG_USAGE_SAVETVC , "SAVETVC <start-address> <end-address> [<filename> [<game-start>]]",IN_DEBUG_FILE  }, //     MENUITEM_SAVETVC
+{ ""                               , MSG_MENUHELP_DELETE      , "Delete file from floppy disk"                   , "DEL"     , "DELETE",""   , 1, 1, MSG_USAGE_DELETE  , "DEL|DELETE <filename>"                                         , IN_DEBUG_DISK    }, //     MENUITEM_DELETE
+{ ""                               , MSG_MENUHELP_DIR         , "List files on floppy disk"                      , "DIR"     , "LD"   , "LDIR",0, 0,                 -1, ""                                                              , IN_DEBUG_DISK    }, //     MENUITEM_DIR
+{ ""                               , MSG_MENUHELP_EXTRACT     , "Extract files from floppy disk"                 , "EXTRACT" , ""     , ""   , 0, 1, MSG_USAGE_EXTRACT , "EXTRACT [<filename>]"                                          , IN_DEBUG_DISK    }, //     MENUITEM_EXTRACT
+{ ""                               , MSG_MENUHELP_INJECT      , "Inject file onto floppy disk"                   , "INJECT"  , ""     , ""   , 1, 1, MSG_USAGE_INJECT  , "INJECT <filename>"                                             , IN_DEBUG_DISK    }, //     MENUITEM_INJECT
+{ ""                               , MSG_MENUHELP_RENAME      , "Rename file on floppy disk"                     , "REN"     , "RENAME",""   , 2, 2, MSG_USAGE_RENAME  , "REN|RENAME <oldname> <newname>"                                , IN_DEBUG_DISK    }, //     MENUITEM_RENAME
+{ ""                               , MSG_MENUHELP_SWAPDISKS   , "Swap disks"                                     , "SWAPDISKS",""     , ""   , 2, 2, MSG_USAGE_SWAPDISKS,"SWAPDISKS <1st-drive> <2nd-drive>"                             , IN_DEBUG_DISK    }, //     MENUITEM_SWAPDISKS
+{ ""                               , 0                        , ""                                               , "DRIVE"   , ""     , ""   , 0, 1,                 -1, ""                                                              , IN_DEBUG_DISK    }, //     MENUFAKE_DRIVE
+{ ""                               , MSG_MENUHELP_DOKE        , "Change word at address to value"                , "DOKE"    , ""     , ""   , 1, 2, MSG_USAGE_DOKE    , "DOKE <address> [<value>]"                                      , IN_DEBUG_EDIT    }, //  90 MENUITEM_DOKE
+{ ""                               , MSG_MENUHELP_POKE        , "Change byte at address to value"                , "E"       , "POKE" , "PM" , 0, 2, MSG_USAGE_E       , "E|POKE [<address> [<value>]]"                                  , IN_DEBUG_EDIT    }, //     MENUITEM_POKE
+{ ""                               , MSG_MENUHELP_FPOKE       , "Change byte on disk to value"                   , "FPOKE"   , ""     , ""   , 2, 2, MSG_USAGE_FPOKE   , "FPOKE <address> <value>"                                       , IN_DEBUG_EDIT    }, //     MENUITEM_FPOKE
+{ ""                               , MSG_MENUHELP_WRITEPORT   , "Write to I/O port"                              , "WRITEPORT",""     , ""   , 2, 2, MSG_USAGE_WRITEPORT,"WRITEPORT <port>|CTRL|DATA <value>"                            , IN_DEBUG_EDIT    }, //     MENUITEM_WRITEPORT
+{ ""                               , MSG_MENUHELP_EQUALS      , "List any or all known labels"                   , "="       , ""     , ""   , 0, 1, MSG_USAGE_EQUALS  , "= [<address>]"                                                 , IN_DEBUG_VIEW    }, //     MENUITEM_EQUALS
+{ ""                               , MSG_MENUHELP_COVER       , "View coverage report"                           , "COVER"   , ""     , ""   , 0, 1, MSG_USAGE_COVER   , "COVER [<reporttype>]"                                          , IN_DEBUG_VIEW    }, //     MENUITEM_COVER
+{ ""                               , MSG_MENUHELP_PEEK        , "Display address range as data"                  , "D"       , "PEEK" , "DM" , 1, 2, MSG_USAGE_D       , "D|PEEK <start-address> [<end-address>]"                        , IN_DEBUG_VIEW    }, //     MENUITEM_PEEK
+{ ""                               , MSG_MENUHELP_DIS         , "Disassemble address range as code"              , "DIS"     , "DI"   , ""   , 0, 2, MSG_USAGE_DIS     , "DIS [<start-address> [<end-address>]]"                         , IN_DEBUG_VIEW    }, //     MENUITEM_DIS
+{ ""                               , MSG_MENUHELP_ERROR       , "Show error message"                             , "ERROR"   , ""     , ""   , 1, 1, MSG_USAGE_ERROR   , "ERROR <number>"                                                , IN_DEBUG_VIEW    }, //     MENUITEM_ERROR
+{ ""                               , MSG_MENUHELP_FPEEK       , "Display address range from disk"                , "FPEEK"   , ""     , ""   , 1, 2, MSG_USAGE_FPEEK   , "FPEEK <startaddr> [<endaddr>]"                                 , IN_DEBUG_VIEW    }, //     MENUITEM_FPEEK
+{ ""                               , MSG_MENUHELP_HISTORY     , "View command history"                           , "HISTORY" , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_VIEW    }, // 100 MENUITEM_HISTORY
+{ ""                               , MSG_MENUHELP_IM          , "View address range as imagery"                  , "IM"      , ""     , ""   , 0, 3, MSG_USAGE_IM      , "IM [<start-address> <end-address>] [<filename>]"               , IN_DEBUG_VIEW    }, //     MENUITEM_IM
+{ ""                               , MSG_MENUHELP_LIST        , "List BASIC/FORTH program"                       , "LIST"    , ""     , ""   , 0, 1,                 -1, "LIST [8KBASIC|FORTH|MB|MWB|TCT]"                               , IN_DEBUG_VIEW    }, //     MENUITEM_LIST
+{ ""                               , MSG_MENUHELP_READPORT    , "Read from I/O port"                             , "READPORT", ""     , ""   , 1, 1, MSG_USAGE_READPORT, "READPORT <port>|CTRL|DATA"                                     , IN_DEBUG_VIEW    }, //     MENUITEM_READPORT
+{ ""                               , MSG_MENUHELP_VIEW_BASIC  , "View BASIC variables"                           , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_BASIC
+{ ""                               , MSG_MENUHELP_VIEW_BIOS   , "View BIOS RAM"                                  , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_BIOS
+{ ""                               , MSG_MENUHELP_VIEW_CPU    , "View CPU status"                                , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_CPU
+{ ""                               , MSG_MENUHELP_VIEW_PSG    , "View PSGs/TMSes status"                         , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_PSG
+{ ""                               , MSG_MENUHELP_VIEW_RAM    , "View RAM"                                       , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_RAM
+{ ""                               , MSG_MENUHELP_VIEW_SCRN   , "View screen contents"                           , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_SCRN
+{ ""                               , MSG_MENUHELP_VIEW_UDG    , "View user-defined graphics"                     , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, // 110 MENUITEM_VIEW_UDG
+{ ""                               , MSG_MENUHELP_VIEW_XVI    , "View UVI/PVI status"                            , "V"       , "VIEW" , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_VIEW    }, //     MENUITEM_VIEW_XVI
+{ ""                               , MSG_MENUHELP_L_A         , "Log illegal memory accesses on/off"             , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_L_A
+{ ""                               , MSG_MENUHELP_L_B         , "Log BIOS calls on/off"                          , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_L_B
+{ ""                               , MSG_MENUHELP_L_C         , "Log inefficient code on/off"                    , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_L_C
+{ ""                               , MSG_MENUHELP_L_I         , "Log illegal instructions on/off"                , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_L_I
+{ ""                               , MSG_MENUHELP_L_N         , "Log interrupts on/off"                          , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_L_N
+{ ""                               , MSG_MENUHELP_L_S         , "Log subroutine calls on/off"                    , "L"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_L_S
+{ ""                               , MSG_MENUHELP_PL          , "Pause after logging on/off"                     , "PL"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_PL
+{ ""                               , MSG_MENUHELP_T           , "Trace CPU on/off"                               , "T"       , "SS"   , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_LOG     }, //     MENUITEM_T
+{ ""                               , MSG_MENUHELP_G           , "Pause/unpause & optionally set breakpoint"      , "G"       , "P"    , "GO" , 0, 1, MSG_USAGE_G       , "G|P [<address>]"                                               , IN_DEBUG_RUN     }, // 120 MENUITEM_G
+{ ""                               , MSG_MENUHELP_GI          , "Generate an interrupt"                          , "GI"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_RUN     }, //     MENUITEM_GI
+{ ""                               , MSG_MENUHELP_I           , "Ignore next instruction"                        , "I"       , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_RUN     }, //     MENUITEM_I
+{ ""                               , MSG_MENUHELP_JUMP        , "Jump to address"                                , "J"       , "JUMP" , ""   , 1, 1, MSG_USAGE_JUMP    , "J|JUMP <address>"                                              , IN_DEBUG_RUN     }, //     MENUITEM_JUMP
+{ ""                               , MSG_MENUHELP_O           , "Step over subroutine"                           , "O"       , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_RUN     }, //     MENUITEM_O
+{ ""                               , MSG_MENUHELP_S           , "Step next instruction"                          , "S"       , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_RUN     }, //     MENUITEM_S
+{ ""                               , MSG_MENUHELP_R           , "Run to rasterline number"                       , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "R F|I|L|R|S|<number>"                                          , IN_DEBUG_RUN     }, //     MENUITEM_R
+{ ""                               , MSG_MENUHELP_R_F         , "Run to next frame"                              , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "R F|I|L|R|S|<number>"                                          , IN_DEBUG_RUN     }, //     MENUITEM_R_F
+{ ""                               , MSG_MENUHELP_R_I         , "Run to next interrupt"                          , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "R F|I|L|R|S|<number>"                                          , IN_DEBUG_RUN     }, //     MENUITEM_R_I
+{ ""                               , MSG_MENUHELP_R_L         , "Run to end of loop"                             , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "R F|I|L|R|S|<number>"                                          , IN_DEBUG_RUN     }, //     MENUITEM_R_L
+{ ""                               , MSG_MENUHELP_R_R         , "Run to next rasterline"                         , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "R F|I|L|R|S|<number>"                                          , IN_DEBUG_RUN     }, // 130 MENUITEM_R_R
+{ ""                               , MSG_MENUHELP_R_S         , "Run to end of subroutine"                       , "R"       , ""     , ""   , 1, 1, MSG_USAGE_R       , "R F|I|L|R|S|<number>"                                          , IN_DEBUG_RUN     }, //     MENUITEM_R_S
+{ ""                               , MSG_MENUHELP_BP          , "Add code breakpoints to address range"          , "BP"      , "SB"   , ""   , 1, 5, MSG_USAGE_BP      , "BP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]" , IN_DEBUG_BP      }, //     MENUITEM_BP
+{ ""                               , MSG_MENUHELP_BC          , "Clear code breakpoints from address range"      , "BC"      , "DB"   , ""   , 0, 2, MSG_USAGE_BC      , "BC [<start-address> [<end-address>]]"                          , IN_DEBUG_BP      }, //     MENUITEM_BC
+{ ""                               , MSG_MENUHELP_BL          , "List all code breakpoints"                      , "BL"      , "LB"   , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_BP      }, //     MENUITEM_BL
+{ ""                               , MSG_MENUHELP_FP          , "Add disk watchpoints to address range"          , "FP"      , ""     , ""   , 1, 2, MSG_USAGE_FP      , "FP <start-address> [<end-address>]"                            , IN_DEBUG_BP      }, //     MENUITEM_FP
+{ ""                               , MSG_MENUHELP_FC          , "Clear disk watchpoints from address range"      , "FC"      , ""     , ""   , 0, 2, MSG_USAGE_FC      , "FC [<start-address> [<end-address>]]"                          , IN_DEBUG_BP      }, //     MENUITEM_FC
+{ ""                               , MSG_MENUHELP_FL          , "List all disk watchpoints"                      , "FL"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_BP      }, //     MENUITEM_FL
+{ ""                               , MSG_MENUHELP_IP          , "Add I/O port watchpoints to port range"         , "IP"      , ""     , ""   , 0, 5, MSG_USAGE_IP      , "IP [<start-port> [<end-port>] [<addr/reg> <condition> <value>]]",IN_DEBUG_BP      }, //     MENUITEM_IP
+{ ""                               , MSG_MENUHELP_IC          , "Clear I/O port watchpoints from port range"     , "IC"      , ""     , ""   , 0, 2, MSG_USAGE_IC      , "IC [<start-port> [<end-port>]]"                                , IN_DEBUG_BP      }, //     MENUITEM_IC
+{ ""                               , MSG_MENUHELP_IL          , "List all I/O port watchpoints"                  , "IL"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_BP      }, // 140 MENUITEM_IL
+{ ""                               , MSG_MENUHELP_WP          , "Add data watchpoints to address range"          , "WP"      , "ST"   , ""   , 1, 5, MSG_USAGE_WP      , "WP <start-addr> [<end-addr>] [<addr/reg> <condition> <value>]" , IN_DEBUG_BP      }, //     MENUITEM_WP
+{ ""                               , MSG_MENUHELP_WC          , "Clear data watchpoints from address range"      , "WC"      , "DT"   , ""   , 0, 2, MSG_USAGE_WC      , "WC [<start-address> [<end-address>]]"                          , IN_DEBUG_BP      }, //     MENUITEM_WC
+{ ""                               , MSG_MENUHELP_WL          , "List all data watchpoints"                      , "WL"      , "LT"   , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_BP      }, //     MENUITEM_WL
+{ ""                               , MSG_MENUHELP_PB          , "Pause after breakpoints/watchpoints on/off"     , "PB"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_BP      }, //     MENUITEM_PB
+{ ""                               , MSG_MENUHELP_WR          , "Watch reads on/off"                             , "WR"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_BP      }, //     MENUITEM_WR
+{ ""                               , 0                        , ""                                               , "WW"      , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_BP      }, //     MENUFAKE_WW
+{ ""                               , MSG_MENUHELP_CLEARSYM    , "Clear symbol(s)"                                , "CLEARSYM", ""     , ""   , 0, 1, MSG_USAGE_CLEARSYM, "CLEARSYM [<label>]"                                            , IN_DEBUG_SYMBOLS }, //     MENUITEM_CLEARSYM
+{ ""                               , MSG_MENUHELP_DEFSYM      , "Define symbol"                                  , "DEFSYM"  , ""     , ""   , 2, 3, MSG_USAGE_DEFSYM  , "DEFSYM <label> <address> [C|D|P|U]"                            , IN_DEBUG_SYMBOLS }, //     MENUITEM_DEFSYM
+{ ""                               , MSG_MENUHELP_LOADSYM     , "Load symbol table from filename"                , "LOADSYM" , ""     , ""   , 0, 1, MSG_USAGE_LOADSYM , "LOADSYM [<filename>]"                                          , IN_DEBUG_SYMBOLS }, //     MENUITEM_LOADSYM
+{ ""                               , MSG_MENUHELP_SAVESYM     , "Save symbol table as filename"                  , "SAVESYM" , ""     , ""   , 1, 1, MSG_USAGE_SAVESYM , "SAVESYM <filename>"                                            , IN_DEBUG_SYMBOLS }, // 150 MENUITEM_SAVESYM
+{ ""                               , MSG_MENUHELP_COMP        , "Compare memory blocks"                          , "CO"      , "COMP" , ""   , 3, 3, MSG_USAGE_CO      , "CO|COMP <1st-start> <1st-end> <2nd-start>"                     , IN_DEBUG_TOOLS   }, //     MENUITEM_COMP
+{ ""                               , MSG_MENUHELP_COPY        , "Copy memory from source to target"              , "COPY"    , "MOVE" , ""   , 3, 3, MSG_USAGE_COPY    , "COPY|MOVE <source-start> <source-end> <target-start>"          , IN_DEBUG_TOOLS   }, //     MENUITEM_COPY
+{ ""                               , MSG_MENUHELP_FILL        , "Fill address range with value"                  , "FILL"    , ""     , ""   , 3, 3, MSG_USAGE_F       , "FILL <start-address> <end-address> <value>"                    , IN_DEBUG_TOOLS   }, //     MENUITEM_FILL
+{ ""                               , MSG_MENUHELP_FIND        , "Find value in address range"                    , "FIND"    , ""     , ""   , 0, 3,                 -1, ""                                                              , IN_DEBUG_TOOLS   }, //     MENUITEM_FIND
+{ ""                               , MSG_MENUHELP_REL         , "Calculate relative offset of target-addr"       , "REL"     , ""     , ""   , 2, 2, MSG_USAGE_REL     , "REL <source-addr> [*]<target-addr>"                            , IN_DEBUG_TOOLS   }, //     MENUITEM_REL
+{ ""                               , MSG_MENUHELP_SWAP        , "Swap memory blocks"                             , "SWAP"    , ""     , ""   , 3, 3, MSG_USAGE_SWAP    , "SWAP <1st-start> <1st-end> <2nd-start>"                        , IN_DEBUG_TOOLS   }, //     MENUITEM_SWAP
+{ ""                               , MSG_MENUHELP_TRAIN       , "Make trainer"                                   , "TRAIN"   , ""     , ""   , 0, 1, MSG_USAGE_TRAIN   , "TRAIN [<value>]"                                               , IN_DEBUG_TOOLS   }, //     MENUITEM_TRAIN
+{ ""                               , 0                        , ""                                               , "BASE"    , ""     , ""   , 0, 1,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, //     MENUFAKE_BASE
+{ ""                               , 0                        , ""                                               , "CPU"     , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, //     MENUFAKE_CPU
+{ ""                               , 0                        , ""                                               , "N"       , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, // 160 MENUFAKE_N
+{ ""                               , 0                        , ""                                               , "TU"      , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, //     MENUFAKE_TU
+{ ""                               , 0                        , ""                                               , "VB"      , "VERBOSE",""  , 1, 1,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, //     MENUFAKE_VERBOSITY
+{ ""                               , MSG_MENUHELP_GR          , "Use guide ray on/off"                           , "GR"      , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, //     MENUITEM_GR
+{ ""                               , MSG_MENUHELP_WARN        , "Assembler warnings on/off"                      , "WARN"    , ""     , ""   , 0, 0,                 -1, ""                                                              , IN_DEBUG_OPTIONS }, //     MENUITEM_WARN
+{ ""                               , 0                        , ""                                               , "DRAW"    , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_GRAPHICS}, //     MENUFAKE_DRAW
+{ ""                               , 0                        , ""                                               , "SPR"     , ""     , ""   , 1, 1,                 -1, ""                                                              , IN_DEBUG_GRAPHICS}, //     MENUFAKE_SPR
+{ "DEBUG.DEBUGGER"                 , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_TOOLSDEBUGGER
+{ "TOOLS.CPU"                      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_VIEWMONITOR_CPU
+{ "TOOLS.PSG"                      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_VIEWMONITOR_PSGS
+{ "TOOLS.XVI"                      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 170 MENUITEM_VIEWMONITOR_XVI
+{ "TOOLS.MUSIC"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_MUSIC
+{ "TOOLS.SERVER"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SERVER
+{ "TOOLS.CLIENT"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CLIENT
+{ "TOOLS.RETROACHIEVEMENTS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CHEEVOS1
+{ "PERIPHERALS.CONTROLS"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CONTROLS
+{ "PERIPHERALS.DIPSWITCHES"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_DIPSWITCHES
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_LEFT
+{ "PERIPHERALS.LEFT.AUTOFIRE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_AUTOFIRE1
+{ "PERIPHERALS.LEFT.REQUIREBUTTON" , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_REQUIREBUTTON1
+{ "PERIPHERALS.LEFT.FORCEFEEDBACK" , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 180 MENUITEM_FORCEFEEDBACK1
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_RIGHT
+{ "PERIPHERALS.RIGHT.AUTOFIRE"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_AUTOFIRE2
+{ "PERIPHERALS.RIGHT.REQUIREBUTTON", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_REQUIREBUTTON2
+{ "PERIPHERALS.RIGHT.FORCEFEEDBACK", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_FORCEFEEDBACK2
+{ "PERIPHERALS.TAPEDECK"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_TAPEDECK
+{ "PERIPHERALS.FLOPPYDRIVE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_FLOPPYDRIVE
+{ "PERIPHERALS.INDUSTRIAL"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_INDUSTRIAL
+{ "PERIPHERALS.PAPERTAPE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_PAPERTAPE
+{ "PERIPHERALS.PRINTER"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_PRINTER
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 190 MENUFAKE_ELEKTORBIOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_PIPBUGBIOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_BINBUGBIOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_CD2650BIOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_PHUNSYBIOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_SELBSTBIOS
+{ "SETTINGS.COLOURS.ARTEFACTS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_UNDITHER
+{ "SETTINGS.COLOURS.DARKENBG"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_DARKENBG
+{ "SETTINGS.COLOURS.FLAGLINE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_FLAGLINE
+{ "SETTINGS.COLOURS.INVERSE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_INVERSE
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 200 MENUFAKE_COLOURSET
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_BINBUGDOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_TWINDOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_CD2650DOS
+{ "SETTINGS.EMULATOR.AUTOSAVE"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_AUTOSAVE
+{ "SETTINGS.EMULATOR.UPDATES"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_STARTUPUPDATES
+{ "SETTINGS.EMULATOR.CONFIRMQUIT"  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CONFIRM
+{ "SETTINGS.EMULATOR.ICONS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CREATEICONS
+{ "SETTINGS.EMULATOR.CONSOLE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CONSOLE
+{ "SETTINGS.EMULATOR.IDENTIFY"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_EMUID
+{ "SETTINGS.EMULATOR.POST"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 210 MENUITEM_POST
+{ "SETTINGS.EMULATOR.RANDOMIZE"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEE_RANDOMIZE
+{ "SETTINGS.EMULATOR.SENSEGAME"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SENSEGAME
+{ "SETTINGS.EMULATOR.SHOWTIPS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SHOWTOD
+{ "SETTINGS.EMULATOR.STUBS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_USESTUBS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_FRAMEBASED
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_LOGTOFILE
+{ "SETTINGS.EMULATOR.PATHS"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_PATHS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_FILTER
+{ "SETTINGS.FILTERS.SCANLINES"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SCANLINES
+{ "SETTINGS.FILTERS.STRETCHWINDOWED",0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 220 MENUITEM_STRETCH43
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_STRETCHING
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_SIZE
+{ "SETTINGS.GRAPHICS.BEZEL"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_BEZEL
+{ "SETTINGS.GRAPHICS.BLANKING"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_USEMARGINS
+{ "SETTINGS.GRAPHICS.BLINK"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_BLINK
+{ "SETTINGS.GRAPHICS.DEJITTER"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_DEJITTER
+{ "SETTINGS.GRAPHICS.SKIES"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SKIES
+{ "SETTINGS.GRAPHICS.INTERSECTIONS", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CORNERS
+{ "SETTINGS.GRAPHICS.FULLSCREEN"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_FULLSCREEN
+{ "SETTINGS.GRAPHICS.INVERTFLASHED", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 230 MENUITEM_COOMER
+{ "SETTINGS.GRAPHICS.NARROW"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_NARROW
+{ "SETTINGS.GRAPHICS.ROTATE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_ROTATE
+{ "SETTINGS.GRAPHICS.UNLIT"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_UNLIT
+{ "SETTINGS.GRAPHICS.SHOWLEDS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SHOWLEDS
+{ "SETTINGS.INPUT.ANALOG"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_ANALOG
+{ "SETTINGS.INPUT.POSITIONS"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SHOWPOSITIONS
+{ "SETTINGS.INPUT.SPRINGS"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SPRINGLOADED
+{ "SETTINGS.INPUT.SWAPPED"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SWAPPED
+{ "SETTINGS.INPUT.CALIBRATE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CALIBRATE
+{ "SETTINGS.INPUT.REARRANGE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 240 MENUITEM_REARRANGE
+{ "SETTINGS.INPUT.REDEFINE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_REDEFINEKEYS
+{ "SETTINGS.INPUT.SENSITIVITY"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SENSITIVITY
+{ "SETTINGS.INPUT.LOWERCASE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_LOWERCASEINPUT
+{ "SETTINGS.INPUT.CONFINE"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CONFINE
+{ "SETTINGS.INPUT.ERASEDELETED"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_ERASEDEL
+{ "SETTINGS.INPUT.AUTOCOIN"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_AUTOCOIN
+{ "SETTINGS.INPUT.GUESTRMB"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_GUESTRMB
+{ "SETTINGS.INPUT.QUEUEKEYSTROKES" , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_QUEUEKEYSTROKES
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_KEYMAP
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 250 MENUFAKE_LANGUAGE
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_MACHINE
+{ "SETTINGS.SOUND.ENABLED"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SOUND
+{ "SETTINGS.SOUND.ADJUST"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_ADJUSTSOUND
+{ "SETTINGS.SOUND.AMBIENT"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_AMBIENT
+{ "SETTINGS.SOUND.FILTERED"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_FILTERED
+{ "SETTINGS.SOUND.RETUNE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_RETUNE
+{ "SETTINGS.SOUND.OUTPUT"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_SOUNDOUTPUT
+{ "SETTINGS.SPEED.ADJUST"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_ADJUSTSPEED
+{ "SETTINGS.SPEED.PAUSED"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_PAUSED
+{ "SETTINGS.SPEED.AUTOPAUSE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 260 MENUITEM_AUTOPAUSE
+{ "SETTINGS.SPEED.EXACT"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_EXACTSPEED
+{ "SETTINGS.SPEED.LIMITREFRESHES"  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_LIMITREFRESHES
+{ "SETTINGS.SPEED.TURBO"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_TURBO
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_REGION
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_PRIORITY
+{ "SETTINGS.SPRITES.COLLISIONS"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_COLLISIONS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_DEMULTIPLEX
+{ "SETTINGS.TRAINERS.CHEATLIVES"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CHEATLIVES
+{ "SETTINGS.TRAINERS.CHEATTIME"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CHEATTIME
+{ "SETTINGS.TRAINERS.INVINCIBILITY", 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 270 MENUITEM_INVINCIBILITY
+{ "SETTINGS.TRAINERS.SKIPLEVEL"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_LEVELSKIP
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_PIPBUGVDU
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUFAKE_CD2650VDU
+{ "HELP.GAMEINFO"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_GAMEINFO
+{ "HELP.HOSTPADS"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_HOSTPADS
+{ "HELP.HOSTKYBD"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_HOSTKYBD
+{ "HELP.OPCODES"                   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_OPCODES
+{ "HELP.CODINGGUIDE"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CODINGGUIDE
+{ "HELP.GAMINGGUIDE"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_GAMINGGUIDE
+{ "HELP.MANUAL"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 280 MENUITEM_MANUAL
+{ "HELP.UPDATE"                    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_UPDATE
+{ "HELP.REACTION"                  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_REACTION
+{ "HELP.ABOUT"                     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_ABOUT
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUITEM_CHEEVOS2
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_PROJECT
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_EDIT
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_VIEW
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_MACRO
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 290 MENUMENU_TOOLS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_PERIPHERALS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_SETTINGS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_HELP
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_SORTBY
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_SPEEDINDICATOR
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_MACRO_ANIMS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_MACRO_SOUNDS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_GENERAL
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_FILE
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 300 MENUMENU_DEBUG_DISK
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_EDIT
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_VIEW
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_LOG
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_RUN
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_BP
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_SYMBOLS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_TOOLS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_OPTIONS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DEBUG_GRAPHICS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 310 MENUMENU_LEFT
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_RIGHT
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_BIOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_DOS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_FILTERS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_MACHINE
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_SPRITES
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUMENU_TRAINERS
+{ ""                               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 318 MENUMENU_VDU
 }, menuinfo2[MENUOPTS] = {
-{ "VIEW.SORTBY.NAME"               , 0                        , ""                                               }, //   0 MENUOPT_SORTBYNAME
-{ "VIEW.SORTBY.MACHINE"            , 0                        , ""                                               }, // MENUOPT_SORTBYMACHINE
-{ "VIEW.INDICATOR.FPS"             , 0                        , ""                                               }, // MENUOPT_INDICATOR_FPS
-{ "VIEW.INDICATOR.KHZ"             , 0                        , ""                                               }, // MENUOPT_INDICATOR_KHZ
-{ "VIEW.INDICATOR.PERCENTAGE"      , 0                        , ""                                               }, // MENUOPT_INDICATOR_PERCENT
-{ ""                               , MSG_MENUHELP_DRIVE_0     , "Change debugger drive to unit 0"                }, // MENUOPT_DRIVE_0
-{ ""                               , MSG_MENUHELP_DRIVE_1     , "Change debugger drive to unit 1"                }, // MENUOPT_DRIVE_1
-{ ""                               , MSG_MENUHELP_DRIVE_2     , "Change debugger drive to unit 2"                }, // MENUOPT_DRIVE_2
-{ ""                               , MSG_MENUHELP_DRIVE_3     , "Change debugger drive to unit 3"                }, // MENUOPT_DRIVE_3
-{ ""                               , MSG_MENUHELP_WATCH_NONE  , "Watch no writes"                                }, // MENUOPT_WW_NONE
-{ ""                               , MSG_MENUHELP_WATCH_SOME  , "Watch some writes"                              }, // MENUOPT_WW_SOME
-{ ""                               , MSG_MENUHELP_WATCH_ALL   , "Watch all writes"                               }, // MENUOPT_WW_ALL
-{ ""                               , MSG_MENUHELP_BASE_BINARY , "Set default input base to binary"               }, //  12 MENUOPT_BASE_BINARY
-{ ""                               , MSG_MENUHELP_BASE_OCTAL  , "Set default input base to octal"                }, // MENUOPT_BASE_OCTAL
-{ ""                               , MSG_MENUHELP_BASE_DECIMAL, "Set default input base to decimal"              }, // MENUOPT_BASE_DECIMAL
-{ ""                               , MSG_MENUHELP_BASE_HEX    , "Set default input base to hexadecimal"          }, // MENUOPT_BASE_HEX
-{ ""                               , MSG_MENUHELP_CPU_0       , "Set CPU to 2650/2650A"                          }, // MENUOPT_CPU_0
-{ ""                               , MSG_MENUHELP_CPU_1       , "Set CPU to 2650B"                               }, // MENUOPT_CPU_1
-{ ""                               , MSG_MENUHELP_N_0         , "Set notation to non-extended Signetics"         , "N" , ""       , "", 1, 1, -1, "" }, // MENUOPT_N_0
-{ ""                               , MSG_MENUHELP_N_1         , "Set notation to extended Signetics"             }, // MENUOPT_N_1
-{ ""                               , MSG_MENUHELP_N_2         , "Set notation to old CALM"                       }, // MENUOPT_N_2
-{ ""                               , MSG_MENUHELP_N_3         , "Set notation to new CALM"                       }, // MENUOPT_N_3
-{ ""                               , MSG_MENUHELP_N_4         , "Set notation to IEEE-694"                       }, // MENUOPT_N_4
-{ ""                               , MSG_MENUHELP_TU_0        , "Set time unit to cycles"                        , "TU", ""       , "", 1, 1, -1, "" }, //  23 MENUOPT_TU_0
-{ ""                               , MSG_MENUHELP_TU_1        , "Set time unit to clocks"                        }, // MENUOPT_TU_1
-{ ""                               , MSG_MENUHELP_TU_2        , "Set time unit to pixels"                        }, // MENUOPT_TU_2
-{ ""                               , MSG_MENUHELP_VB_0        , "Set verbosity to minimum"                       , "VB", "VERBOSE", "", 1, 1, -1, "" }, //     MENUOPT_VB_0
-{ ""                               , MSG_MENUHELP_VB_1        , "Set table tracing mode"                         }, // MENUOPT_VB_1
-{ ""                               , MSG_MENUHELP_VB_2        , "Set verbosity to maximum"                       }, // MENUOPT_VB_2
-{ ""                               , MSG_MENUHELP_DRAW_0      , "Draw normally"                                  }, // MENUOPT_DRAW_0
-{ ""                               , MSG_MENUHELP_DRAW_1      , "Show grid (most machines) or Teletext grid (Malzak)"                                      }, // MENUOPT_DRAW_1
-{ ""                               , MSG_MENUHELP_DRAW_2      , "Show collision table (Arcadia/Interton/Elektor) or playfield grid (Malzak)"               }, // MENUOPT_DRAW_2
-{ ""                               , MSG_MENUHELP_DRAW_3      , "Show CHARLINE table (Arcadia) or DMA read table (Interton/Elektor) or both grids (Malzak)"}, // MENUOPT_DRAW_3
-{ ""                               , MSG_MENUHELP_DRAW_4      , "Show DMA write table (Interton/Elektor)"        }, //  33 MENUOPT_DRAW_4
-{ ""                               , MSG_MENUHELP_SPR_0       , "Set sprite mode to invisible"                   }, // MENUOPT_SPR_0
-{ ""                               , MSG_MENUHELP_SPR_1       , "Set sprite mode to visible"                     }, // MENUOPT_SPR_1
-{ ""                               , MSG_MENUHELP_SPR_2       , "Set sprite mode to numbered"                    }, // MENUOPT_SPR_2
-{ "PERIPHERALS.LEFT.MOUSE"         , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.KEYBOARD"      , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.1STDJOY"       , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.2NDDJOY"       , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.2NDAJOY"       , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.1STDPAD"       , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.2NDDPAD"       , 0                        , ""                                               }, //  43 MENUOPT_LEFT_2NDDPAD
-{ "PERIPHERALS.LEFT.1STAPAD"       , 0                        , ""                                               },
-{ "PERIPHERALS.LEFT.2NDAPAD"       , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.MOUSE"        , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.KEYBOARD"     , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.1STDJOY"      , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.2NDDJOY"      , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.2NDAJOY"      , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.1STDPAD"      , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.2NDDPAD"      , 0                        , ""                                               },
-{ "PERIPHERALS.RIGHT.1STAPAD"      , 0                        , ""                                               }, //  53 MENUOPT_RIGHT_1STAPAD
-{ "PERIPHERALS.RIGHT.2NDAPAD"      , 0                        , ""                                               },
-{ "SETTINGS.BIOS.PHILIPS"          , 0                        , ""                                               },
-{ "SETTINGS.BIOS.HOBBYMODULE"      , 0                        , ""                                               },
-{ "SETTINGS.BIOS.ARTEMIS"          , 0                        , ""                                               },
-{ "SETTINGS.BIOS.HYBUG"            , 0                        , ""                                               },
-{ "SETTINGS.BIOS.PIPBUG1"          , 0                        , ""                                               },
-{ "SETTINGS.BIOS.PIPBUG2"          , 0                        , ""                                               },
-{ "SETTINGS.BIOS.BINBUG35"         , 0                        , ""                                               },
-{ "SETTINGS.BIOS.BINBUG36"         , 0                        , ""                                               },
-{ "SETTINGS.BIOS.BINBUG61"         , 0                        , ""                                               }, //  63 MENUOPT_BINBUG61BIOS
-{ "SETTINGS.BIOS.GBUG"             , 0                        , ""                                               },
-{ "SETTINGS.BIOS.MIKEBUG"          , 0                        , ""                                               },
-{ "SETTINGS.BIOS.MYBUG"            , 0                        , ""                                               },
-{ "SETTINGS.BIOS.IPL"              , 0                        , ""                                               },
-{ "SETTINGS.BIOS.POPMON"           , 0                        , ""                                               },
-{ "SETTINGS.BIOS.SUPERVISOR"       , 0                        , ""                                               },
-{ "SETTINGS.BIOS.MINIMONITOR"      , 0                        , ""                                               },
-{ "SETTINGS.BIOS.PHUNSY"           , 0                        , ""                                               },
-{ "SETTINGS.BIOS.SELBSTNONE"       , 0                        , ""                                               },
-{ "SETTINGS.BIOS.SELBST09"         , 0                        , ""                                               }, //  73 MENUOPT_09BIOS
-{ "SETTINGS.BIOS.SELBST10"         , 0                        , ""                                               },
-{ "SETTINGS.BIOS.SELBST20"         , 0                        , ""                                               },
-{ "SETTINGS.COLOURS.AMBER"         , 0                        , ""                                               },
-{ "SETTINGS.COLOURS.GREEN"         , 0                        , ""                                               },
-{ "SETTINGS.COLOURS.GREY"          , 0                        , ""                                               },
-{ "SETTINGS.COLOURS.PURE"          , 0                        , ""                                               },
-{ "SETTINGS.COLOURS.PVI"           , 0                        , ""                                               },
-{ "SETTINGS.COLOURS.UVI"           , 0                        , ""                                               },
-{ "SETTINGS.DOS.MICRODOS"          , 0                        , ""                                               },
-{ "SETTINGS.DOS.VHSDOS"            , 0                        , ""                                               }, //  83 MENUOPT_VHSDOS
-{ "SETTINGS.DOS.NOBINBUGDOS"       , 0                        , ""                                               },
-{ "SETTINGS.DOS.EXOS"              , 0                        , ""                                               },
-{ "SETTINGS.DOS.SDOS20"            , 0                        , ""                                               },
-{ "SETTINGS.DOS.SDOS40"            , 0                        , ""                                               },
-{ "SETTINGS.DOS.SDOS42"            , 0                        , ""                                               },
-{ "SETTINGS.DOS.TOS"               , 0                        , ""                                               },
-{ "SETTINGS.DOS.UDOS"              , 0                        , ""                                               },
-{ "SETTINGS.DOS.NOTWINDOS"         , 0                        , ""                                               },
-{ "SETTINGS.DOS.CDDOS"             , 0                        , ""                                               },
-{ "SETTINGS.DOS.P1DOS"             , 0                        , ""                                               }, //  93 MENUOPT_P1DOS
-{ "SETTINGS.DOS.NOCD2650DOS"       , 0                        , ""                                               },
-{ "SETTINGS.EMULATOR.FRAMEBASED"   , 0                        , ""                                               }, //     MENUOPT_FRAMEBASED
-{ "SETTINGS.EMULATOR.PIXELBASED"   , 0                        , ""                                               }, //     MENUOPT_PIXELBASED
-{ "SETTINGS.EMULATOR.APPENDLOG"    , 0                        , ""                                               },
-{ "SETTINGS.EMULATOR.IGNORELOG"    , 0                        , ""                                               },
-{ "SETTINGS.EMULATOR.REPLACELOG"   , 0                        , ""                                               },
-{ "SETTINGS.FILTERS.3D"            , 0                        , ""                                               },
-{ "SETTINGS.FILTERS.HQX"           , 0                        , ""                                               },
-{ "SETTINGS.FILTERS.SCALE2X"       , 0                        , ""                                               },
-{ "SETTINGS.FILTERS.NONE"          , 0                        , ""                                               },
-{ "SETTINGS.FILTERS.UNSTRETCHED"   , 0                        , ""                                               },
-{ "SETTINGS.FILTERS.STRETCH43"     , 0                        , ""                                               }, // 105 MENUOPT_STRETCH43
-{ "SETTINGS.FILTERS.STRETCHTOFIT"  , 0                        , ""                                               },
-{ "SETTINGS.GRAPHICS.1XSIZE"       , 0                        , ""                                               },
-{ "SETTINGS.GRAPHICS.2XSIZE"       , 0                        , ""                                               },
-{ "SETTINGS.GRAPHICS.3XSIZE"       , 0                        , ""                                               },
-{ "SETTINGS.GRAPHICS.4XSIZE"       , 0                        , ""                                               },
-{ "SETTINGS.GRAPHICS.5XSIZE"       , 0                        , ""                                               },
-{ "SETTINGS.GRAPHICS.6XSIZE"       , 0                        , ""                                               },
-{ "SETTINGS.INPUT.HOST"            , 0                        , ""                                               },
-{ "SETTINGS.INPUT.EA78UT4"         , 0                        , ""                                               },
-{ "SETTINGS.INPUT.TELETYPE"        , 0                        , ""                                               }, // 115 MENUOPT_KEYMAP_TT
-{ "SETTINGS.LANGUAGE.ENG"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.HOL"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.FRA"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.GER"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.GRE"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.ITA"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.POL"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.RUS"          , 0                        , ""                                               },
-{ "SETTINGS.LANGUAGE.SPA"          , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.ARCADIA"       , 0                        , ""                                               }, // 125 MENUOPT_ARCADIA
-{ "SETTINGS.MACHINE.INTERTON"      , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.ELEKTOR"       , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.PIPBUG"        , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.BINBUG"        , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.INSTRUCTOR"    , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.TWIN"          , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.CD2650"        , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.PHUNSY"        , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.SELBST"        , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.MIKIT"         , 0                        , ""                                               }, // 135 MENUOPT_MIKIT
-{ "SETTINGS.MACHINE.ASTROWARS"     , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.GALAXIA"       , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.LASERBATTLE"   , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.LAZARIAN"      , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.MALZAK1"       , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.MALZAK2"       , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.8550"          , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.8600"          , 0                        , ""                                               },
-{ "SETTINGS.MACHINE.TYPERIGHT"     , 0                        , ""                                               },
-{ "SETTINGS.SOUND.AHI"             , 0                        , ""                                               }, // 145 MENUOPT_SOUND_AHI
-{ "SETTINGS.SOUND.PAULA"           , 0                        , ""                                               },
-{ "SETTINGS.SPEED.NTSC"            , 0                        , ""                                               },
-{ "SETTINGS.SPEED.PAL"             , 0                        , ""                                               },
-{ "SETTINGS.SPEED.HIGH"            , 0                        , ""                                               },
-{ "SETTINGS.SPEED.NORMAL"          , 0                        , ""                                               },
-{ "SETTINGS.SPEED.LOW"             , 0                        , ""                                               },
-{ "SETTINGS.SPRITES.MULTIPLEX"     , 0                        , ""                                               }, // 152 MENUOPT_DEMULTIPLEX_MULTIPLEX
-{ "SETTINGS.SPRITES.TRANSPARENT"   , 0                        , ""                                               }, // 153 MENUOPT_DEMULTIPLEX_TRANSPARENT
-{ "SETTINGS.SPRITES.OPAQUE"        , 0                        , ""                                               }, // 154 MENUOPT_DEMULTIPLEX_OPAQUE
-{ "SETTINGS.VDU.ELEKTERMINAL"      , 0                        , ""                                               },
-{ "SETTINGS.VDU.NARROW"            , 0                        , ""                                               },
-{ "SETTINGS.VDU.WIDE"              , 0                        , ""                                               },
-{ "SETTINGS.VDU.RADIOBULLETIN"     , 0                        , ""                                               }, // 158 MENUOPT_RADIOBULLETIN
-{ "SETTINGS.VDU.SVT100"            , 0                        , ""                                               }, // 159 MENUOPT_SVT100
-{ "SETTINGS.VDU.VT100"             , 0                        , ""                                               }, // 160 MENUOPT_VT100
-{ "SETTINGS.VDU.ASCII"             , 0                        , ""                                               },
-{ "SETTINGS.VDU.CHESSMEN"          , 0                        , ""                                               },
-{ "SETTINGS.VDU.LOWERCASE"         , 0                        , ""                                               }, // 163 MENUOPT_LOWERCASEVDU
+{ "VIEW.SORTBY.NAME"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //   0 MENUOPT_SORTBYNAME
+{ "VIEW.SORTBY.MACHINE"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUOPT_SORTBYMACHINE
+{ "VIEW.INDICATOR.FPS"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUOPT_INDICATOR_FPS
+{ "VIEW.INDICATOR.KHZ"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUOPT_INDICATOR_KHZ
+{ "VIEW.INDICATOR.PERCENTAGE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUOPT_INDICATOR_PERCENT
+{ ""                               , MSG_MENUHELP_DRIVE_0     , "Change debugger drive to unit 0"                , "DRIVE"   , ""     , ""   , 1, 1,                 -1, "DRIVE 0"                                                       , IN_DEBUG_DISK    }, //     MENUOPT_DRIVE_0
+{ ""                               , MSG_MENUHELP_DRIVE_1     , "Change debugger drive to unit 1"                , "DRIVE"   , ""     , ""   , 1, 1,                 -1, "DRIVE 1"                                                       , IN_DEBUG_DISK    }, //     MENUOPT_DRIVE_1
+{ ""                               , MSG_MENUHELP_DRIVE_2     , "Change debugger drive to unit 2"                , "DRIVE"   , ""     , ""   , 1, 1,                 -1, "DRIVE 2"                                                       , IN_DEBUG_DISK    }, //     MENUOPT_DRIVE_2
+{ ""                               , MSG_MENUHELP_DRIVE_3     , "Change debugger drive to unit 3"                , "DRIVE"   , ""     , ""   , 1, 1,                 -1, "DRIVE 3"                                                       , IN_DEBUG_DISK    }, //     MENUOPT_DRIVE_3
+{ ""                               , MSG_MENUHELP_WATCH_NONE  , "Watch no writes"                                , "WW"      , ""     , ""   , 1, 1,                 -1, "WW NONE"                                                       , IN_DEBUG_BP      }, //     MENUOPT_WW_NONE
+{ ""                               , MSG_MENUHELP_WATCH_SOME  , "Watch some writes"                              , "WW"      , ""     , ""   , 1, 1,                 -1, "WW SOME"                                                       , IN_DEBUG_BP      }, //     MENUOPT_WW_SOME
+{ ""                               , MSG_MENUHELP_WATCH_ALL   , "Watch all writes"                               , "WW"      , ""     , ""   , 1, 1,                 -1, "WW ALL"                                                        , IN_DEBUG_BP      }, //     MENUOPT_WW_ALL
+{ ""                               , MSG_MENUHELP_BASE_BINARY , "Set default input base to binary"               , "BASE"    , ""     , ""   , 1, 1,                 -1, "BASE 2"                                                        , IN_DEBUG_OPTIONS }, //  12 MENUOPT_BASE_BINARY
+{ ""                               , MSG_MENUHELP_BASE_OCTAL  , "Set default input base to octal"                , "BASE"    , ""     , ""   , 1, 1,                 -1, "BASE 8"                                                        , IN_DEBUG_OPTIONS }, //     MENUOPT_BASE_OCTAL
+{ ""                               , MSG_MENUHELP_BASE_DECIMAL, "Set default input base to decimal"              , "BASE"    , ""     , ""   , 1, 1,                 -1, "BASE 10"                                                       , IN_DEBUG_OPTIONS }, //     MENUOPT_BASE_DECIMAL
+{ ""                               , MSG_MENUHELP_BASE_HEX    , "Set default input base to hexadecimal"          , "BASE"    , ""     , ""   , 1, 1,                 -1, "BASE 16"                                                       , IN_DEBUG_OPTIONS }, //     MENUOPT_BASE_HEX
+{ ""                               , MSG_MENUHELP_CPU_0       , "Set CPU to 2650/2650A"                          , "CPU"     , ""     , ""   , 1, 1,                 -1, "CPU 0"                                                         , IN_DEBUG_OPTIONS }, //     MENUOPT_CPU_0
+{ ""                               , MSG_MENUHELP_CPU_1       , "Set CPU to 2650B"                               , "CPU"     , ""     , ""   , 1, 1,                 -1, "CPU 1"                                                         , IN_DEBUG_OPTIONS }, //     MENUOPT_CPU_1
+{ ""                               , MSG_MENUHELP_N_0         , "Set notation to non-extended Signetics"         , "N"       , ""     , ""   , 1, 1,                 -1, "N 0"                                                           , IN_DEBUG_OPTIONS }, //     MENUOPT_N_0
+{ ""                               , MSG_MENUHELP_N_1         , "Set notation to extended Signetics"             , "N"       , ""     , ""   , 1, 1,                 -1, "N 1"                                                           , IN_DEBUG_OPTIONS }, //     MENUOPT_N_1
+{ ""                               , MSG_MENUHELP_N_2         , "Set notation to old CALM"                       , "N"       , ""     , ""   , 1, 1,                 -1, "N 2"                                                           , IN_DEBUG_OPTIONS }, //     MENUOPT_N_2
+{ ""                               , MSG_MENUHELP_N_3         , "Set notation to new CALM"                       , "N"       , ""     , ""   , 1, 1,                 -1, "N 3"                                                           , IN_DEBUG_OPTIONS }, //     MENUOPT_N_3
+{ ""                               , MSG_MENUHELP_N_4         , "Set notation to IEEE-694"                       , "N"       , ""     , ""   , 1, 1,                 -1, "N 4"                                                           , IN_DEBUG_OPTIONS }, //     MENUOPT_N_4
+{ ""                               , MSG_MENUHELP_TU_0        , "Set time unit to cycles"                        , "TU"      , ""     , ""   , 1, 1,                 -1, "TU 0"                                                          , IN_DEBUG_OPTIONS }, //  23 MENUOPT_TU_0
+{ ""                               , MSG_MENUHELP_TU_1        , "Set time unit to clocks"                        , "TU"      , ""     , ""   , 1, 1,                 -1, "TU 1"                                                          , IN_DEBUG_OPTIONS }, //     MENUOPT_TU_1
+{ ""                               , MSG_MENUHELP_TU_2        , "Set time unit to pixels"                        , "TU"      , ""     , ""   , 1, 1,                 -1, "TU 2"                                                          , IN_DEBUG_OPTIONS }, //     MENUOPT_TU_2
+{ ""                               , MSG_MENUHELP_VB_0        , "Set verbosity to minimum"                       , "VB"      , "VERBOSE",""  , 1, 1,                 -1, "VB 0"                                                          , IN_DEBUG_OPTIONS }, //     MENUOPT_VB_0
+{ ""                               , MSG_MENUHELP_VB_1        , "Set table tracing mode"                         , "VB"      , "VERBOSE",""  , 1, 1,                 -1, "VB 1"                                                          , IN_DEBUG_OPTIONS }, //     MENUOPT_VB_1
+{ ""                               , MSG_MENUHELP_VB_2        , "Set verbosity to maximum"                       , "VB"      , "VERBOSE",""  , 1, 1,                 -1, "VB 2"                                                          , IN_DEBUG_OPTIONS }, //     MENUOPT_VB_2
+{ ""                               , MSG_MENUHELP_DRAW_0      , "Draw normally"                                  , "DRAW"    , ""     , ""   , 1, 1,                 -1, "DRAW 0"                                                        , IN_DEBUG_GRAPHICS}, //     MENUOPT_DRAW_0
+{ ""                               , MSG_MENUHELP_DRAW_1      , "Show grid (most machines) or Teletext grid (Malzak)","DRAW" , ""     , ""   , 1, 1,                 -1, "DRAW 1"                                                        , IN_DEBUG_GRAPHICS}, //     MENUOPT_DRAW_1
+{ ""                               , MSG_MENUHELP_DRAW_2      , "Show collision table (Arcadia/Interton/Elektor) or playfield grid (Malzak)","DRAW","","",1,1,       -1, "DRAW 2"                                                        , IN_DEBUG_GRAPHICS}, //     MENUOPT_DRAW_2
+{ ""                               , MSG_MENUHELP_DRAW_3      , "Show CHARLINE table (Arcadia) or DMA read table (Interton/Elektor) or both grids (Malzak)","DRAW","","",1,1,-1,"DRAW 3"                                                 , IN_DEBUG_GRAPHICS}, //     MENUOPT_DRAW_3
+{ ""                               , MSG_MENUHELP_DRAW_4      , "Show DMA write table (Interton/Elektor)"        , "DRAW"    , ""     , ""   , 1, 1,                 -1, "DRAW 4"                                                        , IN_DEBUG_GRAPHICS}, //  33 MENUOPT_DRAW_4
+{ ""                               , MSG_MENUHELP_SPR_0       , "Set sprite mode to invisible"                   , "SPR"     , ""     , ""   , 1, 1,                 -1, "SPR 0"                                                         , IN_DEBUG_GRAPHICS}, //     MENUOPT_SPR_0
+{ ""                               , MSG_MENUHELP_SPR_1       , "Set sprite mode to visible"                     , "SPR"     , ""     , ""   , 1, 1,                 -1, "SPR 1"                                                         , IN_DEBUG_GRAPHICS}, //     MENUOPT_SPR_1
+{ ""                               , MSG_MENUHELP_SPR_2       , "Set sprite mode to numbered"                    , "SPR"     , ""     , ""   , 1, 1,                 -1, "SPR 2"                                                         , IN_DEBUG_GRAPHICS}, //     MENUOPT_SPR_2
+{ "PERIPHERALS.LEFT.MOUSE"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.KEYBOARD"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.1STDJOY"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.2NDDJOY"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.2NDAJOY"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.1STDPAD"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.2NDDPAD"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  43 MENUOPT_LEFT_2NDDPAD
+{ "PERIPHERALS.LEFT.1STAPAD"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.LEFT.2NDAPAD"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.MOUSE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.KEYBOARD"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.1STDJOY"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.2NDDJOY"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.2NDAJOY"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.1STDPAD"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.2NDDPAD"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "PERIPHERALS.RIGHT.1STAPAD"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  53 MENUOPT_RIGHT_1STAPAD
+{ "PERIPHERALS.RIGHT.2NDAPAD"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.PHILIPS"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.HOBBYMODULE"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.ARTEMIS"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.HYBUG"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.PIPBUG1"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.PIPBUG2"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.BINBUG35"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.BINBUG36"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.BINBUG61"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  63 MENUOPT_BINBUG61BIOS
+{ "SETTINGS.BIOS.GBUG"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.MIKEBUG"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.MYBUG"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.IPL"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.POPMON"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.SUPERVISOR"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.MINIMONITOR"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.PHUNSY"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.SELBSTNONE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.SELBST09"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  73 MENUOPT_09BIOS
+{ "SETTINGS.BIOS.SELBST10"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.BIOS.SELBST20"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.COLOURS.AMBER"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.COLOURS.GREEN"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.COLOURS.GREY"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.COLOURS.PURE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.COLOURS.PVI"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.COLOURS.UVI"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.MICRODOS"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.VHSDOS"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  83 MENUOPT_VHSDOS
+{ "SETTINGS.DOS.NOBINBUGDOS"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.EXOS"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.SDOS20"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.SDOS40"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.SDOS42"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.TOS"               , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.UDOS"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.NOTWINDOS"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.CDDOS"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.DOS.P1DOS"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //  93 MENUOPT_P1DOS
+{ "SETTINGS.DOS.NOCD2650DOS"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.EMULATOR.FRAMEBASED"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUOPT_FRAMEBASED
+{ "SETTINGS.EMULATOR.PIXELBASED"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, //     MENUOPT_PIXELBASED
+{ "SETTINGS.EMULATOR.APPENDLOG"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.EMULATOR.IGNORELOG"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.EMULATOR.REPLACELOG"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.FILTERS.3D"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.FILTERS.HQX"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.FILTERS.SCALE2X"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.FILTERS.NONE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.FILTERS.UNSTRETCHED"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.FILTERS.STRETCH43"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 105 MENUOPT_STRETCH43
+{ "SETTINGS.FILTERS.STRETCHTOFIT"  , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.GRAPHICS.1XSIZE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.GRAPHICS.2XSIZE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.GRAPHICS.3XSIZE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.GRAPHICS.4XSIZE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.GRAPHICS.5XSIZE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.GRAPHICS.6XSIZE"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.INPUT.HOST"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.INPUT.EA78UT4"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.INPUT.TELETYPE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 115 MENUOPT_KEYMAP_TT
+{ "SETTINGS.LANGUAGE.ENG"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.HOL"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.FRA"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.GER"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.GRE"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.ITA"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.POL"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.RUS"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.LANGUAGE.SPA"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.ARCADIA"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 125 MENUOPT_ARCADIA
+{ "SETTINGS.MACHINE.INTERTON"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.ELEKTOR"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.PIPBUG"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.BINBUG"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.INSTRUCTOR"    , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.TWIN"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.CD2650"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.PHUNSY"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.SELBST"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.MIKIT"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 135 MENUOPT_MIKIT
+{ "SETTINGS.MACHINE.ASTROWARS"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.GALAXIA"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.LASERBATTLE"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.LAZARIAN"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.MALZAK1"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.MALZAK2"       , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.8550"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.8600"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.MACHINE.TYPERIGHT"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SOUND.AHI"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 145 MENUOPT_SOUND_AHI
+{ "SETTINGS.SOUND.PAULA"           , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SPEED.NTSC"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SPEED.PAL"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SPEED.HIGH"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SPEED.NORMAL"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SPEED.LOW"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.SPRITES.MULTIPLEX"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 152 MENUOPT_DEMULTIPLEX_MULTIPLEX
+{ "SETTINGS.SPRITES.TRANSPARENT"   , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 153 MENUOPT_DEMULTIPLEX_TRANSPARENT
+{ "SETTINGS.SPRITES.OPAQUE"        , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 154 MENUOPT_DEMULTIPLEX_OPAQUE
+{ "SETTINGS.VDU.ELEKTERMINAL"      , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.VDU.NARROW"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.VDU.WIDE"              , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.VDU.RADIOBULLETIN"     , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 158 MENUOPT_RADIOBULLETIN
+{ "SETTINGS.VDU.SVT100"            , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 159 MENUOPT_SVT100
+{ "SETTINGS.VDU.VT100"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 160 MENUOPT_VT100
+{ "SETTINGS.VDU.ASCII"             , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.VDU.CHESSMEN"          , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 },
+{ "SETTINGS.VDU.LOWERCASE"         , 0                        , ""                                               , ""        , ""     , ""   , 0, 0,                 -1, ""                                                              ,               -1 }, // 163 MENUOPT_LOWERCASEVDU
 };
 
 // IMPORTED VARIABLES-----------------------------------------------------
@@ -583,6 +584,7 @@ IMPORT     int                        aifffile,
                                       exactspeed,
                                       filter,
                                       flagline,
+                                      foundgames,
                                       framebased,
                                       fullscreen,
                                       game,
@@ -703,6 +705,7 @@ IMPORT const UBYTE                    cd2650_chars_defbmp[96][10],
     IMPORT       HMENU                MenuPtr;
     IMPORT       HWND                 hDebugger,
                                       hToolbar,
+                                      hSideBar,
                                       MainWindowPtr,
                                       RichTextGadget;
     IMPORT       CHARFORMAT2          fgformat;
@@ -722,8 +725,10 @@ IMPORT const UBYTE                    cd2650_chars_defbmp[96][10],
                                       windowed_wide;
     IMPORT       Object*              images[IMAGES];
     IMPORT       struct Gadget*       gadgets[GIDS + 1];
+    IMPORT       struct List          BigSpeedBarList;
     IMPORT       struct Menu*         MenuPtr;
-    IMPORT       struct Node*         SmallSpeedBarNodePtr[SMALLGADGETS + 1];
+    IMPORT       struct Node         *BigSpeedBarNodePtr[BIGGADGETS + 1],
+                                     *SmallSpeedBarNodePtr[SMALLGADGETS + 1];
     IMPORT       struct Window*       MainWindowPtr;
     IMPORT       struct Library      *AmigaGuideBase,
                                      *OpenURLBase,
@@ -1049,8 +1054,9 @@ EXPORT void updatemenu(int which)
     acase MENUITEM_IM:
     case MENUITEM_READPORT:
         ghost(which, !allowable(FALSE));
-    acase MENUITEM_VIEW_BASIC:
-        ghost(which, machine != PIPBUG && machine != CD2650);
+    acase MENUITEM_LIST:
+    case MENUITEM_VIEW_BASIC:
+        ghost(which, machine != PIPBUG && machine != BINBUG && machine != CD2650 && machine != PHUNSY);
     acase MENUITEM_VIEW_BIOS:
         ghost(which,
             machine != ELEKTOR
@@ -2817,64 +2823,6 @@ EXPORT void updatesmlgad(int which, ULONG state, FLAG now)
 #endif
 }
 
-EXPORT void updatesmlgads(void)
-{   if (!MainWindowPtr)
-    {   return; // important!
-    }
-
-#ifdef AMIGA
-    if (!showtoolbars[wsm])
-    {   return;
-    }
-    detachsmlgads();
-#endif
-
-    // controllers
-    updatesmlgad(GADPOS_AUTOFIRE1  , autofire[0], FALSE);
-    updatesmlgad(GADPOS_AUTOFIRE2  , autofire[1], FALSE);
-    updatesmlgad(GADPOS_SWAPPED    , swapped    , FALSE);
-    // sound
-    updatesmlgad(GADPOS_SOUND      , sound      , FALSE);
-    // speed
-    updatesmlgad(GADPOS_PAUSED     , paused     , FALSE);
-    updatesmlgad(GADPOS_TURBO      , turbo      , FALSE);
-    // sprites
-    updatesmlgad(GADPOS_COLLISIONS , collisions , FALSE);
-    // macros
-    updatesmlgad(GADPOS_RECORD     , 0          , FALSE);
-    updatesmlgad(GADPOS_PLAY       , 0          , FALSE);
-    updatesmlgad(GADPOS_STOP       , 0          , FALSE);
-
-    if (machine == PONG)
-    {   machines[PONG].consolekeyimage[0] = (memmap == MEMMAP_8550) ? IMAGE_START2 : IMAGE_START;
-    }
-
-#ifdef WIN32
-    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_START, machines[machine].consolekeyimage[0]);
-    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_A,     machines[machine].consolekeyimage[1]);
-    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_B,     machines[machine].consolekeyimage[2]);
-    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_RESET, machines[machine].consolekeyimage[3]);
-
-    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_START, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[0]) ? TBSTATE_ENABLED : 0);
-    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_A    , (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[1]) ? TBSTATE_ENABLED : 0);
-    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_B    , (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[2]) ? TBSTATE_ENABLED : 0);
-    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_RESET, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[3]) ? TBSTATE_ENABLED : 0);
-#endif
-#ifdef AMIGA
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_START], SBNA_Image, images[machines[machine].consolekeyimage[0]], TAG_DONE);
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_A    ], SBNA_Image, images[machines[machine].consolekeyimage[1]], TAG_DONE);
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_B    ], SBNA_Image, images[machines[machine].consolekeyimage[2]], TAG_DONE);
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_RESET], SBNA_Image, images[machines[machine].consolekeyimage[3]], TAG_DONE);
-
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_START], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[0]) ? FALSE : TRUE, TAG_DONE);
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_A    ], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[1]) ? FALSE : TRUE, TAG_DONE);
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_B    ], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[2]) ? FALSE : TRUE, TAG_DONE);
-    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_RESET], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[3]) ? FALSE : TRUE, TAG_DONE);
-
-    attachsmlgads();
-#endif
-}
-
 EXPORT void handle_menu(int command)
 {   int i;
 
@@ -2915,14 +2863,14 @@ EXPORT void handle_menu(int command)
     acase MENUITEM_SERVER:
     case MENUITEM_CLIENT:
         docommand(command);
-    acase MENUITEM_RECENT1: strcpy((char*) fn_game, (const char*) &recent[0][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT2: strcpy((char*) fn_game, (const char*) &recent[1][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT3: strcpy((char*) fn_game, (const char*) &recent[2][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT4: strcpy((char*) fn_game, (const char*) &recent[3][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT5: strcpy((char*) fn_game, (const char*) &recent[4][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT6: strcpy((char*) fn_game, (const char*) &recent[5][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT7: strcpy((char*) fn_game, (const char*) &recent[6][3]); engine_load(TRUE);
-    acase MENUITEM_RECENT8: strcpy((char*) fn_game, (const char*) &recent[7][3]); engine_load(TRUE);
+    acase MENUITEM_RECENT1: strcpy((char*) fn_game, (const char*) &recent[0][3]); engine_load(TRUE); // add_recent(); is not needed
+    acase MENUITEM_RECENT2: strcpy((char*) fn_game, (const char*) &recent[1][3]); engine_load(TRUE); add_recent();
+    acase MENUITEM_RECENT3: strcpy((char*) fn_game, (const char*) &recent[2][3]); engine_load(TRUE); add_recent();
+    acase MENUITEM_RECENT4: strcpy((char*) fn_game, (const char*) &recent[3][3]); engine_load(TRUE); add_recent();
+    acase MENUITEM_RECENT5: strcpy((char*) fn_game, (const char*) &recent[4][3]); engine_load(TRUE); add_recent();
+    acase MENUITEM_RECENT6: strcpy((char*) fn_game, (const char*) &recent[5][3]); engine_load(TRUE); add_recent();
+    acase MENUITEM_RECENT7: strcpy((char*) fn_game, (const char*) &recent[6][3]); engine_load(TRUE); add_recent();
+    acase MENUITEM_RECENT8: strcpy((char*) fn_game, (const char*) &recent[7][3]); engine_load(TRUE); add_recent();
     acase MENUITEM_ICONIFY:
         iconify();
 #ifdef WIN32
@@ -3054,6 +3002,7 @@ EXPORT void handle_menu(int command)
     acase MENUITEM_FPEEK:      debugger_partial("FPEEK "    );
     acase MENUITEM_HISTORY:    debugger_full(   "HISTORY"   );
     acase MENUITEM_IM:         debugger_partial("IM "       );
+    acase MENUITEM_LIST:       debugger_partial("LIST "     );
     acase MENUITEM_READPORT:   debugger_partial("READPORT " );
     acase MENUITEM_VIEW_BASIC: debugger_full(   "VIEW BASIC");
     acase MENUITEM_VIEW_BIOS:  debugger_full(   "VIEW BIOS" );
@@ -3556,8 +3505,7 @@ EXPORT void handle_menu(int command)
     // "Settings|Graphics �" submenu (again)
     acase MENUITEM_USEMARGINS:
         flipbool(&usemargins, command, FALSE);
-        calc_margins();
-        draw_margins();
+        draw_margins(); // calls calc_margins()
 #ifdef WIN32
         updatemenu(MENUITEM_USEMARGINS);
         resize(size, TRUE);
@@ -3738,19 +3686,19 @@ EXPORT void handle_menu2(int command)
     // "Settings|BIOS/DOS �" submenu
     acase MENUOPT_PHILIPS:
         elektor_biosver = ELEKTOR_PHILIPS;
-        changemachine(ELEKTOR, memmap, TRUE, 2, TRUE);
+        change_machine(ELEKTOR, memmap, FALSE);
         close_subwindows(FALSE);
         reopen_subwindows();
         updatemenus();
-        updatesmlgads();
+        update_toolbar();
         redrawscreen();
     acase MENUOPT_HOBBYMODULE:
         elektor_biosver = ELEKTOR_HOBBYMODULE;
-        changemachine(ELEKTOR, memmap, TRUE, 2, TRUE);
+        change_machine(ELEKTOR, memmap, FALSE);
         close_subwindows(FALSE);
         reopen_subwindows();
         updatemenus();
-        updatesmlgads();
+        update_toolbar();
         redrawscreen();
     acase MENUOPT_ARTEMIS:
         pipbug_biosver = PIPBUG_ARTEMIS;
@@ -3807,52 +3755,22 @@ EXPORT void handle_menu2(int command)
         cd2650_changebios(); // calls updatemenus() for us
     acase MENUOPT_BIOS_MINIMONITOR:
         phunsy_biosver = PHUNSY_MINIMONITOR;
-        changemachine(PHUNSY, memmap, TRUE, 2, TRUE);
-        close_subwindows(FALSE);
-        reopen_subwindows();
-        updatemenus();
-        updatesmlgads();
-        redrawscreen();
+        change_machine(PHUNSY, memmap, FALSE);
     acase MENUOPT_BIOS_PHUNSY:
         phunsy_biosver = PHUNSY_PHUNSY;
-        changemachine(PHUNSY, memmap, TRUE, 2, TRUE);
-        close_subwindows(FALSE);
-        reopen_subwindows();
-        updatemenus();
-        updatesmlgads();
-        redrawscreen();
+        change_machine(PHUNSY, memmap, FALSE);
     acase MENUOPT_00BIOS:
         selbst_biosver = SELBST_BIOS00;
-        changemachine(SELBST, MEMMAP_SELBST, TRUE, 2, TRUE);
-        close_subwindows(FALSE);
-        reopen_subwindows();
-        updatemenus();
-        updatesmlgads();
-        redrawscreen();
+        change_machine(SELBST, memmap, FALSE);
     acase MENUOPT_09BIOS:
         selbst_biosver = SELBST_BIOS09;
-        changemachine(SELBST, MEMMAP_SELBST, TRUE, 2, TRUE);
-        close_subwindows(FALSE);
-        reopen_subwindows();
-        updatemenus();
-        updatesmlgads();
-        redrawscreen();
+        change_machine(SELBST, memmap, FALSE);
     acase MENUOPT_10BIOS:
         selbst_biosver = SELBST_BIOS10;
-        changemachine(SELBST, MEMMAP_SELBST, TRUE, 2, TRUE);
-        close_subwindows(FALSE);
-        reopen_subwindows();
-        updatemenus();
-        updatesmlgads();
-        redrawscreen();
+        change_machine(SELBST, memmap, FALSE);
     acase MENUOPT_20BIOS:
         selbst_biosver = SELBST_BIOS20;
-        changemachine(SELBST, MEMMAP_SELBST, TRUE, 2, TRUE);
-        close_subwindows(FALSE);
-        reopen_subwindows();
-        updatemenus();
-        updatesmlgads();
-        redrawscreen();
+        change_machine(SELBST, memmap, FALSE);
     // "Settings|Colours �" submenu
     acase MENUOPT_AMBER:
         colourset = AMBERSCALE;
@@ -4084,26 +4002,26 @@ EXPORT void handle_menu2(int command)
     acase MENUOPT_SPA:         freelanguage(); language = LANGUAGE_SPA; changelanguage();
 #endif
     // "Settings|Machine �" submenu
-    acase MENUOPT_ARCADIA:     command_changemachine(ARCADIA,    MEMMAP_ARCADIA);
-    acase MENUOPT_INTERTON:    command_changemachine(INTERTON,   MEMMAP_D);
-    acase MENUOPT_ELEKTOR:     command_changemachine(ELEKTOR,    MEMMAP_F);
-    acase MENUOPT_PIPBUG:      command_changemachine(PIPBUG,     MEMMAP_PIPBUG1);
-    acase MENUOPT_BINBUG:      command_changemachine(BINBUG,     MEMMAP_BINBUG);
-    acase MENUOPT_INSTRUCTOR:  command_changemachine(INSTRUCTOR, MEMMAP_O);
-    acase MENUOPT_TWIN:        command_changemachine(TWIN,       MEMMAP_TWIN);
-    acase MENUOPT_CD2650:      command_changemachine(CD2650,     MEMMAP_CD2650);
-    acase MENUOPT_ASTROWARS:   command_changemachine(ZACCARIA,   MEMMAP_ASTROWARS);
-    acase MENUOPT_GALAXIA:     command_changemachine(ZACCARIA,   MEMMAP_GALAXIA);
-    acase MENUOPT_LASERBATTLE: command_changemachine(ZACCARIA,   MEMMAP_LASERBATTLE);
-    acase MENUOPT_LAZARIAN:    command_changemachine(ZACCARIA,   MEMMAP_LAZARIAN);
-    acase MENUOPT_MALZAK1:     command_changemachine(MALZAK,     MEMMAP_MALZAK1);
-    acase MENUOPT_MALZAK2:     command_changemachine(MALZAK,     MEMMAP_MALZAK2);
-    acase MENUOPT_PHUNSY:      command_changemachine(PHUNSY,     MEMMAP_PHUNSY);
-    acase MENUOPT_SELBST:      command_changemachine(SELBST,     MEMMAP_SELBST);
-    acase MENUOPT_MIKIT:       command_changemachine(MIKIT,      MEMMAP_MIKIT);
-    acase MENUOPT_8550:        command_changemachine(PONG,       MEMMAP_8550);
-    acase MENUOPT_8600:        command_changemachine(PONG,       MEMMAP_8600);
-    acase MENUOPT_TYPERIGHT:   command_changemachine(TYPERIGHT,  MEMMAP_TYPERIGHT);
+    acase MENUOPT_ARCADIA:     change_machine(ARCADIA,    MEMMAP_ARCADIA    , TRUE);
+    acase MENUOPT_INTERTON:    change_machine(INTERTON,   MEMMAP_D          , TRUE);
+    acase MENUOPT_ELEKTOR:     change_machine(ELEKTOR,    MEMMAP_F          , TRUE);
+    acase MENUOPT_PIPBUG:      change_machine(PIPBUG,     MEMMAP_PIPBUG1    , TRUE);
+    acase MENUOPT_BINBUG:      change_machine(BINBUG,     MEMMAP_BINBUG     , TRUE);
+    acase MENUOPT_INSTRUCTOR:  change_machine(INSTRUCTOR, MEMMAP_O          , TRUE);
+    acase MENUOPT_TWIN:        change_machine(TWIN,       MEMMAP_TWIN       , TRUE);
+    acase MENUOPT_CD2650:      change_machine(CD2650,     MEMMAP_CD2650     , TRUE);
+    acase MENUOPT_ASTROWARS:   change_machine(ZACCARIA,   MEMMAP_ASTROWARS  , TRUE);
+    acase MENUOPT_GALAXIA:     change_machine(ZACCARIA,   MEMMAP_GALAXIA    , TRUE);
+    acase MENUOPT_LASERBATTLE: change_machine(ZACCARIA,   MEMMAP_LASERBATTLE, TRUE);
+    acase MENUOPT_LAZARIAN:    change_machine(ZACCARIA,   MEMMAP_LAZARIAN   , TRUE);
+    acase MENUOPT_MALZAK1:     change_machine(MALZAK,     MEMMAP_MALZAK1    , TRUE);
+    acase MENUOPT_MALZAK2:     change_machine(MALZAK,     MEMMAP_MALZAK2    , TRUE);
+    acase MENUOPT_PHUNSY:      change_machine(PHUNSY,     MEMMAP_PHUNSY     , TRUE);
+    acase MENUOPT_SELBST:      change_machine(SELBST,     MEMMAP_SELBST     , TRUE);
+    acase MENUOPT_MIKIT:       change_machine(MIKIT,      MEMMAP_MIKIT      , TRUE);
+    acase MENUOPT_8550:        change_machine(PONG,       MEMMAP_8550       , TRUE);
+    acase MENUOPT_8600:        change_machine(PONG,       MEMMAP_8600       , TRUE);
+    acase MENUOPT_TYPERIGHT:   change_machine(TYPERIGHT,  MEMMAP_TYPERIGHT  , TRUE);
     // "Settings|Speed �" submenu
     acase MENUOPT_NTSC:
         region = REGION_NTSC;
@@ -4182,13 +4100,7 @@ MODULE void changecolours2(void)
     if (machine == PONG)
     {   pong_updatedips(); // for ghosting of "player identification?"
     }
-    if (subwin[SUBWINDOW_SPRITES].hwnd)
-    {   close_subwindow(SUBWINDOW_SPRITES);
-        open_spriteeditor();
-    }
-#ifdef WIN32
-    make_stars();
-#endif
+    reopen_subwindow(SUBWINDOW_SPRITES);
     redrawscreen();
 }
 
@@ -4225,13 +4137,7 @@ EXPORT void docommand(int which)
         updatemenu(MENUITEM_SERVER);
         updatemenu(MENUITEM_CLIENT);
     acase MENUITEM_REINITIALIZE:
-        changemachine(machine, memmap, TRUE, TRUE, FALSE);
-        updatemenus();
-        updatebiggads();
-        updatesmlgads();
-        settitle();
-        redrawscreen();
-        reopen_subwindows();
+        change_machine(machine, memmap, TRUE);
     acase MENUITEM_REVERT:
         if (crippled || !game) return;
         macro_stop();
@@ -4417,9 +4323,6 @@ EXPORT void docommand(int which)
         updatemenu(MENUITEM_AUTOFIRE2);
     // "Settings|Colours �" submenu
     acase MENUITEM_DARKENBG:
-#ifdef WIN32
-        make_stars();
-#endif
         updatemenu(MENUITEM_DARKENBG);
     acase MENUITEM_FLAGLINE:
         updatemenu(MENUITEM_FLAGLINE);
@@ -4692,8 +4595,7 @@ EXPORT void docommand2(int which)
         {   usemargins = FALSE;
         }
         reset_vdu(TRUE);
-        calc_margins();
-        draw_margins();
+        draw_margins(); // calls calc_margins()
         fixupcolours();
 #ifdef WIN32
         updatemenu(MENUFAKE_PIPBUGVDU);
@@ -4752,3 +4654,133 @@ EXPORT void updatemenus(void)
     for (i = 0; i < MENUITEMS; i++)
     {   updatemenu(i);
 }   }
+
+EXPORT void update_toolbar(void)
+{   if (!MainWindowPtr)
+    {   return; // important!
+    }
+
+#ifdef WIN32
+    if (crippled)
+    {   if (hToolbar)
+        {   DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_RESET,                      0);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_OPEN,                       0);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_SAVESNP,                    0);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKLOAD,                  0);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKSAVE,                  0);
+        }
+        if (hSideBar)
+        {   EnableWindow(hSideBar, FALSE);
+    }   }
+    else
+    {   if (hToolbar)
+        {   DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_RESET,        TBSTATE_ENABLED);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_OPEN,         TBSTATE_ENABLED);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_SAVESNP,      TBSTATE_ENABLED);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKLOAD,    (cheevos && RA_HardcoreModeIsActive()) ? 0 : TBSTATE_ENABLED);
+            DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_FILE_QUICKSAVE,    TBSTATE_ENABLED);
+        }
+        if (hSideBar && foundgames)
+        {   EnableWindow(hSideBar, TRUE);
+    }   }
+
+    if (hToolbar)
+    {   DISCARD SendMessage(hToolbar, TB_SETSTATE, ID_MACRO_RUNREXX,         (cheevos && RA_HardcoreModeIsActive()) ? 0 : TBSTATE_ENABLED);
+    }
+#endif
+#ifdef AMIGA
+    if (showtoolbars[wsm])
+    {   DISCARD SetGadgetAttrs
+        (   gadgets[GID_MA_SB1], MainWindowPtr, NULL,
+            SPEEDBAR_Buttons, (ULONG) ~0,
+        TAG_DONE);
+        SetSpeedButtonNodeAttrs
+        (   BigSpeedBarNodePtr[0], // reset
+            SBNA_Disabled, crippled,
+        TAG_DONE);
+        SetSpeedButtonNodeAttrs
+        (   BigSpeedBarNodePtr[1], // open
+            SBNA_Disabled, crippled,
+        TAG_DONE);
+        SetSpeedButtonNodeAttrs
+        (   BigSpeedBarNodePtr[2], // save
+            SBNA_Disabled, crippled,
+        TAG_DONE);
+        // 3 is "save screenshot..."
+        // 4 is "copy screenshot"
+        // 5 is "run arexx macro..."
+        SetSpeedButtonNodeAttrs
+        (   BigSpeedBarNodePtr[6], // quickload
+            SBNA_Disabled, crippled,
+        TAG_DONE);
+        SetSpeedButtonNodeAttrs
+        (   BigSpeedBarNodePtr[7], // quicksave
+            SBNA_Disabled, crippled,
+        TAG_DONE);
+        DISCARD SetGadgetAttrs
+        (   gadgets[GID_MA_SB1], MainWindowPtr, NULL,
+            SPEEDBAR_Buttons, &BigSpeedBarList,
+        TAG_DONE);
+        RefreshGList((struct Gadget*) gadgets[GID_MA_SB1], MainWindowPtr, NULL, 1);
+    }
+
+    if (showsidebars[wsm])
+    {   DISCARD SetGadgetAttrs
+        (   gadgets[GID_MA_LB1], MainWindowPtr, NULL,
+            GA_Disabled, crippled,
+        TAG_DONE);
+        // this autorefreshes
+    }
+
+    if (!showtoolbars[wsm])
+    {   return;
+    }
+
+    detachsmlgads();
+#endif
+
+    // controllers
+    updatesmlgad(GADPOS_AUTOFIRE1  , autofire[0], FALSE);
+    updatesmlgad(GADPOS_AUTOFIRE2  , autofire[1], FALSE);
+    updatesmlgad(GADPOS_SWAPPED    , swapped    , FALSE);
+    // sound
+    updatesmlgad(GADPOS_SOUND      , sound      , FALSE);
+    // speed
+    updatesmlgad(GADPOS_PAUSED     , paused     , FALSE);
+    updatesmlgad(GADPOS_TURBO      , turbo      , FALSE);
+    // sprites
+    updatesmlgad(GADPOS_COLLISIONS , collisions , FALSE);
+    // macros
+    updatesmlgad(GADPOS_RECORD     , 0          , FALSE);
+    updatesmlgad(GADPOS_PLAY       , 0          , FALSE);
+    updatesmlgad(GADPOS_STOP       , 0          , FALSE);
+
+    if (machine == PONG)
+    {   machines[PONG].consolekeyimage[0] = (memmap == MEMMAP_8550) ? IMAGE_START2 : IMAGE_START;
+    }
+
+#ifdef WIN32
+    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_START, machines[machine].consolekeyimage[0]);
+    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_A,     machines[machine].consolekeyimage[1]);
+    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_B,     machines[machine].consolekeyimage[2]);
+    DISCARD SendMessage(hToolbar, TB_CHANGEBITMAP, (UINT) ID_CONSOLE_RESET, machines[machine].consolekeyimage[3]);
+
+    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_START, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[0]) ? TBSTATE_ENABLED : 0);
+    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_A    , (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[1]) ? TBSTATE_ENABLED : 0);
+    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_B    , (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[2]) ? TBSTATE_ENABLED : 0);
+    DISCARD SendMessage(hToolbar, TB_SETSTATE    , (UINT) ID_CONSOLE_RESET, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[3]) ? TBSTATE_ENABLED : 0);
+#endif
+#ifdef AMIGA
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_START], SBNA_Image, images[machines[machine].consolekeyimage[0]], TAG_DONE);
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_A    ], SBNA_Image, images[machines[machine].consolekeyimage[1]], TAG_DONE);
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_B    ], SBNA_Image, images[machines[machine].consolekeyimage[2]], TAG_DONE);
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_RESET], SBNA_Image, images[machines[machine].consolekeyimage[3]], TAG_DONE);
+
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_START], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[0]) ? FALSE : TRUE, TAG_DONE);
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_A    ], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[1]) ? FALSE : TRUE, TAG_DONE);
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_B    ], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[2]) ? FALSE : TRUE, TAG_DONE);
+    SetSpeedButtonNodeAttrs(SmallSpeedBarNodePtr[GADPOS_RESET], SBNA_Disabled, (recmode != RECMODE_PLAY && memmapinfo[memmap].gadenabled[3]) ? FALSE : TRUE, TAG_DONE);
+
+    attachsmlgads();
+#endif
+}
