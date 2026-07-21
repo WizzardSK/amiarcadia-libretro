@@ -72,6 +72,7 @@ IMPORT       UBYTE                cosversion,
                                   startaddr_l,
                                   memory[32768],
                                   opcode,
+                                  OutputBuffer[18],
                                   r[7],
                                   reqsector,
                                   tone,
@@ -112,9 +113,11 @@ IMPORT       int                  ambient,
                                   memmap,
                                   n1,
                                   nextinst,
+                                  offset,
                                   queuekeystrokes,
                                   queuepos,
                                   post,
+                                  recmode,
                                   region,
                                   scrnaddr,
                                   serializemode,
@@ -126,6 +129,7 @@ IMPORT       int                  ambient,
                                   watchreads,
                                   watchwrites,
                                   whichgame;
+IMPORT       FILE*                    MacroHandle;
 IMPORT       MEMFLAG                  memflags[ALLTOKENS];
 IMPORT       struct DriveStruct       drive[DRIVES_MAX];
 IMPORT       struct MachineStruct     machines[MACHINES];
@@ -682,7 +686,15 @@ EXPORT UBYTE cd2650_readport(int port)
             {   cd2650_downtill = cycles_2650 + ((ULONG) machines[CD2650].cpf / 2);
         }   }
         else
-        {   t = guestkey;
+        {   if (recmode == RECMODE_PLAY)
+            {   t = IOBuffer[offset++];
+            } else
+            {   t = guestkey;
+            }
+            if (recmode == RECMODE_RECORD)
+            {   OutputBuffer[0] = t;
+                DISCARD fwrite(OutputBuffer, 1, 1, MacroHandle);
+            }
             guestkey = NC; // fixes CDChess.aof. High bit must be set
         }
     acase CD2650_FD1771_STATUS:

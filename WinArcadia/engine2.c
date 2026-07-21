@@ -1772,17 +1772,17 @@ EXPORT void zprintf(UNUSED int whichcolour, const char* format, ...)
     // This function isn't callable recursively
     // (due to the use of persistent variables).
 
-#ifdef AMIGA
     if (quiet)
     {   return;
     }
+
+#ifdef AMIGA
     consoleopened = TRUE;
 #endif
 
     string[0] = EOS;
     if (!LogfileHandle && logfile != LOGFILE_IGNORE)
     {   logfile_open(TRUE);
-        write_log_string(string);
     }
 
     va_start(list, format);
@@ -1815,13 +1815,13 @@ EXPORT void zprintf(UNUSED int whichcolour, const char* format, ...)
         return;
     }
 
-    SendMessage(RichTextGadget, EM_EXGETSEL,      0,             (LPARAM) &cr);
+    SendMessage(RichTextGadget, EM_SETSEL,       -1,             -1);
+    SendMessage(RichTextGadget, EM_EXGETSEL,     0,              (LPARAM) &cr);
     start = cr.cpMin;
-    SendMessage(RichTextGadget, EM_SETSEL,        start,         start);
-    SendMessage(RichTextGadget, EM_REPLACESEL,    FALSE,         (LPARAM) string);
-    SendMessage(RichTextGadget, EM_EXGETSEL,      0,             (LPARAM) &cr);
+    SendMessage(RichTextGadget, EM_REPLACESEL,   FALSE,          (LPARAM) string);
+    SendMessage(RichTextGadget, EM_EXGETSEL,     0,              (LPARAM) &cr);
     end = cr.cpMin;
-    SendMessage(RichTextGadget, EM_SETSEL,        start,         end);
+    SendMessage(RichTextGadget, EM_SETSEL,       start,          end);
 
     memset(&fgformat, 0, sizeof(fgformat));
     fgformat.cbSize      = sizeof(fgformat);
@@ -1830,8 +1830,8 @@ EXPORT void zprintf(UNUSED int whichcolour, const char* format, ...)
     fgformat.crBackColor = (consolebg == 0) ? RGB(0,0,0) : RGB(255,255,255);
     SendMessage(RichTextGadget, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &fgformat);
 
-    SendMessage(RichTextGadget, EM_SETSEL,        end,           end);
-    SendMessage(RichTextGadget, EM_SCROLLCARET,   0,             0);
+    SendMessage(RichTextGadget, EM_SETSEL,       end,            end);
+    SendMessage(RichTextGadget, EM_SCROLLCARET,  0,              0);
 
     if (!already && !quitting && storedmenu1 == -1 && storedmenu2 == -1)
     {   already = TRUE;

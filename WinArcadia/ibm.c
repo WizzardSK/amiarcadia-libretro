@@ -1142,6 +1142,7 @@ IMPORT       FLAG                        aborting,
                                          loadedconfig,
                                          modal,
                                          repaintmemmap,
+                                         rexx,
                                          softctrl,
                                          softlshift,
                                          softrshift;
@@ -1707,7 +1708,8 @@ APIRET APIENTRY rexx_unpause(         CONST CHAR* name, ULONG numargs, RXSTRING 
 APIRET APIENTRY rexx_viewhighscores(  CONST CHAR* name, ULONG numargs, RXSTRING args[], CONST UCHAR* queuename, RXSTRING* retstr);
 APIRET APIENTRY rexx_windowtoback(    CONST CHAR* name, ULONG numargs, RXSTRING args[], CONST UCHAR* queuename, RXSTRING* retstr);
 APIRET APIENTRY rexx_windowtofront(   CONST CHAR* name, ULONG numargs, RXSTRING args[], CONST UCHAR* queuename, RXSTRING* retstr);
-LONG APIENTRY rexx_rxsio(LONG ExitNumber, LONG Subfunction, PEXIT ParmBlock);
+LONG   APIENTRY rexx_rxsio(LONG ExitNumber, LONG Subfunction, PEXIT ParmBlock);
+ULONG  APIENTRY rexx_any(PRXSTRING command, PUSHORT flags, PRXSTRING retstr);
 
 // CODE-------------------------------------------------------------------
 
@@ -2927,6 +2929,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     )
     {   zprintf(TEXTPEN_ERROR, LLL(MSG_REXXERROR1, "Can't register REXX function(s)!\n\n"));
     }
+    if (RexxRegisterSubcomExe("WINARCADIA", rexx_any, NULL) != RXEXIT_OK)
+    {   zprintf(TEXTPEN_ERROR, LLL(MSG_REXXERROR2, "Can't register REXX command handler!\n\n"));
+    }
     if (RexxRegisterExitExe("RXSIO", rexx_rxsio, NULL) != RXEXIT_OK)
     {   zprintf(TEXTPEN_ERROR, LLL(MSG_REXXERROR2, "Can't register REXX I/O handler!\n\n"));
     }
@@ -3244,6 +3249,8 @@ EXPORT void freeall(void)
     EXITING(25);
     DISCARD WSACleanup();
     EXITING(26);
+
+    RexxDeregisterSubcom("WINARCADIA", NULL); // must be done before deregistering any of the functions
     RexxDeregisterFunction("ACTIVATE");
     RexxDeregisterFunction("ACTIVATEWINDOW");
     RexxDeregisterFunction("CLEAR");
@@ -3320,6 +3327,7 @@ EXPORT void freeall(void)
     RexxDeregisterFunction("WINDOWTOBACK");
     RexxDeregisterFunction("WINDOWTOFRONT");
     RexxDeregisterExit("WINARCADIA", "RXSIO");
+
     EXITING(28);
     blanker_on(); // do this *after* uniconify()
     EXITING(29);
@@ -7411,15 +7419,28 @@ APIRET APIENTRY rexx_cmdshell(CONST CHAR* name, ULONG numargs, RXSTRING args[], 
 }
 
 APIRET APIENTRY rexx_debugger(CONST CHAR* name, ULONG numargs, RXSTRING args[], CONST UCHAR* queuename, RXSTRING* retstr)
-{   if (numargs >= 1 && !stricmp(args[0].strptr, "QUIET"))
-    {   quiet = TRUE;
+{   int i;
+
+    if (numargs == 0)
+    {   return RXFUNC_OK;
+    }
+
+    for (i = 0; i < 7; i++)
+    {   thearg[i][0] = EOS;
+    }
+
+    if (!stricmp(args[0].strptr, "QUIET"))
+    {   if (numargs == 1)
+        {   return RXFUNC_OK;
+        }
+        quiet = TRUE;
         if (numargs >= 8) strcpy(thearg[6], args[7].strptr);
         if (numargs >= 7) strcpy(thearg[5], args[6].strptr);
         if (numargs >= 6) strcpy(thearg[4], args[5].strptr);
         if (numargs >= 5) strcpy(thearg[3], args[4].strptr);
         if (numargs >= 4) strcpy(thearg[2], args[3].strptr);
         if (numargs >= 3) strcpy(thearg[1], args[2].strptr);
-        if (numargs >= 2) strcpy(thearg[0], args[1].strptr); else thearg[0][0] = EOS;
+                          strcpy(thearg[0], args[1].strptr);
     } else
     {   if (numargs >= 7) strcpy(thearg[6], args[6].strptr);
         if (numargs >= 6) strcpy(thearg[5], args[5].strptr);
@@ -7427,13 +7448,23 @@ APIRET APIENTRY rexx_debugger(CONST CHAR* name, ULONG numargs, RXSTRING args[], 
         if (numargs >= 4) strcpy(thearg[3], args[3].strptr);
         if (numargs >= 3) strcpy(thearg[2], args[2].strptr);
         if (numargs >= 2) strcpy(thearg[1], args[1].strptr);
-        if (numargs >= 1) strcpy(thearg[0], args[0].strptr); else thearg[0][0] = EOS;
+                          strcpy(thearg[0], args[0].strptr);
     }
 
-    if (thearg[0][0] != EOS)
-    {   debug_command();
-    }
-    quiet = FALSE;
+    sprintf
+    (   userinput,
+        "%s %s %s %s %s %s %s\n",
+        thearg[0],
+        thearg[1],
+        thearg[2],
+        thearg[3],
+        thearg[4],
+        thearg[5],
+        thearg[6]
+    );
+    rexx = TRUE;
+    debug_command();
+    rexx = quiet = FALSE;
 
     return RXFUNC_OK;
 }
@@ -8266,4 +8297,123 @@ LRESULT CALLBACK MagnifierWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+ULONG APIENTRY rexx_any(PRXSTRING command, PUSHORT flags, PRXSTRING retstr)
+{   RXSTRING args[32];
+    ULONG    numargs = 0;
+    char    *p,
+            *start;
+    char     buffer[1024];
+
+    if (command->strlength >= sizeof(buffer))
+    {   *flags = RXSUBCOM_ERROR;
+        return 0;
+    }
+
+    memcpy(buffer, command->strptr, command->strlength);
+    buffer[command->strlength] = 0;
+
+    p = buffer;
+    while (*p && numargs < 32)
+    {   while (*p == ' ' || *p == '\t')
+        {   p++;
+        }
+        if (!*p)
+        {   break;
+        }
+        start = p;
+        while (*p && *p != ' ' && *p != '\t')
+        {   p++;
+        }
+        if (*p)
+        {   *p = 0;
+            p++;
+        }
+        args[numargs].strptr = start;
+        args[numargs].strlength = strlen(start);
+        numargs++;
+    }
+
+    if (numargs == 0)
+    {   return RXFUNC_OK;
+    }
+
+    if (!stricmp(args[0].strptr, "ACTIVATE"      )) return rexx_activate(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "ACTIVATEWINDOW")) return rexx_activatewindow(args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLEAR"         )) return rexx_clear(         args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLIENT"        )) return rexx_client(        args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSECONTROLS" )) return rexx_closecontrols( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEDIPS"     )) return rexx_closedips(     args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEDISKDRIVE")) return rexx_closediskdrive(args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEGAMEINFO" )) return rexx_closegameinfo( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEGAMEPADS" )) return rexx_closegamepads( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEKEYBOARD" )) return rexx_closekeyboard( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEMEMORY"   )) return rexx_closememory(   args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEMONITOR"  )) return rexx_closemonitor(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEMUSIC"    )) return rexx_closemusic(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEOPCODES"  )) return rexx_closeopcodes(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSEPALETTE"  )) return rexx_closepalette(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSESPRITES"  )) return rexx_closesprites(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CLOSETAPEDECK" )) return rexx_closetapedeck( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "CMDSHELL"      )) return rexx_cmdshell(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "COPY"          )) return rexx_copy(          args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "COPYTEXT"      )) return rexx_copytext(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "DEACTIVATE"    )) return rexx_deactivate(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "DEBUGGER"      )) return rexx_debugger(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETATTR"       )) return rexx_getattr(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETCREDITS"    )) return rexx_getcredits(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETHOSTNAME"   )) return rexx_gethostname(   args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETMACHINE"    )) return rexx_getmachine(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETMEMMAP"     )) return rexx_getmemmap(     args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETNAME"       )) return rexx_getname(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETPORT"       )) return rexx_getport(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETREFERENCE"  )) return rexx_getreference(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "GETVERSION"    )) return rexx_getversion(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "HELP"          )) return rexx_help(          args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "HIDE"          )) return rexx_deactivate(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "JUMPTOMONITOR" )) return rexx_jumptomonitor( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "NEW"           )) return rexx_new(           args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "MENU"          )) return rexx_menu(          args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "MOVEWINDOW"    )) return rexx_movewindow(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPEN"          )) return rexx_open(          args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENCONTROLS"  )) return rexx_opencontrols(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENDIPS"      )) return rexx_opendips(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENDISKDRIVE" )) return rexx_opendiskdrive( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENGAMEPADS"  )) return rexx_opengamepads(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENGAMEINFO"  )) return rexx_opengameinfo(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENKEYBOARD"  )) return rexx_openkeyboard(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENMEMORY"    )) return rexx_openmemory(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENMONITOR"   )) return rexx_openmonitor(   args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENMUSIC"     )) return rexx_openmusic(     args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENOPCODES"   )) return rexx_openopcodes(   args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENPALETTE"   )) return rexx_openpalette(   args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENSPRITES"   )) return rexx_opensprites(   args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "OPENTAPEDECK"  )) return rexx_opentapedeck(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "PASTE"         )) return rexx_paste(         args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "PAUSE"         )) return rexx_pause(         args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "PEEK"          )) return rexx_peek(          args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "QUIT"          )) return rexx_quit(          args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "RELOAD"        )) return rexx_revert(        args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "REVERT"        )) return rexx_revert(        args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEACBM"      )) return rexx_saveacbm(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEAS"        )) return rexx_saveas(        args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEBMP"       )) return rexx_savebmp(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEGIF"       )) return rexx_savegif(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEILBM"      )) return rexx_saveilbm(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEPCX"       )) return rexx_savepcx(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVEPNG"       )) return rexx_savepng(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SAVETIFF"      )) return rexx_savetiff(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SERVER"        )) return rexx_server(        args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SETMACHINE"    )) return rexx_setmachine(    args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SETPORT"       )) return rexx_setport(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SETSPEED"      )) return rexx_setspeed(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "SHOW"          )) return rexx_activate(      args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "TURBO"         )) return rexx_turbo(         args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "UNPAUSE"       )) return rexx_unpause(       args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "VIEWHIGHSCORES")) return rexx_viewhighscores(args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "WINDOWTOBACK"  )) return rexx_windowtoback(  args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+    if (!stricmp(args[0].strptr, "WINDOWTOFRONT" )) return rexx_windowtofront( args[0].strptr, numargs - 1, &args[1], NULL, retstr);
+
+    return RXFUNC_OK;
 }

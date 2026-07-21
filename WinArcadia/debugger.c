@@ -34,12 +34,11 @@
 // whether check_labels() should also check for any tokens/symbols/labels
 // which could be interpreted as hex literals
 
-#define ASKUSAGE (thearg[1][0] == '?' && thearg[1][1] == EOS && thearg[2][0] == EOS)
-
 #define MINLENGTH       2
 
 // EXPORTED VARIABLES-----------------------------------------------------
 
+EXPORT       FLAG                     rexx      = FALSE;
 EXPORT       TEXT                     thearg[7][MAX_PATH + 80 + 1],
                                       fn_asm[   MAX_PATH      + 1],
                                       userinput[MAX_PATH + 80 + 1] = "";
@@ -516,10 +515,12 @@ EXPORT FLAG debug_command(void)
         }
     acase MENUITEM_S:
         if (allowable(TRUE))
-        {   step = TRUE;
-            traceorstep = (trace || step) ? TRUE : FALSE;
-            emu_unpause();
-        }
+        {   step = traceorstep = TRUE;
+            if (rexx)
+            {   one_instruction();
+            } else
+            {   emu_unpause();
+        }   }
     acase MENUFAKE_SPR:
         if
         (   machine != ARCADIA
@@ -1193,12 +1194,12 @@ EXPORT FLAG debug_command(void)
         }   }
     acase MENUITEM_DOKE:
         if (allowable(TRUE))
-        {   if (thearg[1][0] && thearg[2][0])
+        {   if (thearg[2][0])
             {   if (poke_start((STRPTR) thearg[1], FALSE, TRUE))
                 {   tonum = parse_expression((STRPTR) thearg[2], tolimit, FALSE);
                     poke_end(FALSE, TRUE);
             }   }
-            elif (thearg[1][0] && (thearg[1][0] != '?' || thearg[1][1] != EOS))
+            elif (thearg[1][0])
             {   DISCARD debug_edit((STRPTR) thearg[1], FALSE, TRUE);
             } else
             {   commandusage(MENUITEM_DOKE);
@@ -7284,8 +7285,8 @@ MODULE void commandusage(int command)
         zprintf(TEXTPEN_CLIOUTPUT, "%s: DRAW 0|1|2|3|4\n\n", LLL(MSG_USAGE, "Usage"));
     acase MENUFAKE_DRIVE:
         zprintf(TEXTPEN_CLIOUTPUT, "DRIVE 0: %s\n" \
-                                   "DRIVE 1: %s\n",
-                                   "DRIVE 2: %s\n",
+                                   "DRIVE 1: %s\n" \
+                                   "DRIVE 2: %s\n" \
                                    "DRIVE 3: %s\n",
                                    LLL(menuinfo2[MENUOPT_DRIVE_0].desc_id, menuinfo2[MENUOPT_DRIVE_0].desc_str),
                                    LLL(menuinfo2[MENUOPT_DRIVE_1].desc_id, menuinfo2[MENUOPT_DRIVE_1].desc_str),

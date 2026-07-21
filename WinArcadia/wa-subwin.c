@@ -1021,16 +1021,25 @@ EXPORT void open_subwindow(int which, LPCTSTR dialog, DLGPROC function)
     }
 
     opening = TRUE;
-    subwin[which].hwnd = CreateDialog
-    (   InstancePtr,
-        dialog,
-        MainWindowPtr,
-        function
-    );
+    if (which == SUBWINDOW_OUTPUT)
+    {   subwin[which].hwnd = CreateDialog
+        (   InstancePtr,
+            dialog,
+            NULL,
+            function
+        );
+    } else
+    {   subwin[which].hwnd = CreateDialog
+        (   InstancePtr,
+            dialog,
+            MainWindowPtr,
+            function
+        );
+    }
     opening = FALSE;
 
     updatemenu(subwin[which].menuitem);
-    if (which != SUBWINDOW_MEMORY)
+    if (which != SUBWINDOW_MEMORY && which != SUBWINDOW_OUTPUT)
     {   DISCARD SetActiveWindow(MainWindowPtr);
     }
 

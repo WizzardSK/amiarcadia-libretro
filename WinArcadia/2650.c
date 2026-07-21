@@ -373,7 +373,8 @@ IMPORT       ULONG                    binbug_interface,
                                       tt_scrntill,
                                       verbosetape;
 IMPORT       FLAG                     halted,
-                                      priflag[32];
+                                      priflag[32],
+                                      rexx;
 IMPORT       UBYTE*                   TapeCopy;
 IMPORT       FILE*                    TapeHandle;
 IMPORT       struct ConditionalStruct bp[32768],
@@ -751,8 +752,10 @@ EXPORT void one_instruction(void)
         {   step = FALSE;
             traceorstep = (trace || step) ? TRUE : FALSE;
             memflags[iar] &= ~(STEPPOINT);
-            emu_pause(); // this is recursive! :-(
-        } else
+            if (!rexx) // so that we can go on to execute the next instruction in the script
+            {   emu_pause(); // this is recursive! :-(
+        }   }
+        else
         {   updatescreen();
         }
 

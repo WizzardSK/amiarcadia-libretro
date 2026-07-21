@@ -4021,9 +4021,8 @@ EXPORT UBYTE get_guest_key(void)
         );
     }
     if (recmode == RECMODE_RECORD)
-    {   OutputBuffer[0] = 1;
-        OutputBuffer[1] = inchar;
-        DISCARD fwrite(OutputBuffer, 2, 1, MacroHandle);
+    {   OutputBuffer[0] = inchar;
+        DISCARD fwrite(OutputBuffer, 1, 1, MacroHandle);
     }
 
     return inchar;
