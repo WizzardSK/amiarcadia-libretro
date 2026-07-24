@@ -28,6 +28,10 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/linux-i686.yml'
 
+  # Linux aarch64
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/linux-aarch64.yml'
+
   # MacOS ARM 64-bit
   - project: 'libretro-infrastructure/ci-templates'
     file: '/osx-arm64.yml'
@@ -95,6 +99,10 @@ include:
     file: '/dingux-arm32.yml'
 
   #################################### MISC ##################################
+  # Emscripten
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/emscripten-static.yml'
+
   # webOS 32-bit (LGTV)
   - project: 'libretro-infrastructure/ci-templates'
     file: '/webos-make.yml'
@@ -128,6 +136,12 @@ libretro-build-linux-x64:
 libretro-build-linux-i686:
   extends:
     - .libretro-linux-i686-make-default
+    - .core-defs
+
+# Linux aarch64
+libretro-build-linux-aarch64:
+  extends:
+    - .libretro-linux-aarch64-make-default
     - .core-defs
 
 # MacOS 64-bit
@@ -250,4 +264,10 @@ libretro-build-miyoo-arm32:
 libretro-build-webos-armv7a:
   extends:
     - .libretro-webos-armv7a-make-default
+    - .core-defs
+
+# Emscripten
+libretro-build-emscripten:
+  extends:
+    - .libretro-emscripten-static-retroarch-master
     - .core-defs

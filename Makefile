@@ -222,6 +222,12 @@ else ifeq ($(platform), miyoo)
 	SHARED := -shared -Wl,--no-undefined
 	CFLAGS += -mcpu=arm926ej-s -ffast-math
 
+# Emscripten
+else ifeq ($(platform), emscripten)
+	EXT?=bc
+	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
+	STATIC_LINKING := 1
+
 # Windows (MinGW)
 else ifneq (,$(findstring win,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.dll
